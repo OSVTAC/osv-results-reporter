@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head><title>{{County_Full_Name}} test election {{ config.election_date|format_date }}</title>
+<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">-->
+<style type="text/css">
+<!--
+div.contests {width:500px}
+.contest table {border:0px solid;border-spacing:0px;width:100%}
+.contest table td {border:1px solid;margin:0px;padding:4px}
+.contest table th {margin:0px;padding:4px}
+.pctrep {font:normal small sans-serif;line-height:1.0}
+.cand {width:50%}
+.votes, .pct {text-align:right}
+.contest {font:normal medium sans-serif;line-height:1.0}
+-->
+</style>
+</head>
+<body>
+<div class='contests'>
+{% for r in Races %}
+<div class='contest'><h2>{{r.Office_Title}}</h2>
+<table><thead><tr><th class='pctrep'>{% if r.Precincts %}{{r.Precincts_Reporting}}/{{r.Precincts}} Precincts Reporting {{r.Precincts_Reporting_Percent}}%{% endif %}</th><th>Ballots cast</th><th>Percentage</th></tr></thead>
+{% for c in r.Candidates -%}
+<tr><td class='cand'>{{c.Candidate_First_Middle_Name}} {{c.Candidate_Last_Name_Suffix}}</td><td class='votes'>{{c.Votes}}</td><td class='pct'>{{c.Votes_Percent}}%</td></tr>
+{% endfor -%}
+<tr><td class='cand'>Writein</td><td class='votes'>{{r.Writein_Votes}}</td><td class='pct'></td></tr>
+</table></div>
+{%- endfor -%}
+{% for m in Measures %}
+<div class='contest'><h2>{{m.Measure_Name}} - {{m.Measure_Title}}</h2>
+<p class='mdist'>{{m.Measure_District}}</p>
+<table><thead><tr><th class='pctrep'>{% if m.Precincts %}{{m.Precincts_Reporting}}/{{m.Precincts}} Precincts Reporting {{m.Precincts_Reporting_Percent}}%{% endif %}</th><th>Ballots cast</th><th>Percentage</th></tr></thead>
+<tr><td class='cand'>Yes</td><td class='votes'>{{m.Yes_Votes}}</td><td class='pct'>{{m.Yes_Votes_Percent}}%</td></tr>
+<tr><td class='cand'>No</td><td class='votes'>{{m.No_Votes}}</td><td class='pct'>{{m.No_Votes_Percent}}%</td></tr>
+</table></div>
+{%- endfor -%}
+</div>
+</body>
+</html>

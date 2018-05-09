@@ -1,0 +1,11 @@
+# Base path for generated files:
+orr_out_dir: .
+# Search path for templates:
+orr_template_paths: ../templates
+#-- Election Specific Definitions --
+# Election Date yyyy/mm/dd
+election_date: 2016/11/08
+# Election Name
+election_name: Presidential Election
+# Election Area
+election_area: City and County of San Francisco
