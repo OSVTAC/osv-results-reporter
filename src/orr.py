@@ -103,7 +103,6 @@ def parse_args():
 # Config attributes that are space separated lists
 # TODO: use structured YAML data rather than character delimited.
 CONFIG_SP_SEP_LIST_ATTRS = ['orr_template_paths']
-CONFIG_DATE_ATTRS = ['election_date']
 
 
 class Config(dict):

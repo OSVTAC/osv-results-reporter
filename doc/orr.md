@@ -66,7 +66,9 @@ The `-j` or `-y` options can be repeated to overlay data from multiple
 files.
 
 
+## Input JSON Format
 
+This section describes the schema of the input JSON format:
 
-
-
+* `Election_Date` a string in the form yyyy/mm/dd.
+* TODO
