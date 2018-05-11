@@ -183,7 +183,7 @@ class Config(dict):
             if not replace and hasattr(self,k): continue;
             # Validate the new attribute value
             # [TODO]
-            logging.debug(f'set Config.{k}={v}')
+            _log.debug(f'set Config.{k}={v}')
             setattr(self,k,v)
 
     def overlay_config_file(self,filepath:str,replace=False):
@@ -249,15 +249,15 @@ def load_json(data,filepath):
     and update/replace data to be processed with templates.
     The json content must be a dictionary (set of named values).
     """
-    logging.debug(f'load_json({filepath})')
+    _log.debug(f'load_json({filepath})')
     with open(filepath) as f:
         newdata = json.load(f)
     if not isinstance(newdata,dict):
-        logging.error(f'Invalid data in json file {filepath}');
+        _log.error(f'Invalid data in json file {filepath}');
         return
     data.update(newdata)
-    logging.info(f'loaded json data from {filepath}')
-    #logging.debug(str(data.keys()))
+    _log.info(f'loaded json data from {filepath}')
+    #_log.debug(str(data.keys()))
 
 def load_yaml(data,filepath):
     """
@@ -266,15 +266,15 @@ def load_yaml(data,filepath):
     and update/replace data to be processed with templates.
     The yaml content must be a dictionary (set of named values).
     """
-    logging.debug(f'load_yaml({filepath})')
+    _log.debug(f'load_yaml({filepath})')
     with open(filepath) as f:
         newdata = yaml.safe_load(f)
     if not isinstance(newdata,dict):
-        logging.error(f'Invalid data in yaml file {filepath}');
+        _log.error(f'Invalid data in yaml file {filepath}');
         return
     data.update(newdata)
-    logging.info(f'loaded yaml data from {filepath}')
-    #logging.debug(str(data.keys()))
+    _log.info(f'loaded yaml data from {filepath}')
+    #_log.debug(str(data.keys()))
 
 
 #--- Template filters and tests: ---
@@ -337,12 +337,12 @@ def process_template(jenv:Environment,
             f'Will process_template {template_name} to create {output_path})')
         return
 
-    logging.debug(f'process_template({template_name}, {output_path})')
+    _log.debug(f'process_template({template_name}, {output_path})')
 
     try:
         template = jenv.get_template(template_name)
     except TemplateSyntaxError as exc_info:
-        logging.error("Template Syntax Error",exc_info)
+        _log.error("Template Syntax Error",exc_info)
         return
 
     # PDF output renders using html, create a .pdf.html file
@@ -354,7 +354,7 @@ def process_template(jenv:Environment,
     if ctx is None: ctx = {}
     with open(output_path,"w") as outFile:
         outFile.write(template.render(ctx))
-        logging.info(f'Created {output_path} from template {template_name}')
+        _log.info(f'Created {output_path} from template {template_name}')
 
 
     if pdf_path:
@@ -421,7 +421,6 @@ def run(config_path, json_paths=None, yaml_paths=None, output_name=None,
 
 
 def main():
-
     args = parse_args()
 
     if args.debug:
