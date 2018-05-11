@@ -108,12 +108,13 @@ class Config(dict):
     [TODO]
     """
 
-    def __init__(self, config_path:str=DEFAULT_CONFIG_FILE_NAME):
+    def __init__(self, config_path:Path=Path(DEFAULT_CONFIG_FILE_NAME)):
         """
         Args:
-          config_path: Name of YAML configuration file to load
+          config_path: path to the YAML configuration file to load, as a
+            Path object.
         """
-        self._config_path = Path(config_path)
+        self._config_path = config_path
 
         # Collect other include files to merge
         self.include_config = []
@@ -322,16 +323,16 @@ def init_jenv(jenv:Environment):
 def process_template(jenv:Environment,
                      template_name:str,     # Template to expand
                      output_path:str,   # Output file to write or '-'
-                     ctx:dict=None):        # Context data or None
+                     ctx:dict=None,  # Context data or None
+                     test_mode:bool=False,
+                     ):
     """
     Creates the specified output file using the named template,
     where `data` provides the template context. The template
     and included templates will be located within the template
     search path, already setup via configuration data.
     """
-    # Args really is a global
-    args = jenv.globals['args']
-    if args.test:
+    if test_mode:
         print(
             f'Will process_template {template_name} to create {output_path})')
         return
@@ -363,6 +364,62 @@ def process_template(jenv:Environment,
 
 #--- Top level processing: ---
 
+def run(config_path, json_paths=None, yaml_paths=None, output_name=None,
+    template_name=None, test_mode=False):
+    """
+    Args:
+      config_path: path to the config file, as a Path object.
+      json_paths: paths to JSON files, as a list of strings.
+      yaml_paths: paths to YAML files, as a list of strings.
+      output_name: name of the output file.  Defaults to the name of the
+        template.
+      template_name: name of the template file.
+    """
+    if json_paths is None:
+        json_paths = []
+    if yaml_paths is None:
+        yaml_paths = []
+    if output_name is None:
+        output_name = template_name
+
+    config = Config(config_path)
+
+    output_path = output_name
+    if config.orr_out_dir:
+        output_path = os.path.join(config.orr_out_dir, output_path)
+    _log.debug(f'using output path: {output_path}')
+
+    # Create the jinja environment
+    template_paths = config.get_template_paths()
+    _log.debug(f'using template paths: {template_paths}')
+
+    jenv = Environment(loader=FileSystemLoader(template_paths),
+        autoescape=select_autoescape(['html', 'xml']))
+
+    # Use the jinja global dict for root election data
+    edata = jenv.globals
+
+    # Allow config data to be template accessible
+    edata['config'] = config
+
+    # Initialize built-in template variables
+    init_edata(edata)
+
+    # Add filters and tests
+    init_jenv(jenv)
+
+    # Process data loader arguments
+    for json_path in json_paths:
+        load_json(edata, json_path)
+
+    for yaml_path in yaml_paths:
+        load_yaml(edata, yaml_path)
+
+    # Process template
+    process_template(jenv, template_name=template_name, output_path=output_path,
+        test_mode=test_mode)
+
+
 def main():
 
     args = parse_args()
@@ -376,45 +433,17 @@ def main():
 
     logging.basicConfig(level=level)
 
-    config_path = args.config_path
-    config = Config(config_path)
+    config_path = Path(args.config_path)
+    json_paths = args.jsonfile
+    yaml_paths = args.yamlfile
 
-    # Create the jinja environment
-    template_paths = config.get_template_paths()
-    _log.debug(f'using template paths: {template_paths}')
+    output_name = args.outputfilename
+    template_name = args.templatefilename
+    test_mode = args.test
 
-    jenv = Environment(loader=FileSystemLoader(template_paths),
-        autoescape=select_autoescape(['html', 'xml']))
-
-    # Use the jinja global dict for root election data
-    edata = jenv.globals
-
-    # Allow config and args data to be template accessible
-    edata['config'] = config
-    edata['args'] = args
-
-    # Initialize built-in template variables
-    init_edata(edata)
-
-    # Add filters and tests
-    init_jenv(jenv)
-
-    # Form output file name with path
-    # Default output file is the same as the input
-    output_path = args.outputfilename or args.templatefilename
-    if config.orr_out_dir and not os.path.abspath(output_path):
-        output_path = os.path.join(config.orr_out_dir, output_path)
-
-
-    # Process data loader command line options
-    if args.jsonfile:
-        for f in args.jsonfile: load_json(edata,f)
-
-    if args.yamlfile:
-        for f in args.yamlfile: load_yaml(edata,j)
-
-    # Process template
-    process_template(jenv, args.templatefilename, output_path)
+    run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
+        output_name=output_name, template_name=template_name,
+        test_mode=test_mode)
 
 
 if __name__ == '__main__':
