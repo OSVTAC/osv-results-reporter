@@ -2,7 +2,7 @@
 
 Initial checkin. Documentation TODO.
 
-See doc/orr.md for a description of the orr application
+See [`doc/orr.md`](doc/orr.md) for a description of the orr application
 and how it can be used to create collections of html/pdf/xml/xls
 files from election data.
 
