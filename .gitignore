@@ -1,0 +1,3 @@
+# The default output directory.
+_build/
+.python-version
