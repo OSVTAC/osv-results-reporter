@@ -360,9 +360,10 @@ def process_template(jenv:Environment,
     output_dir = output_path.parent
     if not output_dir.exists():
         output_dir.mkdir()
-    with open(output_path, 'w') as outFile:
-        outFile.write(template.render(ctx))
-        _log.info(f'Created {output_path} from template {template_name}')
+
+    output_text = template.render(ctx)
+    output_path.write_text(output_text)
+    _log.info(f'Created {output_path} from template {template_name}')
 
 
     if pdf_path:
