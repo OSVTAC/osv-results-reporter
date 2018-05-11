@@ -22,12 +22,11 @@ $ pip install -r requirements.txt
 
 * The templates dir has named jinja templates
 
-* Run from the sampledat dir:
+* Run the program:
 
 ```
-$ cd sampledat
-$ ../src/orr.py -h
-$ ../src/orr.py -v -j ballot.json test.html
+$ ./src/orr.py -h
+$ ./src/orr.py -v -c sampledat/config-orr.yml -j sampledat/ballot.json test.html
 ```
 
 * See doc dir

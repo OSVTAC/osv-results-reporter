@@ -4,6 +4,7 @@
 # orr.py - template-based HTML/PDF/XLS election results report generator
 #
 # Copyright (C) 2018  Carl Hage
+# Copyright (C) 2018  Chris Jerdonek
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +24,7 @@
 # The author(s) can be reached at--
 #
 #   Carl Hage <ch@carlhage.com>
+#   Chris Jerdonek <chris.jerdonek@gmail.com>
 #
 
 """
@@ -30,28 +32,29 @@ Program to create HTML/PDF/XLS files from election results data.
 Documentation: [TODO]
 """
 
-#--- Imports: ----
 import argparse
 import logging
 import sys
 import json
-import yaml
+import os
+from pathlib import Path
+from pprint import pprint
 import re
+
 import babel.dates
 import dateutil.parser
 from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateSyntaxError
-from pprint import pprint
-import os
+import yaml
 
-#--- Module globals: ----
 
-#--- Constant Definitions: ----
+_log = logging.getLogger(__name__)
 
 VERSION='0.0.1'     # Program version
 
 DEFAULT_CONFIG_FILE_NAME = 'config-orr.yml'
 
 ENCODING='utf-8'
+
 
 #--- Command line arguments: ---
 
@@ -71,13 +74,13 @@ generate HTML/PDF/XLS files from election results data
                         help='test mode, print files to expand')
     parser.add_argument('--debug',action='store_true',
                         help='enable debug printout')
-    parser.add_argument('-c',dest='config',metavar='configfilename',
+    parser.add_argument('-c', dest='config_path', metavar='configfile',
                         default=DEFAULT_CONFIG_FILE_NAME,
-                        help='configuration file to use')
-    parser.add_argument('-j',dest='jsonfile',metavar='jsonfilename',
+                        help='path to the configuration file to use')
+    parser.add_argument('-j', dest='jsonfile', metavar='jsonfile',
                         action='append',
                         help='load the specified json data to template global')
-    parser.add_argument('-y',dest='yamlfile',metavar='yamlfilename',
+    parser.add_argument('-y', dest='yamlfile', metavar='yamlfile',
                         action='append',
                         help='load the specified yaml data to template global')
     parser.add_argument('templatefilename',
@@ -94,6 +97,7 @@ generate HTML/PDF/XLS files from election results data
 #--- Configuration file processing: ---
 
 # Config attributes that are space separated lists
+# TODO: use structured YAML data rather than character delimited.
 CONFIG_SP_SEP_LIST_ATTRS = ['orr_template_paths']
 CONFIG_DATE_ATTRS = ['election_date']
 
@@ -104,18 +108,17 @@ class Config(dict):
     [TODO]
     """
 
-    def __init__(self, config_file_name:str=DEFAULT_CONFIG_FILE_NAME):
+    def __init__(self, config_path:str=DEFAULT_CONFIG_FILE_NAME):
         """
         Args:
-          config_file_name: Name of YAML configuration file to load
+          config_path: Name of YAML configuration file to load
         """
-
-        self.config_file_name = config_file_name
+        self._config_path = Path(config_path)
 
         # Collect other include files to merge
         self.include_config = []
 
-        local_config = self.load_config_file(config_file_name);
+        local_config = self.load_config_file(config_path);
         # We could do some default operations here, e.g.
         # locating a root level config and using a search path
         # or other means to find configuration data. [TODO]
@@ -132,28 +135,22 @@ class Config(dict):
         """
         Loads the parsed contents of the specified file.
 
-        Returns: the dictionary of parsed data or None if not present or invalid
+        Returns: the parsed data, as a dict.
+
+        Raises an exception if the file is not present or is invalid.
 
         Args:
           filepath: Full file path to load
         """
-
-        logging.info(f'Loading config data from {filepath}')
-        try:
-            if filepath=='-':
-                config = yaml.safe_load(sys,stdin)
-            else:
-                with open(filepath) as f:
-                    config = yaml.safe_load(f)
-            # Verify the returned data is a dict
-            #[TODO]
-            return config
-        except FileNotFoundError:
-            logging.debug(f'Config file {filepath} not found')
-            return None
-        except yaml.YAMLError as exc_info:
-            logging.error("Error in configuration file:",exc_info)
-            return None
+        _log.info(f'Loading config data from {filepath}')
+        if filepath=='-':
+            config = yaml.safe_load(sys,stdin)
+        else:
+            with open(filepath) as f:
+                config = yaml.safe_load(f)
+        # Verify the returned data is a dict
+        #[TODO]
+        return config
 
     def overlay_config(self,newconfig:dict,replace:bool=False):
         """
@@ -198,6 +195,7 @@ class Config(dict):
         """
         Overlay configuration files found in the search path
         """
+
     def finalize_config(self):
         """
         Validate config data after loading, and add default values if needed.
@@ -210,10 +208,24 @@ class Config(dict):
         # [TODO]
 
         # Convert from string notations
-        #
-        for a in CONFIG_SP_SEP_LIST_ATTRS:
-            if hasattr(self,a): setattr(self,a,getattr(self,a,'').split())
+        for attr_name in CONFIG_SP_SEP_LIST_ATTRS:
+            if not hasattr(self, attr_name):
+                continue
 
+            value = getattr(self, attr_name, '')
+            values = value.split()
+            setattr(self, attr_name, values)
+
+    def get_template_paths(self):
+        """
+        Return the list of template paths to pass to Jinja, as a list of
+        absolute paths.
+        """
+        config_dir = self._config_path.parent
+        # Convert the paths to absolute paths.
+        paths = [(config_dir / path).resolve() for path in self.orr_template_paths]
+
+        return paths
 
 
 #--- Data environment: ---
@@ -309,7 +321,7 @@ def init_jenv(jenv:Environment):
 
 def process_template(jenv:Environment,
                      template_name:str,     # Template to expand
-                     output_filepath:str,   # Output file to write or '-'
+                     output_path:str,   # Output file to write or '-'
                      ctx:dict=None):        # Context data or None
     """
     Creates the specified output file using the named template,
@@ -321,30 +333,27 @@ def process_template(jenv:Environment,
     args = jenv.globals['args']
     if args.test:
         print(
-            f'Will process_template {template_name} to create {output_filepath})')
+            f'Will process_template {template_name} to create {output_path})')
         return
 
-    logging.debug(f'process_template({template_name},{output_filepath})')
+    logging.debug(f'process_template({template_name}, {output_path})')
 
     try:
         template = jenv.get_template(template_name)
     except TemplateSyntaxError as exc_info:
         logging.error("Template Syntax Error",exc_info)
         return
-    except:
-        logging.error("Cannot load template",sys.exc_info()[0])
-        return
 
     # PDF output renders using html, create a .pdf.html file
-    if output_filepath[-4:]=='.pdf':
-        pdf_path = output_filepath
-        output_filepath += '.html'
+    if output_path[-4:]=='.pdf':
+        pdf_path = output_path
+        output_path += '.html'
     else: pdf_path = ''
 
     if ctx is None: ctx = {}
-    with open(output_filepath,"w") as outFile:
+    with open(output_path,"w") as outFile:
         outFile.write(template.render(ctx))
-        logging.info(f'Created {output_filepath} from template {template_name}')
+        logging.info(f'Created {output_path} from template {template_name}')
 
 
     if pdf_path:
@@ -367,11 +376,14 @@ def main():
 
     logging.basicConfig(level=level)
 
-    config = Config(args.config)
+    config_path = args.config_path
+    config = Config(config_path)
 
     # Create the jinja environment
-    jenv = Environment(
-        loader=FileSystemLoader(config.orr_template_paths),
+    template_paths = config.get_template_paths()
+    _log.debug(f'using template paths: {template_paths}')
+
+    jenv = Environment(loader=FileSystemLoader(template_paths),
         autoescape=select_autoescape(['html', 'xml']))
 
     # Use the jinja global dict for root election data
@@ -389,9 +401,9 @@ def main():
 
     # Form output file name with path
     # Default output file is the same as the input
-    outputfilename = args.outputfilename or args.templatefilename
-    if config.orr_out_dir and not os.path.abspath(outputfilename):
-        outputfilename = os.path.join(config.orr_out_dir,outputfilename)
+    output_path = args.outputfilename or args.templatefilename
+    if config.orr_out_dir and not os.path.abspath(output_path):
+        output_path = os.path.join(config.orr_out_dir, output_path)
 
 
     # Process data loader command line options
@@ -402,7 +414,7 @@ def main():
         for f in args.yamlfile: load_yaml(edata,j)
 
     # Process template
-    process_template(jenv,args.templatefilename,outputfilename)
+    process_template(jenv, args.templatefilename, output_path)
 
 
 if __name__ == '__main__':
