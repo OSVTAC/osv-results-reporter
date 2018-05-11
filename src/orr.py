@@ -59,14 +59,14 @@ ENCODING='utf-8'
 
 #--- Command line arguments: ---
 
-# Command line arguments are stored in the global 'args'
-# See the definitins below for list of options
+# See the definitions below for list of options
+
+DESCRIPTION = """\
+generate HTML/PDF/XLS files from election results data
+"""
 
 def parse_args():
-    parser = argparse.ArgumentParser(description=
-"""
-generate HTML/PDF/XLS files from election results data
-""",epilog='default outputfilename is templatefilename')
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     parser.add_argument('--version',action='version',version='%(prog)s '+VERSION)
     parser.add_argument('-v','--verbose',action='store_true',
@@ -86,10 +86,11 @@ generate HTML/PDF/XLS files from election results data
                         help='load the specified yaml data to template global')
     parser.add_argument('--output-dir',
                         help=f'output directory. Defaults to: {DEFAULT_OUTPUT_DIR}.')
+    parser.add_argument('--output-name', metavar='outputname',
+                        help=('name of the output file to create. '
+                              'Defaults to the name of the template file.'))
     parser.add_argument('templatefilename',
                         help='template file name to process')
-    parser.add_argument('outputfilename',nargs='?',
-                        help='output file name to create')
 
     args = parser.parse_args()
     return args
@@ -446,7 +447,7 @@ def main():
     yaml_paths = args.yamlfile
 
     output_dir = args.output_dir
-    output_name = args.outputfilename
+    output_name = args.output_name
     template_name = args.templatefilename
     test_mode = args.test
 
