@@ -1,5 +1,3 @@
-# Base path for generated files:
-orr_out_dir: .
 # Search path for templates (relative to this file):
 orr_template_paths: ../templates
 #-- Election Specific Definitions --

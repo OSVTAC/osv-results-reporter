@@ -51,10 +51,6 @@ When `orr` is invoked, the command line arguments specify a template
 file to be processed and optional output file. If no output file is given,
 the output file will be the same name as the template file.
 
-If the `orr_out_dir:` configuration file option is defined, the
-output file name will be relative to that directory if not an
-absolute path.
-
 Templates are located by scanning a search path defined by the
 `orr_template_paths:` configuration file setting, or if not
 defined, `../templates` will be assumed.

@@ -52,6 +52,7 @@ _log = logging.getLogger(__name__)
 VERSION='0.0.1'     # Program version
 
 DEFAULT_CONFIG_FILE_NAME = 'config-orr.yml'
+DEFAULT_OUTPUT_DIR = '_build'
 
 ENCODING='utf-8'
 
@@ -83,6 +84,8 @@ generate HTML/PDF/XLS files from election results data
     parser.add_argument('-y', dest='yamlfile', metavar='yamlfile',
                         action='append',
                         help='load the specified yaml data to template global')
+    parser.add_argument('--output-dir',
+                        help=f'output directory. Defaults to: {DEFAULT_OUTPUT_DIR}.')
     parser.add_argument('templatefilename',
                         help='template file name to process')
     parser.add_argument('outputfilename',nargs='?',
@@ -322,7 +325,7 @@ def init_jenv(jenv:Environment):
 
 def process_template(jenv:Environment,
                      template_name:str,     # Template to expand
-                     output_path:str,   # Output file to write or '-'
+                     output_path:Path,   # Output file to write or '-'
                      ctx:dict=None,  # Context data or None
                      test_mode:bool=False,
                      ):
@@ -346,13 +349,17 @@ def process_template(jenv:Environment,
         return
 
     # PDF output renders using html, create a .pdf.html file
-    if output_path[-4:]=='.pdf':
+    if output_path.suffix == '.pdf':
         pdf_path = output_path
         output_path += '.html'
     else: pdf_path = ''
 
     if ctx is None: ctx = {}
-    with open(output_path,"w") as outFile:
+
+    output_dir = output_path.parent
+    if not output_dir.exists():
+        output_dir.mkdir()
+    with open(output_path, 'w') as outFile:
         outFile.write(template.render(ctx))
         _log.info(f'Created {output_path} from template {template_name}')
 
@@ -364,13 +371,14 @@ def process_template(jenv:Environment,
 
 #--- Top level processing: ---
 
-def run(config_path, json_paths=None, yaml_paths=None, output_name=None,
-    template_name=None, test_mode=False):
+def run(config_path, json_paths=None, yaml_paths=None, output_dir=None,
+    output_name=None, template_name=None, test_mode=False):
     """
     Args:
       config_path: path to the config file, as a Path object.
       json_paths: paths to JSON files, as a list of strings.
       yaml_paths: paths to YAML files, as a list of strings.
+      output_dir: the output directory, as a path-like object.
       output_name: name of the output file.  Defaults to the name of the
         template.
       template_name: name of the template file.
@@ -379,14 +387,15 @@ def run(config_path, json_paths=None, yaml_paths=None, output_name=None,
         json_paths = []
     if yaml_paths is None:
         yaml_paths = []
+    if output_dir is None:
+        output_dir = DEFAULT_OUTPUT_DIR
     if output_name is None:
         output_name = template_name
 
     config = Config(config_path)
 
-    output_path = output_name
-    if config.orr_out_dir:
-        output_path = os.path.join(config.orr_out_dir, output_path)
+    output_dir = Path(output_dir)
+    output_path = output_dir / output_name
     _log.debug(f'using output path: {output_path}')
 
     # Create the jinja environment
@@ -436,13 +445,14 @@ def main():
     json_paths = args.jsonfile
     yaml_paths = args.yamlfile
 
+    output_dir = args.output_dir
     output_name = args.outputfilename
     template_name = args.templatefilename
     test_mode = args.test
 
     run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
-        output_name=output_name, template_name=template_name,
-        test_mode=test_mode)
+        output_dir=output_dir, output_name=output_name,
+        template_name=template_name, test_mode=test_mode)
 
 
 if __name__ == '__main__':
