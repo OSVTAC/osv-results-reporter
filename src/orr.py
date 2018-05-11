@@ -51,8 +51,8 @@ _log = logging.getLogger(__name__)
 
 VERSION='0.0.1'     # Program version
 
-DEFAULT_CONFIG_FILE_NAME = 'config-orr.yml'
 DEFAULT_OUTPUT_DIR = '_build'
+DEFAULT_TEMPLATE_DIR = 'templates'
 
 ENCODING='utf-8'
 
@@ -75,20 +75,23 @@ def parse_args():
                         help='test mode, print files to expand')
     parser.add_argument('--debug',action='store_true',
                         help='enable debug printout')
-    parser.add_argument('-c', dest='config_path', metavar='configfile',
-                        default=DEFAULT_CONFIG_FILE_NAME,
+    parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
-    parser.add_argument('-j', dest='jsonfile', metavar='jsonfile',
+    parser.add_argument('--json-path', '-j', dest='jsonfile', metavar='PATH',
                         action='append',
                         help='load the specified json data to template global')
-    parser.add_argument('-y', dest='yamlfile', metavar='yamlfile',
+    parser.add_argument('--yaml-path', '-y', dest='yamlfile', metavar='PATH',
                         action='append',
                         help='load the specified yaml data to template global')
-    parser.add_argument('--output-dir',
+    parser.add_argument('--output-dir', metavar='DIR',
                         help=f'output directory. Defaults to: {DEFAULT_OUTPUT_DIR}.')
-    parser.add_argument('--output-name', metavar='outputname',
+    parser.add_argument('--output-name', metavar='NAME',
                         help=('name of the output file to create. '
                               'Defaults to the name of the template file.'))
+    # TODO: do we need to support passing more than one template directory?
+    parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
+                        help=('directory containing template files. '
+                              f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
     parser.add_argument('templatefilename',
                         help='template file name to process')
 
@@ -99,10 +102,6 @@ def parse_args():
 
 
 #--- Configuration file processing: ---
-
-# Config attributes that are space separated lists
-# TODO: use structured YAML data rather than character delimited.
-CONFIG_SP_SEP_LIST_ATTRS = ['orr_template_paths']
 
 
 class Config(dict):
@@ -132,8 +131,6 @@ class Config(dict):
         while len(self.include_config)>0:
             f = self.include_config.pop(0)
             self.overlay_config(self.load_config_file(f))
-
-        self.finalize_config()
 
     def load_config_file(self,filepath:str):
         """
@@ -199,37 +196,6 @@ class Config(dict):
         """
         Overlay configuration files found in the search path
         """
-
-    def finalize_config(self):
-        """
-        Validate config data after loading, and add default values if needed.
-        """
-        # Add built-in defaults
-        self.overlay_config({
-            "orr_template_paths":"../templates"})
-
-        # Validate config data
-        # [TODO]
-
-        # Convert from string notations
-        for attr_name in CONFIG_SP_SEP_LIST_ATTRS:
-            if not hasattr(self, attr_name):
-                continue
-
-            value = getattr(self, attr_name, '')
-            values = value.split()
-            setattr(self, attr_name, values)
-
-    def get_template_paths(self):
-        """
-        Return the list of template paths to pass to Jinja, as a list of
-        absolute paths.
-        """
-        config_dir = self._config_path.parent
-        # Convert the paths to absolute paths.
-        paths = [(config_dir / path).resolve() for path in self.orr_template_paths]
-
-        return paths
 
 
 #--- Data environment: ---
@@ -372,17 +338,19 @@ def process_template(jenv:Environment,
 
 #--- Top level processing: ---
 
-def run(config_path, json_paths=None, yaml_paths=None, output_dir=None,
-    output_name=None, template_name=None, test_mode=False):
+def run(config_path=None, json_paths=None, yaml_paths=None, output_dir=None,
+    output_name=None, template_name=None, template_paths=None, test_mode=False):
     """
     Args:
-      config_path: path to the config file, as a Path object.
+      config_path: optional path to the config file, as a string.
       json_paths: paths to JSON files, as a list of strings.
       yaml_paths: paths to YAML files, as a list of strings.
       output_dir: the output directory, as a path-like object.
       output_name: name of the output file.  Defaults to the name of the
         template.
       template_name: name of the template file.
+      template_paths: the template directories to search, as a list of
+        path-like objects.
     """
     if json_paths is None:
         json_paths = []
@@ -392,15 +360,22 @@ def run(config_path, json_paths=None, yaml_paths=None, output_dir=None,
         output_dir = DEFAULT_OUTPUT_DIR
     if output_name is None:
         output_name = template_name
+    if template_paths is None:
+        template_paths = []
 
-    config = Config(config_path)
+    if config_path is None:
+        config = None
+    else:
+        config_path = Path(config_path)
+        config = Config(config_path)
 
     output_dir = Path(output_dir)
     output_path = output_dir / output_name
     _log.debug(f'using output path: {output_path}')
 
     # Create the jinja environment
-    template_paths = config.get_template_paths()
+    # Convert the paths to absolute paths to simplify troubleshooting.
+    template_paths = [Path(path).resolve() for path in template_paths]
     _log.debug(f'using template paths: {template_paths}')
 
     jenv = Environment(loader=FileSystemLoader(template_paths),
@@ -408,9 +383,6 @@ def run(config_path, json_paths=None, yaml_paths=None, output_dir=None,
 
     # Use the jinja global dict for root election data
     edata = jenv.globals
-
-    # Allow config data to be template accessible
-    edata['config'] = config
 
     # Initialize built-in template variables
     init_edata(edata)
@@ -442,18 +414,22 @@ def main():
 
     logging.basicConfig(level=level)
 
-    config_path = Path(args.config_path)
+    config_path = args.config_path
     json_paths = args.jsonfile
     yaml_paths = args.yamlfile
 
     output_dir = args.output_dir
     output_name = args.output_name
     template_name = args.templatefilename
+    template_dir = args.template_dir
     test_mode = args.test
+
+    template_paths = None if template_dir is None else [template_dir]
 
     run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
         output_dir=output_dir, output_name=output_name,
-        template_name=template_name, test_mode=test_mode)
+        template_name=template_name, template_paths=template_paths,
+        test_mode=test_mode)
 
 
 if __name__ == '__main__':

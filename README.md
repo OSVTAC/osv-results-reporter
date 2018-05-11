@@ -26,7 +26,7 @@ $ pip install -r requirements.txt
 
 ```
 $ ./src/orr.py -h
-$ ./src/orr.py -v -c sampledata/config-orr.yml -j sampledata/results.json test.html
+$ ./src/orr.py -v --json sampledata/results.json test.html
 ```
 
 * See doc dir

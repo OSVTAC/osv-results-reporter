@@ -24,15 +24,12 @@ customized.]
 
 [More TODO] The file `config-orr.yml` in the current directory is
 read with information on how ORR is tailored to the particular
-installation, information about the locality and Election Administration
-to be added to election data, information about election dates and
-definitions, and customization of the output files to be generated
+installation and customization of the output files to be generated
 with the data sources and templates to be used.
 
 The `config-orr.yml` can be edited by hand as needed using the
 configuration file documentation. In the future, some GUI or
-commands may be added to edit config files and setup new elections
-with election-specific configurations.
+commands may be added to edit config files.
 
 The `-c` command line option can be used to specify a different
 configuration file to load. Each configuration file can include
@@ -52,8 +49,7 @@ file to be processed and optional output file. If no output file is given,
 the output file will be the same name as the template file.
 
 Templates are located by scanning a search path defined by the
-`orr_template_paths:` configuration file setting, or if not
-defined, `../templates` will be assumed.
+`--template-dir` command-line option, which defaults to `templates/`.
 
 Specific input data to be included can be specified with optional
 command line arguments. The `-j jsonfilename` option defines the name
