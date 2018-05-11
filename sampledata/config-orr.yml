@@ -1,7 +1,2 @@
 # Search path for templates (relative to this file):
 orr_template_paths: ../templates
-#-- Election Specific Definitions --
-# Election Name
-election_name: Presidential Election
-# Election Area
-election_area: City and County of San Francisco
