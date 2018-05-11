@@ -1,3 +1,4 @@
 # The default output directory.
 _build/
+.DS_Store
 .python-version
