@@ -112,7 +112,7 @@ class Config(dict):
     [TODO]
     """
 
-    def __init__(self, config_path:Path=Path(DEFAULT_CONFIG_FILE_NAME)):
+    def __init__(self, config_path:Path):
         """
         Args:
           config_path: path to the YAML configuration file to load, as a
