@@ -66,6 +66,9 @@ generate HTML/PDF/XLS files from election results data
 """
 
 def parse_args():
+    """
+    Parse sys.argv and return a Namespace object.
+    """
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     parser.add_argument('--version',action='version',version='%(prog)s '+VERSION)
@@ -95,8 +98,9 @@ def parse_args():
     parser.add_argument('templatefilename',
                         help='template file name to process')
 
-    args = parser.parse_args()
-    return args
+    ns = parser.parse_args()
+
+    return ns
 
 #--- Utility Routines: ---
 
@@ -403,26 +407,26 @@ def run(config_path=None, json_paths=None, yaml_paths=None, output_dir=None,
 
 
 def main():
-    args = parse_args()
+    ns = parse_args()
 
-    if args.debug:
+    if ns.debug:
         level = logging.DEBUG
-    elif args.verbose:
+    elif ns.verbose:
         level = logging.INFO
     else:
         level = logging.ERROR
 
     logging.basicConfig(level=level)
 
-    config_path = args.config_path
-    json_paths = args.jsonfile
-    yaml_paths = args.yamlfile
+    config_path = ns.config_path
+    json_paths = ns.jsonfile
+    yaml_paths = ns.yamlfile
 
-    output_dir = args.output_dir
-    output_name = args.output_name
-    template_name = args.templatefilename
-    template_dir = args.template_dir
-    test_mode = args.test
+    output_dir = ns.output_dir
+    output_name = ns.output_name
+    template_name = ns.templatefilename
+    template_dir = ns.template_dir
+    test_mode = ns.test
 
     template_paths = None if template_dir is None else [template_dir]
 
