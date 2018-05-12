@@ -358,15 +358,13 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
     """
     Args:
       config_path: optional path to the config file, as a string.
+      template_dir: a directory containing the templates to render.
       json_paths: paths to JSON files, as a list of strings.
       yaml_paths: paths to YAML files, as a list of strings.
       output_parent: the parent of the output directory.
       output_dir_name: the name to give the output directory inside the
         output parent.  Defaults to a name generated using the current
         datetime.
-      template_name: name of the template file.
-      template_paths: the template directories to search, as a list of
-        path-like objects.
     """
     if json_paths is None:
         json_paths = []
