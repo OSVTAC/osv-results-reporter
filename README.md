@@ -36,5 +36,6 @@ $ ./src/orr.py -v --json sampledata/results.json test.html
 ## Docker (experimental)
 
 ```
-$ docker build .
+$ docker build -t orr .
+$ docker run orr -h
 ```

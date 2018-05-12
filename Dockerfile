@@ -7,5 +7,6 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-# Show what was installed.
-RUN pip freeze
+COPY src/ src/
+
+ENTRYPOINT ["python", "src/orr.py"]
