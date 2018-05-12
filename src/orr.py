@@ -65,14 +65,18 @@ ENCODING='utf-8'
 # See the definitions below for list of options
 
 DESCRIPTION = """\
-generate HTML/PDF/XLS files from election results data
+Generate HTML/PDF/XLS files from election results data.
+
+The path to the output directory is written to stdout at the end
+of the script.
 """
 
 def parse_args():
     """
     Parse sys.argv and return a Namespace object.
     """
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION,
+                    formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('--version',action='version',version='%(prog)s '+VERSION)
     parser.add_argument('-v','--verbose',action='store_true',
@@ -380,6 +384,29 @@ def process_template(jenv:Environment,
 
 #--- Top level processing: ---
 
+# TODO: render the directory recursively.
+def render_template_dir(template_dir, output_dir, jinja_env, test_mode=False):
+    """
+    Render the templates inside the given template directory.
+
+    Args:
+      template_dir: a Path object.
+      output_dir: a Path object.
+      jinja_env: a Jinja2 Environment object.
+      test_mode: a boolean.
+    """
+    # Process templates
+    for template_path in template_dir.iterdir():
+        if template_path.is_dir():
+            # TODO: process directories recursively.
+            continue
+
+        file_name = template_path.name
+        output_path = output_dir / file_name
+        process_template(jinja_env, template_name=file_name, output_path=output_path,
+            test_mode=test_mode)
+
+
 def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
     output_parent=None, output_dir_name=None, fresh_output=False, test_mode=False):
     """
@@ -442,16 +469,8 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Process templates
-    for template_path in template_dir.iterdir():
-        if template_path.is_dir():
-            # TODO: process directories recursively.
-            continue
-
-        file_name = template_path.name
-        output_path = output_dir / file_name
-        process_template(jinja_env, template_name=file_name, output_path=output_path,
-            test_mode=test_mode)
+    render_template_dir(template_dir, output_dir=output_dir, jinja_env=jinja_env,
+        test_mode=test_mode)
 
     _log.info(f'writing the output directory to stdout: {output_dir}')
     print(output_dir)
