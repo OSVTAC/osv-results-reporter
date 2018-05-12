@@ -44,7 +44,8 @@ import sys
 
 import babel.dates
 import dateutil.parser
-from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateSyntaxError
+import jinja2
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 import yaml
 
 
@@ -399,7 +400,7 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
 
     template_dirs = [template_dir]
     jenv = Environment(loader=FileSystemLoader(template_dirs),
-        autoescape=select_autoescape(['html', 'xml']))
+        autoescape=jinja2.select_autoescape(['html', 'xml']))
 
     # Use the jinja global dict for root election data
     edata = jenv.globals
