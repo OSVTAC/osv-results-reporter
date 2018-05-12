@@ -32,3 +32,9 @@ $ ./src/orr.py -v --json sampledata/results.json test.html
 * Open `_build/test.html` in a browser.
 
 * See doc dir
+
+## Docker (experimental)
+
+```
+$ docker build .
+```
