@@ -26,10 +26,10 @@ $ pip install -r requirements.txt
 
 ```
 $ ./src/orr.py -h
-$ ./src/orr.py -v --json sampledata/results.json
+$ ./src/orr.py -v --json sampledata/results.json --output-dir html
 ```
 
-* Open `_build/index.html` in a browser.
+* Open `_build/html/index.html` in a browser.
 
 * See doc dir
 

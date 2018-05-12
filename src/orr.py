@@ -419,7 +419,7 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
     for yaml_path in yaml_paths:
         load_yaml(edata, yaml_path)
 
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Process templates
     for template_path in template_dir.iterdir():
