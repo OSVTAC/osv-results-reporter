@@ -33,6 +33,7 @@ Documentation: [TODO]
 """
 
 import argparse
+import datetime
 import json
 import logging
 import os
@@ -51,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 VERSION='0.0.1'     # Program version
 
-DEFAULT_OUTPUT_DIR = '_build'
+DEFAULT_OUTPUT_PARENT_DIR = '_build'
 DEFAULT_TEMPLATE_DIR = 'templates'
 
 ENCODING='utf-8'
@@ -86,17 +87,16 @@ def parse_args():
     parser.add_argument('--yaml-path', '-y', dest='yamlfile', metavar='PATH',
                         action='append',
                         help='load the specified yaml data to template global')
-    parser.add_argument('--output-dir', metavar='DIR',
-                        help=f'output directory. Defaults to: {DEFAULT_OUTPUT_DIR}.')
-    parser.add_argument('--output-name', metavar='NAME',
-                        help=('name of the output file to create. '
-                              'Defaults to the name of the template file.'))
-    # TODO: do we need to support passing more than one template directory?
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
-                        help=('directory containing template files. '
+                        help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
-    parser.add_argument('templatefilename',
-                        help='template file name to process')
+    parser.add_argument('--output-parent', metavar='DIR',
+                        help=('the directory in which to write the output directory. '
+                              f'Defaults to: {DEFAULT_OUTPUT_PARENT_DIR}.'))
+    parser.add_argument('--output-dir-name', metavar='NAME',
+                        help=('the name to give the output directory inside '
+                              'the parent output directory. '
+                              'Defaults to a name generated using the current datetime.'))
 
     ns = parser.parse_args()
 
@@ -104,6 +104,14 @@ def parse_args():
 
 #--- Utility Routines: ---
 
+def generate_output_name():
+    """
+    Return a name of the form "build_20180511_224339".
+    """
+    now = datetime.datetime.now()
+    name = 'build_{:%Y%m%d_%H%M%S}'.format(now)
+
+    return name
 
 #--- Configuration file processing: ---
 
@@ -342,16 +350,17 @@ def process_template(jenv:Environment,
 
 #--- Top level processing: ---
 
-def run(config_path=None, json_paths=None, yaml_paths=None, output_dir=None,
-    output_name=None, template_name=None, template_paths=None, test_mode=False):
+def run(config_path=None, json_paths=None, yaml_paths=None, output_parent=None,
+    output_dir_name=None, template_dir=None, test_mode=False):
     """
     Args:
       config_path: optional path to the config file, as a string.
       json_paths: paths to JSON files, as a list of strings.
       yaml_paths: paths to YAML files, as a list of strings.
-      output_dir: the output directory, as a path-like object.
-      output_name: name of the output file.  Defaults to the name of the
-        template.
+      output_parent: the parent of the output directory.
+      output_dir_name: the name to give the output directory inside the
+        output parent.  Defaults to a name generated using the current
+        datetime.
       template_name: name of the template file.
       template_paths: the template directories to search, as a list of
         path-like objects.
@@ -360,12 +369,12 @@ def run(config_path=None, json_paths=None, yaml_paths=None, output_dir=None,
         json_paths = []
     if yaml_paths is None:
         yaml_paths = []
-    if output_dir is None:
-        output_dir = DEFAULT_OUTPUT_DIR
-    if output_name is None:
-        output_name = template_name
-    if template_paths is None:
-        template_paths = []
+    if output_parent is None:
+        output_parent = DEFAULT_OUTPUT_PARENT_DIR
+    if output_dir_name is None:
+        output_dir_name = generate_output_name()
+
+    assert template_dir is not None
 
     if config_path is None:
         config = None
@@ -373,16 +382,16 @@ def run(config_path=None, json_paths=None, yaml_paths=None, output_dir=None,
         config_path = Path(config_path)
         config = Config(config_path)
 
-    output_dir = Path(output_dir)
-    output_path = output_dir / output_name
-    _log.debug(f'using output path: {output_path}')
+    output_dir = Path(output_parent) / output_dir_name
+    _log.debug(f'using output directory: {output_dir}')
 
     # Create the jinja environment
-    # Convert the paths to absolute paths to simplify troubleshooting.
-    template_paths = [Path(path).resolve() for path in template_paths]
-    _log.debug(f'using template paths: {template_paths}')
+    # Convert the path to an absolute paths to simplify troubleshooting.
+    template_dir = Path(template_dir)
+    _log.debug(f'using template directory: {template_dir}')
 
-    jenv = Environment(loader=FileSystemLoader(template_paths),
+    template_dirs = [template_dir]
+    jenv = Environment(loader=FileSystemLoader(template_dirs),
         autoescape=select_autoescape(['html', 'xml']))
 
     # Use the jinja global dict for root election data
@@ -401,9 +410,15 @@ def run(config_path=None, json_paths=None, yaml_paths=None, output_dir=None,
     for yaml_path in yaml_paths:
         load_yaml(edata, yaml_path)
 
-    # Process template
-    process_template(jenv, template_name=template_name, output_path=output_path,
-        test_mode=test_mode)
+    # Process templates
+    for template_path in template_dir.iterdir():
+        file_name = template_path.name
+        output_path = output_dir / file_name
+        process_template(jenv, template_name=file_name, output_path=output_path,
+            test_mode=test_mode)
+
+    _log.info(f'writing the output directory to stdout: {output_dir}')
+    print(output_dir)
 
 
 def main():
@@ -422,18 +437,15 @@ def main():
     json_paths = ns.jsonfile
     yaml_paths = ns.yamlfile
 
-    output_dir = ns.output_dir
-    output_name = ns.output_name
-    template_name = ns.templatefilename
+    output_parent = ns.output_parent
+    output_dir_name = ns.output_dir_name
     template_dir = ns.template_dir
     test_mode = ns.test
 
-    template_paths = None if template_dir is None else [template_dir]
-
+    output_dir = Path()
     run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
-        output_dir=output_dir, output_name=output_name,
-        template_name=template_name, template_paths=template_paths,
-        test_mode=test_mode)
+        output_parent=output_parent, output_dir_name=output_dir_name,
+        template_dir=template_dir, test_mode=test_mode)
 
 
 if __name__ == '__main__':

@@ -26,10 +26,10 @@ $ pip install -r requirements.txt
 
 ```
 $ ./src/orr.py -h
-$ ./src/orr.py -v --json sampledata/results.json test.html
+$ ./src/orr.py -v --json sampledata/results.json
 ```
 
-* Open `_build/test.html` in a browser.
+* Open `_build/index.html` in a browser.
 
 * See doc dir
 
@@ -38,4 +38,13 @@ $ ./src/orr.py -v --json sampledata/results.json test.html
 ```
 $ docker build -t orr .
 $ docker run orr -h
+```
+
+To render a template directory:
+
+```
+$ docker build -t orr . \
+    && docker run --name orr orr \
+    && docker cp orr:/app/data/. _build \
+    && docker rm orr
 ```
