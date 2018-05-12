@@ -1,0 +1,11 @@
+{
+    "languages": ["en", "es", "zh"],
+    "i8n_office": "mayor",
+    "translations": {
+        "mayor": {
+            "en": "Mayor",
+            "es": "Alcalde",
+            "zh": "\u5e02\u9577"
+        }
+    }
+}

@@ -45,7 +45,8 @@ import sys
 import babel.dates
 import dateutil.parser
 import jinja2
-from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
+from jinja2 import contextfilter, Environment, FileSystemLoader, TemplateSyntaxError
+from jinja2.utils import Namespace
 import yaml
 
 
@@ -276,32 +277,57 @@ def format_date(value,format_str:str='medium'):
     full (default is medium), or a pattern in the Locale Data
     Markup Language specification.
     """
-
     if isinstance(value,str):
         value = dateutil.parser.parse(value)
 
     return(babel.dates.format_date(value,format_str))
 
 
+@contextfilter
+def translate(context, label):
+    """
+    Return the translation using the currently set language.
+    """
+    options = context['options']
+    lang = options.lang
+
+    all_trans = context['translations']
+    translations = all_trans[label]
+    translated = translations[lang]
+    return translated
+
+
 # The following dictionary of filter and test functions will be auto-edited.
 # [Do not change these, instead edit the docstrings in the function def]
-filters = {"format_date":format_date}
+filters = dict(format_date=format_date, translate=translate)
 tests = {}
 
 #--- Template global setup: ---
 
-def init_edata(edata:dict):
+def init_globals(jinja_globals:dict):
     """
     This routine is called to initialize built-in template variables.
     """
+    # Using a Namespace object lets us change the context inside a
+    # template, e.g. by calling "{% set options.lang = lang %}" from
+    # within a with block.  Doing this lets us access the option values
+    # from within a custom filter, without having to pass the option
+    # values explicitly.
+    jinja_globals['options'] = Namespace()
 
-def init_jenv(jenv:Environment):
+
+def create_jinja_env(template_dirs):
     """
-    This routine is called after creating the template processing
-    environment to add filters, tests, etc.
+    Create and return the Jinja2 Environment object.
     """
-    jenv.filters.update(filters)
-    jenv.tests.update(tests)
+    jinja_env = Environment(loader=FileSystemLoader(template_dirs),
+        autoescape=jinja2.select_autoescape(['html', 'xml']))
+
+    jinja_env.filters.update(filters)
+    jinja_env.tests.update(tests)
+
+    return jinja_env
+
 
 #--- Template processing: ---
 
@@ -399,32 +425,32 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir]
-    jenv = Environment(loader=FileSystemLoader(template_dirs),
-        autoescape=jinja2.select_autoescape(['html', 'xml']))
+    jinja_env = create_jinja_env(template_dirs)
 
     # Use the jinja global dict for root election data
-    edata = jenv.globals
+    jinja_globals = jinja_env.globals
 
     # Initialize built-in template variables
-    init_edata(edata)
-
-    # Add filters and tests
-    init_jenv(jenv)
+    init_globals(jinja_globals)
 
     # Process data loader arguments
     for json_path in json_paths:
-        load_json(edata, json_path)
+        load_json(jinja_globals, json_path)
 
     for yaml_path in yaml_paths:
-        load_yaml(edata, yaml_path)
+        load_yaml(jinja_globals, yaml_path)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Process templates
     for template_path in template_dir.iterdir():
+        if template_path.is_dir():
+            # TODO: process directories recursively.
+            continue
+
         file_name = template_path.name
         output_path = output_dir / file_name
-        process_template(jenv, template_name=file_name, output_path=output_path,
+        process_template(jinja_env, template_name=file_name, output_path=output_path,
             test_mode=test_mode)
 
     _log.info(f'writing the output directory to stdout: {output_dir}')

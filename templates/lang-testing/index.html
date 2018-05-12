@@ -1,0 +1,12 @@
+Office
+
+<ul>
+{% for lang in languages %}
+  {% with %}
+  {% set options.lang = lang %}
+<li>
+  {{ lang }}: {{ i8n_office|translate }}
+</li>
+  {% endwith %}
+{% endfor %}
+</ol>
