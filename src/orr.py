@@ -97,6 +97,9 @@ def parse_args():
                         help=('the name to give the output directory inside '
                               'the parent output directory. '
                               'Defaults to a name generated using the current datetime.'))
+    parser.add_argument('--output-fresh-parent', action='store_true',
+                        help=('require that the output parent not already exist. '
+                              'This is for running inside a Docker container.'))
 
     ns = parser.parse_args()
 
@@ -350,8 +353,8 @@ def process_template(jenv:Environment,
 
 #--- Top level processing: ---
 
-def run(config_path=None, json_paths=None, yaml_paths=None, output_parent=None,
-    output_dir_name=None, template_dir=None, test_mode=False):
+def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
+    output_parent=None, output_dir_name=None, fresh_output=False, test_mode=False):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -382,7 +385,13 @@ def run(config_path=None, json_paths=None, yaml_paths=None, output_parent=None,
         config_path = Path(config_path)
         config = Config(config_path)
 
-    output_dir = Path(output_parent) / output_dir_name
+    output_parent = Path(output_parent)
+
+    if fresh_output and output_parent.exists():
+        msg = f'--output-fresh-parent: output parent directory already exists: {output_parent}'
+        raise RuntimeError(msg)
+
+    output_dir = output_parent / output_dir_name
     _log.debug(f'using output directory: {output_dir}')
 
     # Create the jinja environment
@@ -410,6 +419,8 @@ def run(config_path=None, json_paths=None, yaml_paths=None, output_parent=None,
     for yaml_path in yaml_paths:
         load_yaml(edata, yaml_path)
 
+    output_dir.mkdir(parents=True)
+
     # Process templates
     for template_path in template_dir.iterdir():
         file_name = template_path.name
@@ -434,18 +445,20 @@ def main():
     logging.basicConfig(level=level)
 
     config_path = ns.config_path
+    template_dir = ns.template_dir
     json_paths = ns.jsonfile
     yaml_paths = ns.yamlfile
 
     output_parent = ns.output_parent
     output_dir_name = ns.output_dir_name
-    template_dir = ns.template_dir
+    fresh_output = ns.output_fresh_parent
+
     test_mode = ns.test
 
-    output_dir = Path()
-    run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
+    run(config_path=config_path, template_dir=template_dir,
+        json_paths=json_paths, yaml_paths=yaml_paths,
         output_parent=output_parent, output_dir_name=output_dir_name,
-        template_dir=template_dir, test_mode=test_mode)
+        fresh_output=fresh_output, test_mode=test_mode)
 
 
 if __name__ == '__main__':

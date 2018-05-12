@@ -40,11 +40,13 @@ $ docker build -t orr .
 $ docker run orr -h
 ```
 
-To render a template directory:
+To render a template directory to the build directory using Docker:
 
 ```
 $ docker build -t orr . \
-    && docker run --name orr orr \
-    && docker cp orr:/app/data/. _build \
-    && docker rm orr
+    && docker rm orr_builder; echo "removed container: orr_builder" \
+    && docker run --name orr_builder orr --json sampledata/results.json \
+    && docker cp orr_builder:/app/_build/. _build
 ```
+
+TODO: change the above to a bash script?
