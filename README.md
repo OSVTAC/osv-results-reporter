@@ -22,12 +22,14 @@ $ pip install -r requirements.txt
 
 * The templates dir has named jinja templates
 
-* Run the program (which writes the output to the directory `_build`):
+* Run the program (you may need to replace `python` with `python3`):
 
 ```
-$ ./src/orr.py -h
-$ ./src/orr.py -v --json sampledata/results.json --output-dir html
+$ python src/orr -h
+$ python src/orr -v --json sampledata/results.json --output-dir html
 ```
+
+  The above writes the output to the directory `_build`.
 
 * Open `_build/html/index.html` in a browser.
 
