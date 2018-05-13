@@ -3,9 +3,9 @@ Office
 <ul>
 {% for lang in languages %}
   {% with %}
-  {% set options.lang = lang %}
-  {% set src = "details-{}.html".format(lang) %}
-    <li><a href="{{ src }}">Language: {{ lang }}</a></li>
+    {% set options.lang = lang %}
+    {% set src = "details-{}.html".format(lang) %}
+    <li><a href="{{ src }}">{{ i8n_office|translate }}</a> ({{ lang }})</li>
     {% do subtemplate('detail.html', src) %}
   {% endwith %}
 {% endfor %}
