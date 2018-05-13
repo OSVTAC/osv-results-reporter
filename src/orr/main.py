@@ -528,7 +528,3 @@ def main():
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
         fresh_output=fresh_output, test_mode=test_mode)
-
-
-if __name__ == '__main__':
-    main()

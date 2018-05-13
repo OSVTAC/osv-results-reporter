@@ -25,8 +25,8 @@ $ pip install -r requirements.txt
 * Run the program (you may need to replace `python` with `python3`):
 
 ```
-$ python src/orr -h
-$ python src/orr -v --json sampledata/results.json --output-dir html
+$ python src -h
+$ python src -v --json sampledata/results.json --output-dir html
 ```
 
   The above writes the output to the directory `_build`.
