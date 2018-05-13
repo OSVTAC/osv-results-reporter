@@ -307,11 +307,7 @@ def translate(context, label):
 def subtemplate(context, template_name, file_name):
     jinja_env = context.environment
 
-    options = context['options']
-    output_dir = options.output_dir
-    output_path = output_dir / file_name
-
-    process_template(jinja_env, template_name=template_name, output_path=output_path,
+    process_template(jinja_env, template_name=template_name, rel_output_path=file_name,
         context=context)
 
 
@@ -356,7 +352,7 @@ def create_jinja_env(template_dirs, output_dir):
 
 #--- Template processing: ---
 
-def process_template(jenv:Environment, template_name:str, output_path:Path,
+def process_template(jenv:Environment, template_name:str, rel_output_path:Path,
     context:dict=None, test_mode:bool=False):
     """
     Creates the specified output file using the named template,
@@ -367,7 +363,8 @@ def process_template(jenv:Environment, template_name:str, output_path:Path,
     Args:
       jenv: the Jinja2 Environment object to use.
       template_name: template to expand.
-      output_path: output file to write or '-'.
+      rel_output_path: the output path (relative to the output directory
+        configured in the Jinja2 Environment object), or else '-'.
       context: optional context data.
     """
     if context is None:
@@ -378,7 +375,11 @@ def process_template(jenv:Environment, template_name:str, output_path:Path,
             f'Will process_template {template_name} to create {output_path})')
         return
 
-    _log.debug(f'process_template({template_name}, {output_path})')
+    options = jenv.globals['options']
+    output_dir = options.output_dir
+    output_path = output_dir / rel_output_path
+
+    _log.debug(f'process_template: {template_name} -> {output_path}')
 
     template = jenv.get_template(template_name)
 
@@ -422,8 +423,7 @@ def render_template_dir(template_dir, output_dir, jinja_env, test_mode=False):
             continue
 
         file_name = template_path.name
-        output_path = output_dir / file_name
-        process_template(jinja_env, template_name=file_name, output_path=output_path,
+        process_template(jinja_env, template_name=file_name, rel_output_path=file_name,
             test_mode=test_mode)
 
 
