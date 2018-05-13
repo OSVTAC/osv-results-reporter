@@ -45,7 +45,8 @@ import sys
 import babel.dates
 import dateutil.parser
 import jinja2
-from jinja2 import contextfilter, Environment, FileSystemLoader, TemplateSyntaxError
+from jinja2 import (contextfilter, contextfunction, Environment, FileSystemLoader,
+    TemplateSyntaxError)
 from jinja2.utils import Namespace
 import yaml
 
@@ -124,7 +125,6 @@ def generate_output_name():
 
 #--- Configuration file processing: ---
 
-
 class Config(dict):
 
     """
@@ -190,10 +190,9 @@ class Config(dict):
         Args:
           newconfig:    Parsed configuration data dict or None to skip
           replace:      If true, replace defined entries, otherwise not
-
         """
-
-        if newconfig is None: return;
+        if newconfig is None:
+            return
 
         for k,v in newconfig.items():
             if k == 'include_config':
@@ -301,6 +300,12 @@ def translate(context, label):
     return translated
 
 
+# TODO
+@contextfunction
+def subtemplate(context):
+    print('****: subtemplate')
+
+
 # The following dictionary of filter and test functions will be auto-edited.
 # [Do not change these, instead edit the docstrings in the function def]
 filters = dict(format_date=format_date, translate=translate)
@@ -308,24 +313,24 @@ tests = {}
 
 #--- Template global setup: ---
 
-def init_globals(jinja_globals:dict):
+def create_jinja_env(template_dirs):
     """
-    This routine is called to initialize built-in template variables.
+    Create and return the Jinja2 Environment object.
     """
+    jinja_env = Environment(
+        loader=FileSystemLoader(template_dirs),
+        autoescape=jinja2.select_autoescape(['html', 'xml']),
+        # Enable the expression-statement extension:
+        # http://jinja.pocoo.org/docs/2.10/templates/#expression-statement
+        extensions=['jinja2.ext.do'],
+    )
+
     # Using a Namespace object lets us change the context inside a
     # template, e.g. by calling "{% set options.lang = lang %}" from
     # within a with block.  Doing this lets us access the option values
     # from within a custom filter, without having to pass the option
     # values explicitly.
-    jinja_globals['options'] = Namespace()
-
-
-def create_jinja_env(template_dirs):
-    """
-    Create and return the Jinja2 Environment object.
-    """
-    jinja_env = Environment(loader=FileSystemLoader(template_dirs),
-        autoescape=jinja2.select_autoescape(['html', 'xml']))
+    jinja_env.globals.update(options=Namespace(), subtemplate=subtemplate)
 
     jinja_env.filters.update(filters)
     jinja_env.tests.update(tests)
@@ -347,6 +352,9 @@ def process_template(jenv:Environment,
     and included templates will be located within the template
     search path, already setup via configuration data.
     """
+    if ctx is None:
+        ctx = {}
+
     if test_mode:
         print(
             f'Will process_template {template_name} to create {output_path})')
@@ -354,19 +362,14 @@ def process_template(jenv:Environment,
 
     _log.debug(f'process_template({template_name}, {output_path})')
 
-    try:
-        template = jenv.get_template(template_name)
-    except TemplateSyntaxError as exc_info:
-        _log.error("Template Syntax Error",exc_info)
-        return
+    template = jenv.get_template(template_name)
 
     # PDF output renders using html, create a .pdf.html file
     if output_path.suffix == '.pdf':
         pdf_path = output_path
         output_path += '.html'
-    else: pdf_path = ''
-
-    if ctx is None: ctx = {}
+    else:
+        pdf_path = ''
 
     output_dir = output_path.parent
     if not output_dir.exists():
@@ -375,7 +378,6 @@ def process_template(jenv:Environment,
     output_text = template.render(ctx)
     output_path.write_text(output_text)
     _log.info(f'Created {output_path} from template {template_name}')
-
 
     if pdf_path:
         # Convert the html file to pdf_path
@@ -456,9 +458,6 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
 
     # Use the jinja global dict for root election data
     jinja_globals = jinja_env.globals
-
-    # Initialize built-in template variables
-    init_globals(jinja_globals)
 
     # Process data loader arguments
     for json_path in json_paths:
