@@ -303,22 +303,26 @@ def translate(context, label):
     return translated
 
 
-# TODO
 @contextfunction
-def subtemplate(context):
-    print('****: subtemplate')
+def subtemplate(context, template_name, file_name):
+    jinja_env = context.environment
 
+    options = context['options']
+    output_dir = options.output_dir
+    output_path = output_dir / file_name
 
-# The following dictionary of filter and test functions will be auto-edited.
-# [Do not change these, instead edit the docstrings in the function def]
-filters = dict(format_date=format_date, translate=translate)
-tests = {}
+    process_template(jinja_env, template_name=template_name, output_path=output_path,
+        context=context)
+
 
 #--- Template global setup: ---
 
-def create_jinja_env(template_dirs):
+def create_jinja_env(template_dirs, output_dir):
     """
     Create and return the Jinja2 Environment object.
+
+    Args:
+      output_dir: a Path object.
     """
     jinja_env = Environment(
         loader=FileSystemLoader(template_dirs),
@@ -333,7 +337,16 @@ def create_jinja_env(template_dirs):
     # within a with block.  Doing this lets us access the option values
     # from within a custom filter, without having to pass the option
     # values explicitly.
-    jinja_env.globals.update(options=Namespace(), subtemplate=subtemplate)
+    options = Namespace()
+    # Apparently we need to set using index rather than attribute notation.
+    options['output_dir'] = output_dir
+
+    jinja_env.globals.update(options=options, subtemplate=subtemplate)
+
+    # The following dictionary of filter and test functions will be auto-edited.
+    # [Do not change these, instead edit the docstrings in the function def]
+    filters = dict(format_date=format_date, translate=translate)
+    tests = {}
 
     jinja_env.filters.update(filters)
     jinja_env.tests.update(tests)
@@ -343,20 +356,22 @@ def create_jinja_env(template_dirs):
 
 #--- Template processing: ---
 
-def process_template(jenv:Environment,
-                     template_name:str,     # Template to expand
-                     output_path:Path,   # Output file to write or '-'
-                     ctx:dict=None,  # Context data or None
-                     test_mode:bool=False,
-                     ):
+def process_template(jenv:Environment, template_name:str, output_path:Path,
+    context:dict=None, test_mode:bool=False):
     """
     Creates the specified output file using the named template,
     where `data` provides the template context. The template
     and included templates will be located within the template
     search path, already setup via configuration data.
+
+    Args:
+      jenv: the Jinja2 Environment object to use.
+      template_name: template to expand.
+      output_path: output file to write or '-'.
+      context: optional context data.
     """
-    if ctx is None:
-        ctx = {}
+    if context is None:
+        context = {}
 
     if test_mode:
         print(
@@ -378,7 +393,7 @@ def process_template(jenv:Environment,
     if not output_dir.exists():
         output_dir.mkdir()
 
-    output_text = template.render(ctx)
+    output_text = template.render(context)
     output_path.write_text(output_text)
     _log.info(f'Created {output_path} from template {template_name}')
 
@@ -463,7 +478,7 @@ def run(config_path=None, json_paths=None, yaml_paths=None, template_dir=None,
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir] + extra_template_dirs
-    jinja_env = create_jinja_env(template_dirs)
+    jinja_env = create_jinja_env(template_dirs, output_dir=output_dir)
 
     # Use the jinja global dict for root election data
     jinja_globals = jinja_env.globals
