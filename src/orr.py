@@ -300,14 +300,15 @@ def translate(context, label):
     all_trans = context['translations']
     translations = all_trans[label]
     translated = translations[lang]
+
     return translated
 
 
 @contextfunction
 def subtemplate(context, template_name, file_name):
-    jinja_env = context.environment
+    env = context.environment
 
-    process_template(jinja_env, template_name=template_name, rel_output_path=file_name,
+    process_template(env, template_name=template_name, rel_output_path=file_name,
         context=context)
 
 
@@ -320,7 +321,7 @@ def create_jinja_env(template_dirs, output_dir):
     Args:
       output_dir: a Path object.
     """
-    jinja_env = Environment(
+    env = Environment(
         loader=FileSystemLoader(template_dirs),
         autoescape=jinja2.select_autoescape(['html', 'xml']),
         # Enable the expression-statement extension:
@@ -337,22 +338,22 @@ def create_jinja_env(template_dirs, output_dir):
     # Apparently we need to set using index rather than attribute notation.
     options['output_dir'] = output_dir
 
-    jinja_env.globals.update(options=options, subtemplate=subtemplate)
+    env.globals.update(options=options, subtemplate=subtemplate)
 
     # The following dictionary of filter and test functions will be auto-edited.
     # [Do not change these, instead edit the docstrings in the function def]
     filters = dict(format_date=format_date, translate=translate)
     tests = {}
 
-    jinja_env.filters.update(filters)
-    jinja_env.tests.update(tests)
+    env.filters.update(filters)
+    env.tests.update(tests)
 
-    return jinja_env
+    return env
 
 
 #--- Template processing: ---
 
-def process_template(jenv:Environment, template_name:str, rel_output_path:Path,
+def process_template(env:Environment, template_name:str, rel_output_path:Path,
     context:dict=None, test_mode:bool=False):
     """
     Creates the specified output file using the named template,
@@ -361,7 +362,7 @@ def process_template(jenv:Environment, template_name:str, rel_output_path:Path,
     search path, already setup via configuration data.
 
     Args:
-      jenv: the Jinja2 Environment object to use.
+      env: the Jinja2 Environment object to use.
       template_name: template to expand.
       rel_output_path: the output path (relative to the output directory
         configured in the Jinja2 Environment object), or else '-'.
@@ -375,13 +376,13 @@ def process_template(jenv:Environment, template_name:str, rel_output_path:Path,
             f'Will process_template {template_name} to create {output_path})')
         return
 
-    options = jenv.globals['options']
+    options = env.globals['options']
     output_dir = options.output_dir
     output_path = output_dir / rel_output_path
 
     _log.debug(f'process_template: {template_name} -> {output_path}')
 
-    template = jenv.get_template(template_name)
+    template = env.get_template(template_name)
 
     # PDF output renders using html, create a .pdf.html file
     if output_path.suffix == '.pdf':
@@ -406,14 +407,14 @@ def process_template(jenv:Environment, template_name:str, rel_output_path:Path,
 #--- Top level processing: ---
 
 # TODO: render the directory recursively.
-def render_template_dir(template_dir, output_dir, jinja_env, test_mode=False):
+def render_template_dir(template_dir, output_dir, env, test_mode=False):
     """
     Render the templates inside the given template directory.
 
     Args:
       template_dir: a Path object.
       output_dir: a Path object.
-      jinja_env: a Jinja2 Environment object.
+      env: a Jinja2 Environment object.
       test_mode: a boolean.
     """
     # Process templates
@@ -423,7 +424,7 @@ def render_template_dir(template_dir, output_dir, jinja_env, test_mode=False):
             continue
 
         file_name = template_path.name
-        process_template(jinja_env, template_name=file_name, rel_output_path=file_name,
+        process_template(env, template_name=file_name, rel_output_path=file_name,
             test_mode=test_mode)
 
 
@@ -478,10 +479,10 @@ def run(config_path=None, json_paths=None, yaml_paths=None, template_dir=None,
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir] + extra_template_dirs
-    jinja_env = create_jinja_env(template_dirs, output_dir=output_dir)
+    env = create_jinja_env(template_dirs, output_dir=output_dir)
 
     # Use the jinja global dict for root election data
-    jinja_globals = jinja_env.globals
+    jinja_globals = env.globals
 
     # Process data loader arguments
     for json_path in json_paths:
@@ -492,7 +493,7 @@ def run(config_path=None, json_paths=None, yaml_paths=None, template_dir=None,
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    render_template_dir(template_dir, output_dir=output_dir, jinja_env=jinja_env,
+    render_template_dir(template_dir, output_dir=output_dir, env=env,
         test_mode=test_mode)
 
     _log.info(f'writing the output directory to stdout: {output_dir}')
