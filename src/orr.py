@@ -97,6 +97,9 @@ def parse_args():
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
+    parser.add_argument('--extra-template-dirs', metavar='DIR', nargs='+',
+                        help=('extra directories to search when looking for '
+                              'templates, and not rendered otherwise.'))
     parser.add_argument('--output-parent', metavar='DIR',
                         help=('the directory in which to write the output directory. '
                               f'Defaults to: {DEFAULT_OUTPUT_PARENT_DIR}.'))
@@ -409,12 +412,16 @@ def render_template_dir(template_dir, output_dir, jinja_env, test_mode=False):
             test_mode=test_mode)
 
 
-def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
-    output_parent=None, output_dir_name=None, fresh_output=False, test_mode=False):
+def run(config_path=None, json_paths=None, yaml_paths=None, template_dir=None,
+    extra_template_dirs=None, output_parent=None, output_dir_name=None,
+    fresh_output=False, test_mode=False):
     """
     Args:
       config_path: optional path to the config file, as a string.
       template_dir: a directory containing the templates to render.
+      extra_template_dirs: optional extra directories to search for
+        templates (e.g. for the subtemplate tag).  This should be a list
+        of path-like objects.
       json_paths: paths to JSON files, as a list of strings.
       yaml_paths: paths to YAML files, as a list of strings.
       output_parent: the parent of the output directory.
@@ -426,6 +433,8 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
         json_paths = []
     if yaml_paths is None:
         yaml_paths = []
+    if extra_template_dirs is None:
+        extra_template_dirs = []
     if output_parent is None:
         output_parent = DEFAULT_OUTPUT_PARENT_DIR
     if output_dir_name is None:
@@ -453,7 +462,7 @@ def run(config_path=None, template_dir=None, json_paths=None, yaml_paths=None,
     template_dir = Path(template_dir)
     _log.debug(f'using template directory: {template_dir}')
 
-    template_dirs = [template_dir]
+    template_dirs = [template_dir] + extra_template_dirs
     jinja_env = create_jinja_env(template_dirs)
 
     # Use the jinja global dict for root election data
@@ -489,6 +498,7 @@ def main():
 
     config_path = ns.config_path
     template_dir = ns.template_dir
+    extra_template_dirs = ns.extra_template_dirs
     json_paths = ns.jsonfile
     yaml_paths = ns.yamlfile
 
@@ -498,8 +508,8 @@ def main():
 
     test_mode = ns.test
 
-    run(config_path=config_path, template_dir=template_dir,
-        json_paths=json_paths, yaml_paths=yaml_paths,
+    run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
+        template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
         fresh_output=fresh_output, test_mode=test_mode)
 
