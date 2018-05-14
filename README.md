@@ -52,3 +52,10 @@ $ docker build -t orr . \
 ```
 
 TODO: change the above to a bash script?
+
+## Contact
+
+The authors can be reached at--
+
+* Carl Hage <ch@carlhage.com>
+* Chris Jerdonek <chris.jerdonek@gmail.com>

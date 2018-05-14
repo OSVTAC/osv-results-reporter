@@ -19,13 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Contact info:
-#
-# The author(s) can be reached at--
-#
-#   Carl Hage <ch@carlhage.com>
-#   Chris Jerdonek <chris.jerdonek@gmail.com>
-#
 
 """
 Program to create HTML/PDF/XLS files from election results data.
