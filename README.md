@@ -58,6 +58,13 @@ $ docker build -t orr . \
     && docker cp orr_builder:/app/_build/. _build
 ```
 
+To run tests:
+
+```
+$ docker build -t orr . \
+    && docker run --entrypoint python orr -m unittest discover orr
+```
+
 TODO: change the above to a bash script?
 
 ## Copyright
