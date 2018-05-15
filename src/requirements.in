@@ -1,6 +1,11 @@
-# This file includes the "abstract" requirements used to generate the
-# explicit requirements in requirements.txt, e.g. using
-# https://github.com/jazzband/pip-tools
+# This file contains the "abstract" requirements that are--
+#
+# (1) used to generate the explicit requirements in requirements.txt,
+#     e.g. using https://github.com/jazzband/pip-tools (for use in
+#     our Dockerfile), and
+# (2) passed as the install_requires argument to the setup() function
+#     inside setup.py (for use when developing locally).
+#
 Babel
 Jinja2
 python-dateutil
