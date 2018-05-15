@@ -15,7 +15,6 @@ To install:
 * Requires python version 3.6
 
 ```
-$ pip install -r src/requirements.txt
 $ pip install -e ./src
 ```
 
