@@ -16,17 +16,14 @@ To run:
 
 ```
 $ pip install -r src/requirements.txt
+$ pip install -e ./src
 ```
-
-* Put src/orr.py in search path or reference explicitly
 
 * The templates dir has named jinja templates
 
-* Run the program (you may need to replace `python` with `python3`):
-
 ```
-$ python src -h
-$ python src -v --json sampledata/results.json --output-dir html
+$ orr -h
+$ orr -v --json sampledata/results.json --output-dir html
 ```
 
   The above writes the output to the directory `_build`.
