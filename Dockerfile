@@ -11,8 +11,12 @@ COPY sampledata/ sampledata/
 COPY src/ src/
 COPY templates/ templates/
 
+# Installing via pip lets us invoke the program using the console-script
+# entry-point "orr" defined in setup.py.
+RUN pip install ./src
+
 # Pass --output-fresh-parent as a check to ensure that the parent
 # of the output directory is empty when running using Docker.
 # This way we know we're copying only one directory when we run--
 # $ docker cp orr_builder:/app/_build/. _build
-ENTRYPOINT ["python", "src", "--output-fresh-parent"]
+ENTRYPOINT ["orr", "--output-fresh-parent"]
