@@ -3,9 +3,11 @@ FROM python:3.6-slim
 # Put all of our files in an application-specific directory.
 WORKDIR app
 
-COPY requirements.txt .
+# Only copy the requirements file before installing requirements so that
+# updating our Python code doesn't force the requirements to be reinstalled.
+COPY src/requirements.txt src/
 
-RUN pip install -r requirements.txt
+RUN pip install -r src/requirements.txt
 
 COPY sampledata/ sampledata/
 COPY src/ src/

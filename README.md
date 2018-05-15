@@ -15,7 +15,7 @@ To run:
 * Requires python version 3.6
 
 ```
-$ pip install -r requirements.txt
+$ pip install -r src/requirements.txt
 ```
 
 * Put src/orr.py in search path or reference explicitly
