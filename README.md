@@ -36,6 +36,12 @@ $ orr -v --json sampledata/results.json --output-dir html
 
 * See doc dir
 
+To run tests:
+
+```
+$ python -m unittest discover orr
+```
+
 ## Docker (experimental)
 
 ```
