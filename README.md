@@ -29,7 +29,7 @@ $ orr -h
 * The templates dir has named jinja templates
 
 ```
-$ orr -v --json sampledata/results.json --output-dir html
+$ orr -v --input sampledata/results.json --output-dir html
 ```
 
   The above writes the output to the directory `_build`.
@@ -56,7 +56,7 @@ To render a template directory to the build directory using Docker:
 ```
 $ docker build -t orr . \
     && docker rm orr_builder; echo "removed container: orr_builder" \
-    && docker run --name orr_builder orr --json sampledata/results.json \
+    && docker run --name orr_builder orr --input sampledata/results.json \
     && docker cp orr_builder:/app/_build/. _build
 ```
 

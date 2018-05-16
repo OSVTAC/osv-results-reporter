@@ -82,12 +82,8 @@ def parse_args():
                         help='enable debug printout')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
-    parser.add_argument('--json-path', '-j', dest='jsonfile', metavar='PATH',
-                        action='append',
-                        help='load the specified json data to template global')
-    parser.add_argument('--yaml-path', '-y', dest='yamlfile', metavar='PATH',
-                        action='append',
-                        help='load the specified yaml data to template global')
+    parser.add_argument('--input-paths', metavar='PATH', nargs='+',
+                        help='path to a file containing election data (e.g. a json file)')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
@@ -228,7 +224,7 @@ class Config(dict):
 # included in the template file documentation.
 # [TODO: Allow data loaders to be invoked in templates as function call]
 
-def load_json(data,filepath):
+def load_json(data, filepath):
     """
     Data Loader: The json data loader will read arbitrary
     json-formatted data from the named file
@@ -245,7 +241,8 @@ def load_json(data,filepath):
     _log.info(f'loaded json data from {filepath}')
     #_log.debug(str(data.keys()))
 
-def load_yaml(data,filepath):
+
+def load_yaml(data, filepath):
     """
     Data Loader: The yaml data loader will read arbitrary
     yaml-formatted data from the named file
@@ -261,6 +258,17 @@ def load_yaml(data,filepath):
     data.update(newdata)
     _log.info(f'loaded yaml data from {filepath}')
     #_log.debug(str(data.keys()))
+
+
+def load_input(data, path):
+    path = Path(path)
+    suffix = path.suffix
+    if suffix == '.json':
+        load_json(data, path)
+    elif suffix == '.yaml':
+        load_yaml(data, path)
+    else:
+        raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
 #--- Template filters and tests: ---
@@ -422,27 +430,24 @@ def render_template_dir(template_dir, output_dir, env, test_mode=False):
             test_mode=test_mode)
 
 
-def run(config_path=None, json_paths=None, yaml_paths=None, template_dir=None,
+def run(config_path=None, input_paths=None, template_dir=None,
     extra_template_dirs=None, output_parent=None, output_dir_name=None,
     fresh_output=False, test_mode=False):
     """
     Args:
       config_path: optional path to the config file, as a string.
+      input_paths: paths to the election data files, as a list of strings.
       template_dir: a directory containing the templates to render.
       extra_template_dirs: optional extra directories to search for
         templates (e.g. for the subtemplate tag).  This should be a list
         of path-like objects.
-      json_paths: paths to JSON files, as a list of strings.
-      yaml_paths: paths to YAML files, as a list of strings.
       output_parent: the parent of the output directory.
       output_dir_name: the name to give the output directory inside the
         output parent.  Defaults to a name generated using the current
         datetime.
     """
-    if json_paths is None:
-        json_paths = []
-    if yaml_paths is None:
-        yaml_paths = []
+    if input_paths is None:
+        input_paths = []
     if extra_template_dirs is None:
         extra_template_dirs = []
     if output_parent is None:
@@ -476,14 +481,12 @@ def run(config_path=None, json_paths=None, yaml_paths=None, template_dir=None,
     env = create_jinja_env(template_dirs, output_dir=output_dir)
 
     # Use the jinja global dict for root election data
+    # TODO: store the election data in the context and not globals.
     jinja_globals = env.globals
 
     # Process data loader arguments
-    for json_path in json_paths:
-        load_json(jinja_globals, json_path)
-
-    for yaml_path in yaml_paths:
-        load_yaml(jinja_globals, yaml_path)
+    for input_path in input_paths:
+        load_input(jinja_globals, input_path)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -509,8 +512,7 @@ def main():
     config_path = ns.config_path
     template_dir = ns.template_dir
     extra_template_dirs = ns.extra_template_dirs
-    json_paths = ns.jsonfile
-    yaml_paths = ns.yamlfile
+    input_paths = ns.input_paths
 
     output_parent = ns.output_parent
     output_dir_name = ns.output_dir_name
@@ -518,7 +520,7 @@ def main():
 
     test_mode = ns.test
 
-    run(config_path=config_path, json_paths=json_paths, yaml_paths=yaml_paths,
+    run(config_path=config_path, input_paths=input_paths,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
         fresh_output=fresh_output, test_mode=test_mode)
