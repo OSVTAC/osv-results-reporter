@@ -83,7 +83,8 @@ def parse_args():
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
     parser.add_argument('--input-paths', metavar='PATH', nargs='+',
-                        help='path to a file containing election data (e.g. a json file)')
+                        help=('paths to files containing election data '
+                              '(e.g. in json format).'))
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
