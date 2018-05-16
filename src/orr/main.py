@@ -410,7 +410,7 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
 #--- Top level processing: ---
 
 # TODO: render the directory recursively.
-def render_template_dir(template_dir, output_dir, env, test_mode=False):
+def render_template_dir(template_dir, output_dir, env, context=None, test_mode=False):
     """
     Render the templates inside the given template directory.
 
@@ -418,6 +418,7 @@ def render_template_dir(template_dir, output_dir, env, test_mode=False):
       template_dir: a Path object.
       output_dir: a Path object.
       env: a Jinja2 Environment object.
+      context: optional context data.
       test_mode: a boolean.
     """
     # Process templates
@@ -428,7 +429,7 @@ def render_template_dir(template_dir, output_dir, env, test_mode=False):
 
         file_name = template_path.name
         process_template(env, template_name=file_name, rel_output_path=file_name,
-            test_mode=test_mode)
+            context=context, test_mode=test_mode)
 
 
 def run(config_path=None, input_paths=None, template_dir=None,
@@ -481,18 +482,14 @@ def run(config_path=None, input_paths=None, template_dir=None,
     template_dirs = [template_dir] + extra_template_dirs
     env = create_jinja_env(template_dirs, output_dir=output_dir)
 
-    # Use the jinja global dict for root election data
-    # TODO: store the election data in the context and not globals.
-    jinja_globals = env.globals
-
-    # Process data loader arguments
+    context = {}
     for input_path in input_paths:
-        load_input(jinja_globals, input_path)
+        load_input(context, input_path)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     render_template_dir(template_dir, output_dir=output_dir, env=env,
-        test_mode=test_mode)
+        context=context, test_mode=test_mode)
 
     _log.info(f'writing the output directory to stdout: {output_dir}')
     print(output_dir)
