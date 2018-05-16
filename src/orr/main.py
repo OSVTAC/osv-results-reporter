@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# orr.py - template-based HTML/PDF/XLS election results report generator
-#
+# Open Source Voting Results Reporter (ORR) - election results report generator
 # Copyright (C) 2018  Carl Hage
 # Copyright (C) 2018  Chris Jerdonek
 #
-# This program is free software: you can redistribute it and/or modify
+# This file is part of Open Source Voting Results Reporter (ORR).
+#
+# ORR is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.

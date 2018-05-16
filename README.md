@@ -1,4 +1,6 @@
-# orr - OEMS HTML/PDF/XLS report generator for election data
+# Open Source Voting Results Reporter (ORR)
+
+## Election results report generator (HTML/PDF/XLS)
 
 Initial checkin. Documentation TODO.
 
@@ -76,7 +78,9 @@ Copyright (C) 2018  Chris Jerdonek
 
 ## License
 
-This program is free software: you can redistribute it and/or modify
+This file is part of Open Source Voting Results Reporter (ORR).
+
+ORR is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
