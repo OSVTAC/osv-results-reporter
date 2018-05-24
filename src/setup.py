@@ -70,4 +70,10 @@ setup(
             'orr=orr.main:main',
         ],
     },
+    package_data={
+        'orr': [
+            # Also include our data files needed for testing.
+            'testing/data/*.*',
+        ],
+    },
 )
