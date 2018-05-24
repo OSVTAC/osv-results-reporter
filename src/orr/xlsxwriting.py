@@ -18,21 +18,41 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from pathlib import Path
-from unittest import TestCase
+"""
+Support for creating Excel XLSX files.
+"""
 
-import orr.testing.xlstesting as xlstesting
-from orr.testing.xlstesting import SAMPLE_XLSX_PATH
+from contextlib import contextmanager
+
+import xlsxwriter
 
 
-class ModuleTest(TestCase):
-
+@contextmanager
+def creating_workbook(path):
     """
-    Test the functions in the xlstesting module.
+    Args:
+      path: a path-like object.
     """
+    workbook = xlsxwriter.Workbook(path)
+    try:
+        yield workbook
+    finally:
+        workbook.close()
 
-    def test_get_sheet_names(self):
-        wb = xlstesting.load(SAMPLE_XLSX_PATH)
-        actual = xlstesting.get_sheet_names(wb)
-        expected = ['People', 'Animals']
-        self.assertEqual(actual, expected)
+
+def add_worksheet(wb, data=None, name=None):
+    """
+    Add a worksheet to a workbook.
+
+    Args:
+      wb: an xlsxwriter.Workbook object.
+      data: the data to add to the sheet, as an iterable of iterables.
+      name: an optional name for the worksheet.
+    """
+    if data is None:
+        data = []
+
+    worksheet = wb.add_worksheet(name)
+    for i, row in enumerate(data):
+        for j, value in enumerate(row):
+            worksheet.write(i, j, value)
