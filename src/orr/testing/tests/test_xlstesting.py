@@ -32,7 +32,9 @@ class ModuleTest(TestCase):
     """
 
     def test_get_sheet_names(self):
-        wb = xlstesting.load(SAMPLE_XLSX_PATH)
-        actual = xlstesting.get_sheet_names(wb)
+        with open(SAMPLE_XLSX_PATH, mode='rb') as f:
+            wb = xlstesting.load(f)
+            actual = xlstesting.get_sheet_names(wb)
+
         expected = ['People', 'Animals']
         self.assertEqual(actual, expected)

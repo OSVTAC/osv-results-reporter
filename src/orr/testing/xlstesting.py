@@ -34,6 +34,7 @@ SAMPLE_DIR = Path(__file__).parent / 'data'
 SAMPLE_XLSX_PATH = SAMPLE_DIR / 'sample.xlsx'
 
 
+# TODO: document / encourage passing a binary stream.
 def load(path):
     """
     Return a Workbook object.
