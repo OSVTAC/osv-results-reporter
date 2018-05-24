@@ -14,3 +14,4 @@ python-dateutil==2.7.3
 pytz==2018.4              # via babel
 pyyaml==3.12
 six==1.11.0               # via python-dateutil
+xlsxwriter==1.0.5

@@ -8,7 +8,9 @@
 #
 Babel
 Jinja2
-# For reading Excel files, which we use for testing.
+# For reading Excel files, which we use only for testing.
 openpyxl
 python-dateutil
 PyYAML
+# Used for writing Excel files.
+XlsxWriter
