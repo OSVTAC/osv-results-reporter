@@ -59,7 +59,7 @@ def get_sheet_names(wb):
 
 def get_sheet_rows(worksheet):
     """
-    Return an iterable of iterables, representing the rows.
+    Return the row data as a list of tuples.
 
     Args:
       wb: an openpyxl.worksheet.read_only.ReadOnlyWorksheet object,
