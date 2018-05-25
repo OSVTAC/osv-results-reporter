@@ -28,10 +28,25 @@ from pathlib import Path
 
 import babel.dates
 import dateutil.parser
-from jinja2 import contextfilter, contextfunction, Environment
+from jinja2 import contextfilter, contextfunction, environmentfunction, Environment
+
+from orr.xlsxwriting import XLSXBook
 
 
 _log = logging.getLogger(__name__)
+
+
+def get_output_path(env, rel_path):
+    """
+    Args:
+      env: the Jinja2 Environment object.
+      rel_path: a relative path, as a path-like object.
+    """
+    options = env.globals['options']
+    output_dir = options.output_dir
+    path = output_dir / rel_path
+
+    return path
 
 
 # TODO: move this function to a different module.
@@ -44,7 +59,7 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     search path, already setup via configuration data.
 
     Args:
-      env: the Jinja2 Environment object to use.
+      env: the Jinja2 Environment object.
       template_name: template to expand.
       rel_output_path: the output path (relative to the output directory
         configured in the Jinja2 Environment object), or else '-'.
@@ -58,9 +73,7 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
             f'Will process_template {template_name} to create {output_path})')
         return
 
-    options = env.globals['options']
-    output_dir = options.output_dir
-    output_path = output_dir / rel_output_path
+    output_path = get_output_path(env, rel_output_path)
 
     _log.debug(f'process_template: {template_name} -> {output_path}')
 
@@ -125,3 +138,19 @@ def subtemplate(context, template_name, file_name):
 
     process_template(env, template_name=template_name, rel_output_path=file_name,
         context=context)
+
+
+# TODO: finish implementing (this is still experimental).
+@environmentfunction
+def open_xlsx(env, rel_path):
+    """
+    Render a template.
+    """
+    rel_path = Path(rel_path)
+    if rel_path.suffix != '.xlsx':
+        raise RuntimeError(f'workbook path does not have extension .xlsx: {rel_path}')
+
+    output_path = get_output_path(env, rel_path)
+    book = XLSXBook(output_path)
+
+    return book

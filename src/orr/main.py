@@ -297,7 +297,10 @@ def create_jinja_env(template_dirs, output_dir):
     # Apparently we need to set using index rather than attribute notation.
     options['output_dir'] = output_dir
 
-    env.globals.update(options=options, subtemplate=templating.subtemplate)
+    env.globals.update(options=options,
+        open_xlsx=templating.open_xlsx,
+        subtemplate=templating.subtemplate
+    )
 
     # The following dictionary of filter and test functions will be auto-edited.
     # [Do not change these, instead edit the docstrings in the function def]
