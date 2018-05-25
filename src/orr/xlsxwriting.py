@@ -23,8 +23,53 @@ Support for creating Excel XLSX files.
 """
 
 from contextlib import contextmanager
+import logging
 
 import xlsxwriter
+
+
+_log = logging.getLogger(__name__)
+
+
+class XLSXBook:
+
+    """
+    Encapsulates an XLSX file (aka workbook).
+    """
+
+    def __init__(self, path):
+        """
+        Args:
+          path: a path-like object.
+        """
+        # TODO: open the file in a create method and not __init__().
+        self.workbook = xlsxwriter.Workbook(path)
+
+        self.closed = False
+
+    def close(self):
+        _log.debug(f'closing: {self.workbook!r}')
+        self.workbook.close()
+        self.closed = True
+
+    # We define a __del__() method to help us when it's not convenient
+    # to call close() explicitly (e.g. from within a template).
+    def __del__(self):
+        if not self.closed:
+            _log.debug(f'calling close from __del__: {self.workbook!r}')
+            self.close()
+
+    def add_sheet(self, name=None):
+        """
+        Create, and return an XLSXSheet object.
+
+        Args:
+          name: an optional name for the worksheet. Defaults to e.g. "Sheet1".
+        """
+        worksheet = self.workbook.add_worksheet(name)
+        sheet = XLSXSheet(worksheet)
+
+        return sheet
 
 
 class XLSXSheet:
@@ -53,43 +98,33 @@ class XLSXSheet:
 @contextmanager
 def creating_workbook(path):
     """
+    Create and yield an XLSXBook object.
+
     Args:
       path: a path-like object.
     """
-    workbook = xlsxwriter.Workbook(path)
+    book = XLSXBook(path)
+
     try:
-        yield workbook
+        yield book
     finally:
-        workbook.close()
-
-
-def _add_sheet(wb, name=None):
-    """
-    Create, and return an XLSXSheet object.
-
-    Args:
-      wb: an xlsxwriter.Workbook object.
-      name: an optional name for the worksheet.  Defaults to e.g. "Sheet1".
-    """
-    worksheet = wb.add_worksheet(name)
-    sheet = XLSXSheet(worksheet)
-
-    return sheet
+        # Close the file handle
+        book.close()
 
 
 # TODO: remove this shortcut function?
-def add_worksheet(wb, rows=None, name=None):
+def add_worksheet(book, rows=None, name=None):
     """
     Add a worksheet to a workbook.
 
     Args:
-      wb: an xlsxwriter.Workbook object.
+      book: an XLSXBook object.
       rows: the data to add to the sheet, as an iterable of iterables.
       name: an optional name for the worksheet.
     """
     if rows is None:
         rows = []
 
-    sheet = _add_sheet(wb, name=name)
+    sheet = book.add_sheet(name=name)
     for row in rows:
         sheet.add_row(row)
