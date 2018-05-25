@@ -32,9 +32,22 @@ class ModuleTest(TestCase):
     """
 
     def test_get_sheet_names(self):
+        # The data in the second sheet.
+        expected_data = [
+            ('Id', 'Name', 'Color'),
+            (4, 'Bear', 'Brown'),
+            (5, 'Squirrel', 'Gray')
+        ]
+
         with open(SAMPLE_XLSX_PATH, mode='rb') as f:
             wb = xlstesting.load(f)
-            actual = xlstesting.get_sheet_names(wb)
 
-        expected = ['People', 'Animals']
-        self.assertEqual(actual, expected)
+            # Check the worksheet names.
+            actual = xlstesting.get_sheet_names(wb)
+            expected = ['People', 'Animals']
+            self.assertEqual(actual, expected)
+
+            # Check the data in the second sheet.
+            sheet2 = wb.worksheets[1]
+            data = xlstesting.get_sheet_rows(sheet2)
+            self.assertEqual(data, expected_data)

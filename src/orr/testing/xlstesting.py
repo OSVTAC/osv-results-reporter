@@ -55,3 +55,18 @@ def get_sheet_names(wb):
       wb: a Workbook object.
     """
     return wb.sheetnames
+
+
+def get_sheet_rows(worksheet):
+    """
+    Return an iterable of iterables, representing the rows.
+
+    Args:
+      wb: an openpyxl.worksheet.read_only.ReadOnlyWorksheet object,
+        e.g. as returned from wb.worksheets[0].
+    """
+    rows = []
+    for row in worksheet.iter_rows():
+        rows.append(tuple(cell.value for cell in row))
+
+    return rows
