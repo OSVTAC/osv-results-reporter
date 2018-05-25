@@ -144,7 +144,10 @@ def subtemplate(context, template_name, file_name):
 @environmentfunction
 def open_xlsx(env, rel_path):
     """
-    Render a template.
+    Create and return an XLSXBook object, for use inside a template.
+
+    The file is written to the given path, relative to the output path
+    configured in the given Jinja2 environment.
     """
     rel_path = Path(rel_path)
     if rel_path.suffix != '.xlsx':
