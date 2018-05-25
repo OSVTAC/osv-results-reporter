@@ -36,13 +36,12 @@ from pprint import pprint
 import re
 import sys
 
-import babel.dates
-import dateutil.parser
 import jinja2
-from jinja2 import (contextfilter, contextfunction, Environment, FileSystemLoader,
-    TemplateSyntaxError)
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 from jinja2.utils import Namespace
 import yaml
+
+import orr.templating as templating
 
 
 _log = logging.getLogger(__name__)
@@ -272,49 +271,6 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
-#--- Template filters and tests: ---
-
-# Define filter and test function docstrings beginning with "Template Filter: "
-# or "Template Test: ", so template documentation can be auto-extracted,
-# and names for the filters or tests can be collected.
-
-def format_date(value,format_str:str='medium'):
-    """
-    Template Filter: Converts a date value (str or datetime) into
-    the internationalized representation. A format parameter
-    can be supplied, either the standard short, medium, long, or
-    full (default is medium), or a pattern in the Locale Data
-    Markup Language specification.
-    """
-    if isinstance(value,str):
-        value = dateutil.parser.parse(value)
-
-    return(babel.dates.format_date(value,format_str))
-
-
-@contextfilter
-def translate(context, label):
-    """
-    Return the translation using the currently set language.
-    """
-    options = context['options']
-    lang = options.lang
-
-    all_trans = context['translations']
-    translations = all_trans[label]
-    translated = translations[lang]
-
-    return translated
-
-
-@contextfunction
-def subtemplate(context, template_name, file_name):
-    env = context.environment
-
-    process_template(env, template_name=template_name, rel_output_path=file_name,
-        context=context)
-
-
 #--- Template global setup: ---
 
 def create_jinja_env(template_dirs, output_dir):
@@ -341,11 +297,11 @@ def create_jinja_env(template_dirs, output_dir):
     # Apparently we need to set using index rather than attribute notation.
     options['output_dir'] = output_dir
 
-    env.globals.update(options=options, subtemplate=subtemplate)
+    env.globals.update(options=options, subtemplate=templating.subtemplate)
 
     # The following dictionary of filter and test functions will be auto-edited.
     # [Do not change these, instead edit the docstrings in the function def]
-    filters = dict(format_date=format_date, translate=translate)
+    filters = dict(format_date=templating.format_date, translate=templating.translate)
     tests = {}
 
     env.filters.update(filters)
@@ -353,59 +309,6 @@ def create_jinja_env(template_dirs, output_dir):
 
     return env
 
-
-#--- Template processing: ---
-
-def process_template(env:Environment, template_name:str, rel_output_path:Path,
-    context:dict=None, test_mode:bool=False):
-    """
-    Creates the specified output file using the named template,
-    where `data` provides the template context. The template
-    and included templates will be located within the template
-    search path, already setup via configuration data.
-
-    Args:
-      env: the Jinja2 Environment object to use.
-      template_name: template to expand.
-      rel_output_path: the output path (relative to the output directory
-        configured in the Jinja2 Environment object), or else '-'.
-      context: optional context data.
-    """
-    if context is None:
-        context = {}
-
-    if test_mode:
-        print(
-            f'Will process_template {template_name} to create {output_path})')
-        return
-
-    options = env.globals['options']
-    output_dir = options.output_dir
-    output_path = output_dir / rel_output_path
-
-    _log.debug(f'process_template: {template_name} -> {output_path}')
-
-    template = env.get_template(template_name)
-
-    # PDF output renders using html, create a .pdf.html file
-    if output_path.suffix == '.pdf':
-        pdf_path = output_path
-        output_path += '.html'
-    else:
-        pdf_path = ''
-
-    output_dir = output_path.parent
-    if not output_dir.exists():
-        output_dir.mkdir()
-
-    output_text = template.render(context)
-    output_path.write_text(output_text)
-    _log.info(f'Created {output_path} from template {template_name}')
-
-    if pdf_path:
-        # Convert the html file to pdf_path
-        #[TODO]
-        return
 
 #--- Top level processing: ---
 
@@ -428,7 +331,7 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
             continue
 
         file_name = template_path.name
-        process_template(env, template_name=file_name, rel_output_path=file_name,
+        templating.process_template(env, template_name=file_name, rel_output_path=file_name,
             context=context, test_mode=test_mode)
 
 
