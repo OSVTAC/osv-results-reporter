@@ -20,7 +20,7 @@
 #
 
 """
-Includes custom filters and context functions.
+Includes custom template filters and context functions.
 """
 
 import logging

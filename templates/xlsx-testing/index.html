@@ -1,0 +1,9 @@
+<h1>Excel Test</h1>
+
+{% with book=open_xlsx('sample.xlsx') %}
+  {% with sheet=book.add_sheet('My Sheet') %}
+    {% for row in rows %}
+      {% do sheet.add_row(row) %}
+    {% endfor %}
+  {% endwith %}
+{% endwith %}
