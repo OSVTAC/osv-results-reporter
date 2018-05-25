@@ -33,12 +33,12 @@ class ModuleTest(TestCase):
     """
 
     def test_add_worksheet(self):
-        sheet1_data = [
+        rows1 = [
             ('id', 'name'),
             (2, 'Alice'),
             (3, 'Bob'),
         ]
-        sheet2_data = [
+        rows2 = [
             ('id', 'text'),
             (4, 'abc'),
             (5, 'xyz'),
@@ -49,8 +49,8 @@ class ModuleTest(TestCase):
             path = temp_dir / 'test.xlsx'
 
             with xlsxwriting.creating_workbook(path) as wb:
-                xlsxwriting.add_worksheet(wb, data=sheet1_data)
-                xlsxwriting.add_worksheet(wb, data=sheet2_data, name='MySheet')
+                xlsxwriting.add_worksheet(wb, rows=rows1)
+                xlsxwriting.add_worksheet(wb, rows=rows2, name='MySheet')
 
             # TODO: also check the data in the sheets.
             wb = xlstesting.load(path)

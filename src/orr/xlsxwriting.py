@@ -27,6 +27,29 @@ from contextlib import contextmanager
 import xlsxwriter
 
 
+class XLSXSheet:
+
+    """
+    Encapsulates an XLSX worksheet.
+    """
+
+    def __init__(self, worksheet):
+        """
+        Args:
+          worksheet: an xlsxwriter.worksheet.Worksheet object.
+        """
+        self.row_index = 0
+
+        self.worksheet = worksheet
+
+    def add_row(self, row):
+        row_index = self.row_index
+        for i, value in enumerate(row):
+            self.worksheet.write(i, row_index, value)
+
+        self.row_index += 1
+
+
 @contextmanager
 def creating_workbook(path):
     """
@@ -40,19 +63,33 @@ def creating_workbook(path):
         workbook.close()
 
 
-def add_worksheet(wb, data=None, name=None):
+def _add_sheet(wb, name=None):
+    """
+    Create, and return an XLSXSheet object.
+
+    Args:
+      wb: an xlsxwriter.Workbook object.
+      name: an optional name for the worksheet.  Defaults to e.g. "Sheet1".
+    """
+    worksheet = wb.add_worksheet(name)
+    sheet = XLSXSheet(worksheet)
+
+    return sheet
+
+
+# TODO: remove this shortcut function?
+def add_worksheet(wb, rows=None, name=None):
     """
     Add a worksheet to a workbook.
 
     Args:
       wb: an xlsxwriter.Workbook object.
-      data: the data to add to the sheet, as an iterable of iterables.
+      rows: the data to add to the sheet, as an iterable of iterables.
       name: an optional name for the worksheet.
     """
-    if data is None:
-        data = []
+    if rows is None:
+        rows = []
 
-    worksheet = wb.add_worksheet(name)
-    for i, row in enumerate(data):
-        for j, value in enumerate(row):
-            worksheet.write(i, j, value)
+    sheet = _add_sheet(wb, name=name)
+    for row in rows:
+        sheet.add_row(row)
