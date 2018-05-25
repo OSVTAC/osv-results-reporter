@@ -52,8 +52,14 @@ class ModuleTest(TestCase):
                 xlsxwriting.add_worksheet(wb, rows=rows1)
                 xlsxwriting.add_worksheet(wb, rows=rows2, name='MySheet')
 
-            # TODO: also check the data in the sheets.
             wb = xlstesting.load(path)
+
+            # Check the sheet names.
             actual = xlstesting.get_sheet_names(wb)
             expected = ['Sheet1', 'MySheet']
             self.assertEqual(actual, expected)
+
+            # Check the data in the second sheet, for example.
+            sheet = wb.worksheets[1]
+            actual_rows = xlstesting.get_sheet_rows(sheet)
+            self.assertEqual(actual_rows, rows2)

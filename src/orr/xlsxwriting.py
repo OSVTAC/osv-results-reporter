@@ -45,7 +45,7 @@ class XLSXSheet:
     def add_row(self, row):
         row_index = self.row_index
         for i, value in enumerate(row):
-            self.worksheet.write(i, row_index, value)
+            self.worksheet.write(row_index, i, value)
 
         self.row_index += 1
 
