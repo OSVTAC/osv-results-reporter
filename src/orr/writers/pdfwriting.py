@@ -82,7 +82,7 @@ def compute_width(data, start_column, end_column):
     assert end_column > start_column
 
     # Grab the data that would be used from each row.
-    new_data = slice_data_vertically(data, start_column, end_column + 1)
+    new_data = slice_data_vertically(data, start=start_column, stop=(end_column + 1))
     table = Table(new_data)
 
     # We can pass 0 for the available width and height since it doesn't
@@ -142,8 +142,12 @@ def split_table_vertically(table, column_counts):
     """
     Split a Table object along columns.
 
+    Returns a list of new Table objects.
+
     Args:
       table: a reportlab Table object.
+      column_counts: an iterable of the number of columns of data to use
+        in each table split from the original.
     """
     # TODO: don't rely on an internal API.
     data = table._cellvalues
@@ -152,7 +156,7 @@ def split_table_vertically(table, column_counts):
     start = 0
     for column_count in column_counts:
         stop = start + column_count
-        new_data = slice_data_vertically(data, start, stop)
+        new_data = slice_data_vertically(data, start=start, stop=stop)
         table = Table(new_data)
         tables.append(table)
         start = stop
@@ -188,7 +192,7 @@ def make_pdf(path, text):
         # Then split each sub-table along columns, using the column
         # counts we already computed.
         new_tables = split_table_vertically(table, column_counts)
-        print(f'split table into: {len(new_tables)}')
+        _log.debug(f'split table into {len(new_tables)} tables')
         for new_table in new_tables:
             story.extend([new_table, PageBreak()])
 
