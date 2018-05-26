@@ -211,19 +211,25 @@ def make_pdf(path):
 
     data = make_sample_table_data(row_count=60)
 
-    def make_table(data):
-        table = Table(data)
+    def make_table(data, **kwargs):
+        """
+        Args:
+          **kwargs: additional keyword arguments to pass to the Table
+            constructor.
+        """
+        table = Table(data, **kwargs)
         table.setStyle(TableStyle([
             # Add grid lines to the table.
             # The third element is the width of the grid lines.
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgoldenrodyellow),
         ]))
 
         return table
 
     column_counts = compute_column_counts(make_table, data=data, width=available_width)
 
-    table = make_table(data)
+    table = make_table(data, repeatRows=1)
 
     # First split the table along rows.
     tables = table.split(*available)
