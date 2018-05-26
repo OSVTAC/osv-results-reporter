@@ -12,5 +12,7 @@ Jinja2
 openpyxl
 python-dateutil
 PyYAML
-# Used for writing Excel files.
+# For writing PDF's.
+reportlab
+# For writing Excel files.
 XlsxWriter

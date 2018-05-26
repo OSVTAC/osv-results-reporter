@@ -10,8 +10,10 @@ jdcal==1.4                # via openpyxl
 jinja2==2.10
 markupsafe==1.0           # via jinja2
 openpyxl==2.5.3
+pillow==5.1.0             # via reportlab
 python-dateutil==2.7.3
 pytz==2018.4              # via babel
 pyyaml==3.12
+reportlab==3.4.0
 six==1.11.0               # via python-dateutil
 xlsxwriter==1.0.5
