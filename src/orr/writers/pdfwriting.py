@@ -29,8 +29,10 @@ import sys
 import reportlab.lib.colors as colors
 # The "inch" value equals 72.0.
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import PageBreak, SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import (PageBreak, Paragraph, SimpleDocTemplate, Table,
+    TableStyle)
 
 
 _log = logging.getLogger(__name__)
@@ -45,6 +47,8 @@ MARGIN_NAMES = [
     'rightMargin',
     'topMargin'
 ]
+
+STYLES = getSampleStyleSheet()
 
 
 def get_available_size(page_size):
@@ -187,6 +191,28 @@ def make_sample_table_data(row_count):
     return data
 
 
+class CanvasState:
+
+    def __init__(self):
+        self.page_number = 1
+        self.style = STYLES['Normal']
+
+    def _after_new_page(self):
+        self.page_number += 1
+
+    def onFirstPage(self, canvas, document):
+        self._after_new_page()
+
+    def onLaterPages(self, canvas, document):
+        text = f'Page {self.page_number}'
+        paragraph = Paragraph(text, style=self.style)
+        result = paragraph.wrapOn(canvas, 100, 100)
+
+        paragraph.drawOn(canvas, inch, 0.5 * inch)
+
+        self._after_new_page()
+
+
 # TODO: keep working on PDF generation.  This is a scratch function.
 def make_pdf(path):
     """
@@ -243,8 +269,10 @@ def make_pdf(path):
         for new_table in new_tables:
             story.extend([new_table, PageBreak()])
 
+    canvas_state = CanvasState()
+
     _log.info(f'writing PDF to: {path}')
-    document.build(story)
+    document.build(story, onFirstPage=canvas_state.onFirstPage, onLaterPages=canvas_state.onLaterPages)
 
 
 if __name__ == '__main__':
