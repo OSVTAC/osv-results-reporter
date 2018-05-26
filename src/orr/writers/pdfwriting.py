@@ -56,24 +56,6 @@ def get_available_size(page_size):
     return (page_width - 2 * inch, page_height - 2 * inch)
 
 
-# This is only for testing.
-def make_table_data(row_count):
-    """
-    Args:
-      rows: the number of data rows.
-    """
-    column_count = 20
-    first_row = [f'Column{i}' for i in range(column_count)]
-
-    data = [first_row]
-    for i in range(row_count):
-        value = (i + 1) * 10000
-        row = [value + j for j in range(20)]
-        data.append(row)
-
-    return data
-
-
 def slice_data_vertically(data, start, stop):
     """
     Return a list of new row data, slicing each row.
@@ -187,6 +169,24 @@ def split_table_vertically(make_table, table, column_counts):
     return tables
 
 
+# TODO: remove this (it's only for testing).
+def make_sample_table_data(row_count):
+    """
+    Args:
+      rows: the number of data rows.
+    """
+    column_count = 20
+    first_row = [f'Column{i}' for i in range(column_count)]
+
+    data = [first_row]
+    for i in range(row_count):
+        value = (i + 1) * 10000
+        row = [value + j for j in range(20)]
+        data.append(row)
+
+    return data
+
+
 # TODO: keep working on PDF generation.  This is a scratch function.
 def make_pdf(path):
     """
@@ -208,7 +208,7 @@ def make_pdf(path):
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
 
-    data = make_table_data(row_count=60)
+    data = make_sample_table_data(row_count=60)
 
     def make_table(data):
         table = Table(data)
