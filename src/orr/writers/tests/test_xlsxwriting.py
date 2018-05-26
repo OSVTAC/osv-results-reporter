@@ -22,7 +22,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
-import orr.xlsxwriting as xlsxwriting
+import orr.writers.xlsxwriting as xlsxwriting
 import orr.testing.xlstesting as xlstesting
 
 

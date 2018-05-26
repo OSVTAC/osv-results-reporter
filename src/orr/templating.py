@@ -30,7 +30,7 @@ import babel.dates
 import dateutil.parser
 from jinja2 import contextfilter, contextfunction, environmentfunction, Environment
 
-from orr.xlsxwriting import XLSXBook
+from orr.writers.xlsxwriting import XLSXBook
 
 
 _log = logging.getLogger(__name__)
