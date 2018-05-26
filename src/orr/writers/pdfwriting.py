@@ -25,19 +25,22 @@ Support for creating PDF files.
 import logging
 import os
 
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.platypus import PageBreak, SimpleDocTemplate, Table
-from reportlab.rl_config import defaultPageSize
 
 
 _log = logging.getLogger(__name__)
 
+# ReportLab defaults to A4, so make the American standard more available.
+DEFAULT_PAGE_SIZE = letter
 
-def get_available_size():
+
+def get_available_size(page_size):
     """
     Return the available space on the page as (width, height).
     """
-    page_width, page_height = defaultPageSize
+    page_width, page_height = page_size
 
     return (page_width - 2 * inch, page_height - 2 * inch)
 
@@ -172,9 +175,12 @@ def make_pdf(path, text):
     """
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
-    document = SimpleDocTemplate(path)
 
-    available = get_available_size()
+    page_size = DEFAULT_PAGE_SIZE
+
+    document = SimpleDocTemplate(path, pagesize=page_size)
+
+    available = get_available_size(page_size=page_size)
     available_width, available_height = available
 
     data = make_table_data(row_count=60)
