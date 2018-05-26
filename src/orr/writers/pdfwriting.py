@@ -24,16 +24,27 @@ Support for creating PDF files.
 
 import logging
 import os
+import sys
 
+import reportlab.lib.colors as colors
+# The "inch" value equals 72.0.
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-from reportlab.platypus import PageBreak, SimpleDocTemplate, Table
+from reportlab.platypus import PageBreak, SimpleDocTemplate, Table, TableStyle
 
 
 _log = logging.getLogger(__name__)
 
 # ReportLab defaults to A4, so make the American standard more available.
 DEFAULT_PAGE_SIZE = letter
+
+# The names of ReportLab's BaseDocTemplate margin attributes.
+MARGIN_NAMES = [
+    'bottomMargin',
+    'leftMargin',
+    'rightMargin',
+    'topMargin'
+]
 
 
 def get_available_size(page_size):
@@ -45,6 +56,7 @@ def get_available_size(page_size):
     return (page_width - 2 * inch, page_height - 2 * inch)
 
 
+# This is only for testing.
 def make_table_data(row_count):
     """
     Args:
@@ -61,6 +73,7 @@ def make_table_data(row_count):
 
     return data
 
+
 def slice_data_vertically(data, start, stop):
     """
     Return a list of new row data, slicing each row.
@@ -73,11 +86,13 @@ def slice_data_vertically(data, start, stop):
     return [tuple(row[start:stop]) for row in data]
 
 
-def compute_width(data, start_column, end_column):
+def compute_width(make_table, data, start_column, end_column):
     """
     Compute the width of a table constructed from the given columns of data.
 
     Args:
+      make_table: a function that accepts a data argument and returns a
+        ReportLab Table object.
       start_column: the index of the first column.
       end_column: the index of the last column.
     """
@@ -85,7 +100,7 @@ def compute_width(data, start_column, end_column):
 
     # Grab the data that would be used from each row.
     new_data = slice_data_vertically(data, start=start_column, stop=(end_column + 1))
-    table = Table(new_data)
+    table = make_table(new_data)
 
     # We can pass 0 for the available width and height since it doesn't
     # affect the calculation.
@@ -94,18 +109,20 @@ def compute_width(data, start_column, end_column):
     return width
 
 
-def split_data_vertically(data, start_column, width, column_count):
+def split_data_vertically(make_table, data, start_column, width, column_count):
     """
     Return the number of columns that can fit in the available width.
 
     Args:
+      make_table: a function that accepts a data argument and returns a
+        ReportLab Table object.
       width: the available width.
       column_count: the maximum number of columns.
     """
     end_column = start_column + 1
     while end_column < column_count:
         _log.debug(f'computing (start_column, end_column): ({start_column}, {end_column})')
-        actual_width = compute_width(data, start_column, end_column=end_column)
+        actual_width = compute_width(make_table, data, start_column, end_column=end_column)
         if actual_width > width:
             end_column -= 1
             break
@@ -120,12 +137,14 @@ def split_data_vertically(data, start_column, width, column_count):
     return end_column - start_column
 
 
-def compute_column_counts(data, width):
+def compute_column_counts(make_table, data, width):
     """
     Return an iterable of column counts representing how a table constructed
     from the given data should be split along columns.
 
     Args:
+      make_table: a function that accepts a data argument and returns a
+        ReportLab Table object.
       width: the available width.
     """
     column_count = max(len(row) for row in data)
@@ -133,20 +152,22 @@ def compute_column_counts(data, width):
     counts = []
     start_column = 0
     while start_column < column_count:
-        count = split_data_vertically(data, start_column, width=width, column_count=column_count)
+        count = split_data_vertically(make_table, data, start_column, width=width, column_count=column_count)
         counts.append(count)
         start_column += count
 
     return counts
 
 
-def split_table_vertically(table, column_counts):
+def split_table_vertically(make_table, table, column_counts):
     """
     Split a Table object along columns.
 
     Returns a list of new Table objects.
 
     Args:
+      make_table: a function that accepts a data argument and returns a
+        ReportLab Table object.
       table: a reportlab Table object.
       column_counts: an iterable of the number of columns of data to use
         in each table split from the original.
@@ -159,7 +180,7 @@ def split_table_vertically(table, column_counts):
     for column_count in column_counts:
         stop = start + column_count
         new_data = slice_data_vertically(data, start=start, stop=stop)
-        table = Table(new_data)
+        table = make_table(new_data)
         tables.append(table)
         start = stop
 
@@ -167,7 +188,7 @@ def split_table_vertically(table, column_counts):
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
-def make_pdf(path, text):
+def make_pdf(path):
     """
     Args:
       path: a path-like object.
@@ -178,16 +199,30 @@ def make_pdf(path, text):
 
     page_size = DEFAULT_PAGE_SIZE
 
-    document = SimpleDocTemplate(path, pagesize=page_size)
+    # Add a little margin cushion to prevent overflow.
+    margin = 0.9 * inch
+    margins = {key: margin for key in MARGIN_NAMES}
+
+    document = SimpleDocTemplate(path, pagesize=page_size, **margins)
 
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
 
     data = make_table_data(row_count=60)
 
-    column_counts = compute_column_counts(data, width=available_width)
+    def make_table(data):
+        table = Table(data)
+        table.setStyle(TableStyle([
+            # Add grid lines to the table.
+            # The third element is the width of the grid lines.
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ]))
 
-    table = Table(data)
+        return table
+
+    column_counts = compute_column_counts(make_table, data=data, width=available_width)
+
+    table = make_table(data)
 
     # First split the table along rows.
     tables = table.split(*available)
@@ -196,9 +231,26 @@ def make_pdf(path, text):
     for table in tables:
         # Then split each sub-table along columns, using the column
         # counts we already computed.
-        new_tables = split_table_vertically(table, column_counts)
+        new_tables = split_table_vertically(make_table, table=table, column_counts=column_counts)
         _log.debug(f'split table into {len(new_tables)} tables')
         for new_table in new_tables:
             story.extend([new_table, PageBreak()])
 
+    _log.info(f'writing PDF to: {path}')
     document.build(story)
+
+
+if __name__ == '__main__':
+    # The code below is for testing purposes.
+    #
+    # To run:
+    #
+    #     $ python src/orr/writers/pdfwriting.py
+    #
+    logging.basicConfig(level=logging.DEBUG)
+    try:
+        path = sys.argv[1]
+    except IndexError:
+        path = 'sample.pdf'
+
+    make_pdf(path)
