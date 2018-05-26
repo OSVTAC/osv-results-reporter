@@ -28,6 +28,22 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Table
 
 
+def make_table(row_count):
+    """
+    Args:
+      rows: the number of data rows.
+    """
+    data = [20 * ('Alice', )]
+    for i in range(row_count):
+        value = (i + 1) * 1000
+        row = 20 * (value, )
+        data.append(row)
+
+    table = Table(data)
+
+    return table
+
+
 # TODO: keep working on PDF generation.  This is a scratch function.
 def make_pdf(path, text):
     """
@@ -39,16 +55,18 @@ def make_pdf(path, text):
     path = os.fspath(path)
     canvas = Canvas(path)
 
-    data = [
-        ('Alice', 'Bob', 'Cathy', 'David', 'Erica', 'Frank'),
-        (100, 200, 300, 400, 500, 600),
-        (150, 250, 350, 450, 550, 650),
-    ]
-    table = Table(data)
+    table = make_table(row_count=60)
+
+    # tables = table.split(40, 40)
+    # tables = [table, table]
+
+    tables = [table]
+
     # We need to call wrapOn() before calling drawOn().
     result = table.wrapOn(canvas, 300, 300)
+    print(f'wrapOn: {result}')
 
-    table.drawOn(canvas, 50, 600)
+    table.drawOn(canvas, 20, 20)
 
     canvas.showPage()
     canvas.save()
