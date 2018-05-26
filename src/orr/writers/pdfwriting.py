@@ -25,6 +25,7 @@ Support for creating PDF files.
 import os
 
 from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import Table
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
@@ -37,6 +38,17 @@ def make_pdf(path, text):
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
     canvas = Canvas(path)
-    canvas.drawString(200, 500, text)
+
+    data = [
+        ('Alice', 'Bob', 'Cathy', 'David', 'Erica', 'Frank'),
+        (100, 200, 300, 400, 500, 600),
+        (150, 250, 350, 450, 550, 650),
+    ]
+    table = Table(data)
+    # We need to call wrapOn() before calling drawOn().
+    result = table.wrapOn(canvas, 300, 300)
+
+    table.drawOn(canvas, 50, 600)
+
     canvas.showPage()
     canvas.save()
