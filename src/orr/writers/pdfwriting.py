@@ -78,7 +78,7 @@ def compute_width(make_table, data, start_column, end_column):
       start_column: the index of the first column.
       end_column: the index of the last column.
     """
-    assert end_column > start_column
+    assert end_column >= start_column
 
     # Grab the data that would be used from each row.
     new_data = slice_data_vertically(data, start=start_column, stop=(end_column + 1))
@@ -101,10 +101,10 @@ def split_data_vertically(make_table, data, start_column, width, column_count):
       width: the available width.
       column_count: the maximum number of columns.
     """
-    end_column = start_column + 1
+    end_column = start_column
     while end_column < column_count:
-        _log.debug(f'computing (start_column, end_column): ({start_column}, {end_column})')
         actual_width = compute_width(make_table, data, start_column, end_column=end_column)
+        _log.debug(f'width for columns ({start_column}, {end_column}): {actual_width}')
         if actual_width > width:
             end_column -= 1
             break
@@ -207,6 +207,7 @@ def make_pdf(path):
 
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
+    _log.debug(f'computed available width: {available_width} ({available_width / inch} inches)')
 
     data = make_sample_table_data(row_count=60)
 
