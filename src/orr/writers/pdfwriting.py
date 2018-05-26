@@ -24,8 +24,7 @@ Support for creating PDF files.
 
 import os
 
-from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import Table
+from reportlab.platypus import SimpleDocTemplate, Table
 
 
 def make_table(row_count):
@@ -53,20 +52,9 @@ def make_pdf(path, text):
     """
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
-    canvas = Canvas(path)
+    document = SimpleDocTemplate(path)
 
     table = make_table(row_count=60)
 
-    # tables = table.split(40, 40)
-    # tables = [table, table]
-
-    tables = [table]
-
-    # We need to call wrapOn() before calling drawOn().
-    result = table.wrapOn(canvas, 300, 300)
-    print(f'wrapOn: {result}')
-
-    table.drawOn(canvas, 20, 20)
-
-    canvas.showPage()
-    canvas.save()
+    story = [table]
+    document.build(story)
