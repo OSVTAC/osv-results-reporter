@@ -26,7 +26,6 @@ import logging
 import os
 
 from reportlab.lib.units import inch
-from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import PageBreak, SimpleDocTemplate, Table
 from reportlab.rl_config import defaultPageSize
 
