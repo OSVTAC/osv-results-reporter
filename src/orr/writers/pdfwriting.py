@@ -196,11 +196,13 @@ def make_sample_table_data(row_count):
 
 class CanvasState:
 
-    def __init__(self, page_size):
+    def __init__(self):
         self.page_column = 1
         self.page_row = 1
 
-        self.page_size = page_size
+    def get_page_size(self, canvas):
+        # TODO: is it okay to depend on this internal API?
+        return canvas._pagesize
 
     def _write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
@@ -209,7 +211,7 @@ class CanvasState:
         _log.debug(f'writing page number: {text})')
 
         # Center the page number near the very bottom.
-        page_width = self.page_size[0]
+        page_width = self.get_page_size(canvas)[0]
         width = canvas.stringWidth(text)
         x = (page_width - width) / 2
         canvas.drawString(x, 0.5 * inch, text)
@@ -245,7 +247,7 @@ def make_pdf(path):
 
     data = make_sample_table_data(row_count=60)
 
-    canvas_state = CanvasState(page_size=page_size)
+    canvas_state = CanvasState()
 
     class TrackingTable(Table):
 
