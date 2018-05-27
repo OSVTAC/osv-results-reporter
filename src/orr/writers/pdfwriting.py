@@ -205,12 +205,11 @@ class CanvasState:
         self.page_size = page_size
 
     def _write_page_number(self, canvas):
-        # Page 3 [row 2:col 3]
         text = f'Page {self.page_number} [row {self.page_row}: col {self.page_column}]'
         _log.debug(f'writing page number: {text})')
 
+        # Center the page number near the very bottom.
         page_width = self.page_size[0]
-
         width = canvas.stringWidth(text)
         x = (page_width - width) / 2
         canvas.drawString(x, 0.5 * inch, text)
