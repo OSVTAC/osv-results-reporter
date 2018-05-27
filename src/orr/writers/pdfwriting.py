@@ -170,6 +170,8 @@ def split_table_vertically(make_table, table, column_counts):
         tables.append(table)
         start = stop
 
+    table.last_in_row = True
+
     return tables
 
 
@@ -193,24 +195,33 @@ def make_sample_table_data(row_count):
 
 class CanvasState:
 
-    def __init__(self):
+    def __init__(self, page_size):
         self.page_number = 1
+        self.page_column = 1
+        self.page_row = 1
+
         self.style = STYLES['Normal']
 
-    def _after_new_page(self):
+        self.page_size = page_size
+
+    def _write_page_number(self, canvas):
+        # Page 3 [row 2:col 3]
+        text = f'Page {self.page_number} [row {self.page_row}: col {self.page_column}]'
+        _log.debug(f'writing page number: {text})')
+
+        page_width = self.page_size[0]
+
+        width = canvas.stringWidth(text)
+        x = (page_width - width) / 2
+        canvas.drawString(x, 0.5 * inch, text)
+
         self.page_number += 1
 
     def onFirstPage(self, canvas, document):
-        self._after_new_page()
+        self._write_page_number(canvas)
 
     def onLaterPages(self, canvas, document):
-        text = f'Page {self.page_number}'
-        paragraph = Paragraph(text, style=self.style)
-        result = paragraph.wrapOn(canvas, 100, 100)
-
-        paragraph.drawOn(canvas, inch, 0.5 * inch)
-
-        self._after_new_page()
+        self._write_page_number(canvas)
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
@@ -237,17 +248,41 @@ def make_pdf(path):
 
     data = make_sample_table_data(row_count=60)
 
+    canvas_state = CanvasState(page_size=page_size)
+
+    class TrackingTable(Table):
+
+        """
+        A table that tells CanvasState which table has been drawn.
+        """
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.last_in_row = False
+
+        def drawOn(self, *args, **kwargs):
+            _log.debug('calling: TrackingTable.drawOn()')
+            super().drawOn(*args, **kwargs)
+
+            if self.last_in_row:
+                canvas_state.page_row += 1
+                canvas_state.page_column = 1
+            else:
+                canvas_state.page_column += 1
+
     def make_table(data, **kwargs):
         """
         Args:
           **kwargs: additional keyword arguments to pass to the Table
             constructor.
         """
-        table = Table(data, **kwargs)
+        table = TrackingTable(data, **kwargs)
+
         table.setStyle(TableStyle([
             # Add grid lines to the table.
             # The third element is the width of the grid lines.
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            # Shade the first (header) row.
             ('BACKGROUND', (0, 0), (-1, 0), colors.lightgoldenrodyellow),
         ]))
 
@@ -266,10 +301,10 @@ def make_pdf(path):
         # counts we already computed.
         new_tables = split_table_vertically(make_table, table=table, column_counts=column_counts)
         _log.debug(f'split table into {len(new_tables)} tables')
-        for new_table in new_tables:
-            story.extend([new_table, PageBreak()])
 
-    canvas_state = CanvasState()
+        for new_table in new_tables:
+            # Force a page break after each part of the table.
+            story.extend([new_table, PageBreak()])
 
     _log.info(f'writing PDF to: {path}')
     document.build(story, onFirstPage=canvas_state.onFirstPage, onLaterPages=canvas_state.onLaterPages)
