@@ -196,7 +196,6 @@ def make_sample_table_data(row_count):
 class CanvasState:
 
     def __init__(self, page_size):
-        self.page_number = 1
         self.page_column = 1
         self.page_row = 1
 
@@ -205,7 +204,9 @@ class CanvasState:
         self.page_size = page_size
 
     def _write_page_number(self, canvas):
-        text = f'Page {self.page_number} [row {self.page_row}: col {self.page_column}]'
+        page_number = canvas.getPageNumber()
+
+        text = f'Page {page_number} [row {self.page_row}: col {self.page_column}]'
         _log.debug(f'writing page number: {text})')
 
         # Center the page number near the very bottom.
@@ -213,8 +214,6 @@ class CanvasState:
         width = canvas.stringWidth(text)
         x = (page_width - width) / 2
         canvas.drawString(x, 0.5 * inch, text)
-
-        self.page_number += 1
 
     def onFirstPage(self, canvas, document):
         self._write_page_number(canvas)
