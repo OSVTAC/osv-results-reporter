@@ -49,6 +49,7 @@ MARGIN_NAMES = [
 ]
 
 STYLES = getSampleStyleSheet()
+NORMAL_STYLE = STYLES['Normal']
 
 
 def get_available_size(page_size):
@@ -198,8 +199,6 @@ class CanvasState:
     def __init__(self, page_size):
         self.page_column = 1
         self.page_row = 1
-
-        self.style = STYLES['Normal']
 
         self.page_size = page_size
 
