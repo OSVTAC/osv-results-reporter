@@ -18,6 +18,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+"""
+Test the orr.main module.
+"""
+
 from datetime import datetime
 from unittest import TestCase
 from unittest.mock import patch

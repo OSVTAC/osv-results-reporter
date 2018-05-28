@@ -18,6 +18,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+"""
+Test the orr.templating module.
+"""
+
 from pathlib import Path
 from unittest import TestCase
 
