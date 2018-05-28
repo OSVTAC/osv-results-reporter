@@ -343,7 +343,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir] + extra_template_dirs
-    env = configlib.create_jinja_env(template_dirs, output_dir=output_dir)
+    env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs)
 
     context = {}
     for input_path in input_paths:

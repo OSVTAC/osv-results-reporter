@@ -23,6 +23,8 @@
 Contains functions to help configure ORR.
 """
 
+from pathlib import Path
+
 import jinja2
 from jinja2 import Environment, FileSystemLoader
 from jinja2.utils import Namespace
@@ -30,13 +32,16 @@ from jinja2.utils import Namespace
 import orr.templating as templating
 
 
-def create_jinja_env(template_dirs, output_dir):
+def create_jinja_env(output_dir, template_dirs=None):
     """
     Create and return the Jinja2 Environment object.
 
     Args:
-      output_dir: a Path object.
+      output_dir: a path-like object.
     """
+    if template_dirs is None:
+        template_dirs = []
+
     env = Environment(
         loader=FileSystemLoader(template_dirs),
         autoescape=jinja2.select_autoescape(['html', 'xml']),
@@ -52,7 +57,7 @@ def create_jinja_env(template_dirs, output_dir):
     # values explicitly.
     options = Namespace()
     # Apparently we need to set using index rather than attribute notation.
-    options['output_dir'] = output_dir
+    options['output_dir'] = Path(output_dir)
 
     env.globals.update(options=options,
         open_xlsx=templating.open_xlsx,
