@@ -24,6 +24,7 @@ Support for creating PDF files.
 
 import logging
 import os
+import random
 import sys
 
 import reportlab.lib.colors as colors
@@ -290,15 +291,48 @@ class TextWrapper:
     def canvas(self):
         return self.document.canv
 
-    def make_vertical_text(self, text):
+    def compute_vertical_text_dimensions(self, text):
+        """
+        Compute and return (width, height).
+        """
+        # TODO: incorporate the style into the computation.
+        width, height = wrap_text(self.canvas, text)
+
+        # Swap the dimensions since the text will be rotated 90-degrees.
+        return (height, width)
+
+    def make_vertical_text(self, text, dimensions=None):
         """
         Create and return a VerticalText flowable.
         """
-        width, height = wrap_text(self.canvas, text)
+        if dimensions is None:
+            dimensions = wrap_text(self.canvas, text)
+
+        width, height = dimensions
+
         # Swap the dimensions since the text will be rotated 90-degrees.
-        vertical_text = VerticalText(text, width=height, height=width)
+        vertical_text = VerticalText(text, width=width, height=height)
 
         return vertical_text
+
+
+def make_header_row(count, text_wrapper):
+    """
+    Return a list of VerticalText objects that is suitable for the
+    first data row of a Table object.
+    """
+    texts = [i * 'A' for i in range(1, count + 1)]
+    random.shuffle(texts)
+    texts = [f'{text} {i + 1}' for text, i in zip(texts, range(count))]
+
+    # A list of ordered pairs (width, height).
+    dimensions = [text_wrapper.compute_vertical_text_dimensions(text) for text in texts]
+    max_height = max(dimension[1] for dimension in dimensions)
+
+    vertical_texts = [text_wrapper.make_vertical_text(text, dimensions=(dim[0], max_height))
+                      for text, dim in zip(texts, dimensions)]
+
+    return vertical_texts
 
 
 # TODO: remove this (it's only for testing).
@@ -310,11 +344,9 @@ def make_sample_table_data(row_count, text_wrapper):
     """
     column_count = 20
 
-    # Try some vertical text.
-    first_row = tuple(text_wrapper.make_vertical_text(f'Column {i}')
-                      for i in range(1, column_count + 1))
+    header_row = make_header_row(count=column_count, text_wrapper=text_wrapper)
 
-    data = [first_row]
+    data = [header_row]
     for i in range(row_count):
         value = (i + 1) * 10000
         row = [value + j for j in range(20)]
