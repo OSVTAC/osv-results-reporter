@@ -31,6 +31,7 @@ import reportlab.lib.colors as colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (PageBreak, Paragraph, SimpleDocTemplate, Table,
     TableStyle)
 
@@ -223,6 +224,23 @@ class CanvasState:
         self._write_page_number(canvas)
 
 
+def draw_vertical_text(canvas, text, x, y):
+    """
+    Draw text on the canvas vertically.
+
+    Args:
+      x: the x coordinates at which to draw.
+      y: the y coordinates at which to draw.
+    """
+    canvas.saveState()
+    # Rotate 90 degrees counter-clockwise.
+    canvas.rotate(90)
+    # Adjust the coordinates after rotating.
+    canvas.drawString(y, -1 * x, text)
+    canvas.restoreState()
+    canvas.save()
+
+
 # TODO: keep working on PDF generation.  This is a scratch function.
 def make_pdf(path):
     """
@@ -232,6 +250,11 @@ def make_pdf(path):
     """
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
+
+    # canvas = Canvas(path)
+    # text = 'Hello, world'
+    # draw_vertical_text(canvas, text, x=200, y=200)
+    # return
 
     page_size = DEFAULT_PAGE_SIZE
 
