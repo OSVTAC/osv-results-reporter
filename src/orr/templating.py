@@ -43,7 +43,8 @@ def get_output_path(env, rel_path):
 
     Args:
       env: a Jinja2 Environment object.
-      rel_path: a relative path, as a path-like object.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object. This can be any path-like object.
     """
     options = env.globals['options']
     output_dir = options.output_dir
@@ -114,7 +115,7 @@ def output_file_uri(env, rel_path):
     Args:
       env: a Jinja2 Environment object.
       rel_path: a path relative to the output directory configured in the
-        Jinja2 Environment object.
+        Jinja2 Environment object. This can be any path-like object.
     """
     output_path = get_output_path(env, rel_path)
     output_path = output_path.resolve()
