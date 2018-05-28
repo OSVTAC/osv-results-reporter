@@ -28,7 +28,8 @@ from pathlib import Path
 
 import babel.dates
 import dateutil.parser
-from jinja2 import contextfilter, contextfunction, environmentfunction, Environment
+from jinja2 import (contextfilter, contextfunction, environmentfilter,
+    environmentfunction, Environment)
 
 from orr.writers.xlsxwriting import XLSXBook
 
@@ -38,8 +39,10 @@ _log = logging.getLogger(__name__)
 
 def get_output_path(env, rel_path):
     """
+    Return the output path, as a Path object.
+
     Args:
-      env: the Jinja2 Environment object.
+      env: a Jinja2 Environment object.
       rel_path: a relative path, as a path-like object.
     """
     options = env.globals['options']
@@ -59,7 +62,7 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     search path, already setup via configuration data.
 
     Args:
-      env: the Jinja2 Environment object.
+      env: a Jinja2 Environment object.
       template_name: template to expand.
       rel_output_path: the output path (relative to the output directory
         configured in the Jinja2 Environment object), or else '-'.
@@ -98,6 +101,26 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
         # Convert the html file to pdf_path
         #[TODO]
         return
+
+
+@environmentfilter
+def output_file_uri(env, rel_path):
+    """
+    Return an (absolute) file URI to an output path.
+
+    This template filter can be used to add hyperlinks to allow browsing
+    the rendered files on the local file system.
+
+    Args:
+      env: a Jinja2 Environment object.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object.
+    """
+    output_path = get_output_path(env, rel_path)
+    output_path = output_path.resolve()
+    uri = output_path.as_uri()
+
+    return uri
 
 
 def format_date(value,format_str:str='medium'):

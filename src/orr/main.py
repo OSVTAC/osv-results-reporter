@@ -302,9 +302,11 @@ def create_jinja_env(template_dirs, output_dir):
         subtemplate=templating.subtemplate
     )
 
-    # The following dictionary of filter and test functions will be auto-edited.
-    # [Do not change these, instead edit the docstrings in the function def]
-    filters = dict(format_date=templating.format_date, translate=templating.translate)
+    filters = dict(
+        file_uri=templating.output_file_uri,
+        format_date=templating.format_date,
+        translate=templating.translate
+    )
     tests = {}
 
     env.filters.update(filters)

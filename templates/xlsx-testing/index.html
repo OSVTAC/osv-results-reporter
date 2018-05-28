@@ -1,9 +1,12 @@
 <h1>Excel Test</h1>
 
-{% with book=open_xlsx('sample.xlsx') %}
-  {% with sheet=book.add_sheet('My Sheet') %}
-    {% for row in rows %}
-      {% do sheet.add_row(row) %}
-    {% endfor %}
+{% with rel_path='sample.xlsx' %}
+  <a href="{{ rel_path|file_uri}}">{{ rel_path }}</a>
+  {% with book=open_xlsx('sample.xlsx') %}
+    {% with sheet=book.add_sheet('My Sheet') %}
+      {% for row in rows %}
+        {% do sheet.add_row(row) %}
+      {% endfor %}
+    {% endwith %}
   {% endwith %}
 {% endwith %}
