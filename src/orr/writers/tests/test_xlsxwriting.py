@@ -18,6 +18,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+"""
+Test the orr.writers.xlsxwriting module.
+"""
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -29,7 +33,7 @@ import orr.testing.xlstesting as xlstesting
 class ModuleTest(TestCase):
 
     """
-    Test the functions in the xlsxwriting module.
+    Test the functions in orr.writers.pdfwriting.
     """
 
     def test_add_worksheet(self):
