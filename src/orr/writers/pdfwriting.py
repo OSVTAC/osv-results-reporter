@@ -451,6 +451,11 @@ def make_pdf(path):
             super().drawOn(*args, **kwargs)
 
             if self.last_in_row:
+                # The document's onFirstPage() and onLaterPages() functions
+                # fire **before** any flowables are drawn (and in particular
+                # before start_new_page_row() is called below), so
+                # start_new_page_row() below takes effect for the next
+                # page and table.
                 canvas_state.start_new_page_row()
 
         # Override Table._calcPreliminaryWidths() to prevent ReportLab
