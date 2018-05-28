@@ -221,7 +221,7 @@ class CanvasState:
         page_number = canvas.getPageNumber()
 
         text = f'Page {page_number} [row {self._page_row}: col {self._page_column}]'
-        _log.debug(f'writing page number: {text})')
+        _log.debug(f'writing page: {text!r}')
 
         # Center the page number near the very bottom.
         page_width = self.get_page_size(canvas)[0]
@@ -292,7 +292,6 @@ class VerticalText(Flowable):
         self.text = text
 
     def wrap(self, available_width, available_height):
-        _log.debug(f'VerticalText wrap: aw={available_width}, ah={available_height}')
         # Store the available width and height for the draw() stage.
         self.aw = available_width
         self.ah = available_height
@@ -447,7 +446,6 @@ def make_pdf(path):
             self.last_in_row = False
 
         def drawOn(self, *args, **kwargs):
-            _log.debug('calling: TrackingTable.drawOn()')
             super().drawOn(*args, **kwargs)
 
             if self.last_in_row:
@@ -484,19 +482,20 @@ def make_pdf(path):
         return table
 
     column_counts = compute_column_counts(make_table, data=data, width=available_width)
+    _log.debug(f'will split table along columns into {len(column_counts)}: {column_counts}')
 
     # Display the header on each page.
     table = make_table(data, repeatRows=1)
 
     # First split the table along rows.
     tables = split_table_along_rows(table, available)
+    _log.debug(f'split table along rows into {len(tables)}')
 
     story = []
     for table in tables:
         # Then split each sub-table along columns, using the column
         # counts we already computed.
         new_tables = split_table_along_columns(make_table, table=table, column_counts=column_counts)
-        _log.debug(f'split table into {len(new_tables)} tables')
 
         for new_table in new_tables:
             # Force a page break after each part of the table.
