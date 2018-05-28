@@ -237,6 +237,42 @@ def wrap_text(canvas, text):
     return width, height
 
 
+class VerticalText(Flowable):
+
+    """
+    Represents a single vertical line of unwrapped text.
+    """
+
+    # Require a fixed width and height at the outset so the flowable
+    # can be used as the value of a Table cell (so that the Table will
+    # be able to wrap correctly, etc).
+    def __init__(self, text, width, height):
+        """
+        Args:
+          text: a string.
+          width: the width of the text (after being rotated).
+          height: the height of the text (after being rotated).
+        """
+        super().__init__()
+
+        self.width = width
+        self.height = height
+        self.text = text
+
+    def wrap(self, available_width, available_height):
+        _log.debug(f'VerticalText wrap: aw={available_width}, ah={available_height}')
+        self.aw = available_width
+        self.ah = available_height
+
+        return (self.width, self.height)
+
+    def draw(self):
+        canvas = self.canv
+        # Shift the text to the right as a crude padding for now.
+        x = self.aw / 2
+        draw_vertical_text(canvas, self.text, x=x)
+
+
 class TextWrapper:
 
     """
@@ -254,31 +290,15 @@ class TextWrapper:
     def canvas(self):
         return self.document.canv
 
-
-class VerticalText(Flowable):
-
-    """
-    Represents a single line of unwrapped text.
-    """
-
-    def __init__(self, text, text_wrapper=None):
+    def make_vertical_text(self, text):
         """
-        Args:
-          text: a string.
+        Create and return a VerticalText flowable.
         """
-        self.text = text
-        self.text_wrapper = text_wrapper
+        width, height = wrap_text(self.canvas, text)
+        # Swap the dimensions since the text will be rotated 90-degrees.
+        vertical_text = VerticalText(text, width=height, height=width)
 
-    def wrap(self, available_width, available_height):
-        canvas = self.text_wrapper.canvas
-        width, height = wrap_text(canvas, self.text)
-
-        # Swap the dimensions to reflect 90-degree rotation.
-        return height, width
-
-    def draw(self):
-        canvas = self.canv
-        draw_vertical_text(canvas, self.text)
+        return vertical_text
 
 
 # TODO: remove this (it's only for testing).
@@ -289,9 +309,10 @@ def make_sample_table_data(row_count, text_wrapper):
       text_wrapper: a TextWrapper object.
     """
     column_count = 20
-    first_row = [f'Column{i}' for i in range(column_count)]
+
     # Try some vertical text.
-    first_row[0] = VerticalText('Vertical text test...', text_wrapper=text_wrapper)
+    first_row = tuple(text_wrapper.make_vertical_text(f'Column {i}')
+                      for i in range(1, column_count + 1))
 
     data = [first_row]
     for i in range(row_count):
@@ -344,7 +365,6 @@ def make_pdf(path):
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
     _log.debug(f'computed available width: {available_width} ({available_width / inch} inches)')
-
 
     canvas_state = CanvasState()
 
