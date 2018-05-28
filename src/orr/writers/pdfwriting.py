@@ -32,8 +32,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import (PageBreak, Paragraph, SimpleDocTemplate, Table,
-    TableStyle)
+from reportlab.platypus import (Flowable, PageBreak, Paragraph, SimpleDocTemplate,
+    Table, TableStyle)
 
 
 _log = logging.getLogger(__name__)
@@ -224,7 +224,7 @@ class CanvasState:
         self._write_page_number(canvas)
 
 
-def draw_vertical_text(canvas, text, x, y):
+def draw_vertical_text(canvas, text, x=0, y=0):
     """
     Draw text on the canvas vertically.
 
@@ -238,7 +238,45 @@ def draw_vertical_text(canvas, text, x, y):
     # Adjust the coordinates after rotating.
     canvas.drawString(y, -1 * x, text)
     canvas.restoreState()
-    canvas.save()
+
+
+# TODO: incorporate the style.
+def wrap_text(canvas, text):
+    """
+    Return the space taken up by horizontal text.
+
+    Returns: (width, height)
+    """
+    width = canvas.stringWidth(text)
+    # TODO: compute height.
+    height = 20
+
+    return width, height
+
+
+class VerticalText(Flowable):
+
+    """
+    Represents a single line of unwrapped text.
+    """
+
+    def __init__(self, text):
+        """
+        Args:
+          text: a string.
+        """
+        self.text = text
+
+    def wrap(self, available_width, available_height):
+        canvas = self.canv
+        width, height = wrap_text(canvas, self.text)
+
+        # Swap the dimensions to reflect 90-degree rotation.
+        return height, width
+
+    def draw(self):
+        canvas = self.canv
+        draw_vertical_text(canvas, self.text)
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
@@ -254,6 +292,7 @@ def make_pdf(path):
     # canvas = Canvas(path)
     # text = 'Hello, world'
     # draw_vertical_text(canvas, text, x=200, y=200)
+    # canvas.save()
     # return
 
     page_size = DEFAULT_PAGE_SIZE
