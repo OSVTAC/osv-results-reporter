@@ -262,6 +262,7 @@ class VerticalText(Flowable):
 
     def wrap(self, available_width, available_height):
         _log.debug(f'VerticalText wrap: aw={available_width}, ah={available_height}')
+        # Store the available width and height for the draw() stage.
         self.aw = available_width
         self.ah = available_height
 
@@ -269,7 +270,8 @@ class VerticalText(Flowable):
 
     def draw(self):
         canvas = self.canv
-        # Shift the text to the right as a crude padding for now.
+        # Center the text horizontally in the middle of the cell.
+        # TODO: also account for the line width.
         x = self.aw / 2
         draw_vertical_text(canvas, self.text, x=x)
 
