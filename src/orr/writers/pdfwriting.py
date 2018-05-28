@@ -338,20 +338,23 @@ def make_header_row(count, text_wrapper):
 
 
 # TODO: remove this (it's only for testing).
-def make_sample_table_data(row_count, text_wrapper):
+def make_sample_table_data(text_wrapper, row_count=None):
     """
     Args:
       rows: the number of data rows.
       text_wrapper: a TextWrapper object.
     """
+    if row_count is None:
+        row_count = 60
+
     column_count = 20
 
     header_row = make_header_row(count=column_count, text_wrapper=text_wrapper)
 
     data = [header_row]
     for i in range(row_count):
-        value = (i + 1) * 10000
-        row = [value + j for j in range(20)]
+        value = (i + 1) * 100000
+        row = [value + j for j in range(column_count)]
         data.append(row)
 
     return data
@@ -394,7 +397,7 @@ def make_pdf(path):
     # Do a fake build to set document.canv.
     document.build([])
     text_wrapper = TextWrapper(document=document)
-    data = make_sample_table_data(row_count=60, text_wrapper=text_wrapper)
+    data = make_sample_table_data(text_wrapper=text_wrapper)
 
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
@@ -421,6 +424,13 @@ def make_pdf(path):
                 canvas_state.page_column = 1
             else:
                 canvas_state.page_column += 1
+
+        # Override Table._calcPreliminaryWidths() to prevent ReportLab
+        # from expanding the table columns to fill the entire width of
+        # the page.  There doesn't seem to be a nicer way to do this.
+        # TODO: find a way to avoid having to use this hack.
+        def _calcPreliminaryWidths(self, available_width):
+            return super()._calcPreliminaryWidths(availWidth=0)
 
     def make_table(data, **kwargs):
         """
