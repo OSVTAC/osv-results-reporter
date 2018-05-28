@@ -63,6 +63,31 @@ def get_available_size(page_size):
     return (page_width - 2 * inch, page_height - 2 * inch)
 
 
+def split_table_along_rows(table, available):
+    """
+    Split a table along rows, iteratively.
+
+    Returns a list of new Table objects.
+
+    Args:
+      table: a Table object.
+      available: the space available for each table as a pair (width, height).
+    """
+    tables = []
+
+    while True:
+        new_tables = table.split(*available)
+        assert 1 <= len(new_tables) <= 2
+
+        tables.append(new_tables[0])
+        if len(new_tables) <= 1:
+            break
+
+        table = new_tables[1]
+
+    return tables
+
+
 def slice_data_vertically(data, start, stop):
     """
     Return a list of new row data, slicing each row.
@@ -148,9 +173,9 @@ def compute_column_counts(make_table, data, width):
     return counts
 
 
-def split_table_vertically(make_table, table, column_counts):
+def split_table_along_columns(make_table, table, column_counts):
     """
-    Split a Table object along columns.
+    Split a table along columns, iteratively.
 
     Returns a list of new Table objects.
 
@@ -320,8 +345,8 @@ class TextWrapper:
 
 def make_header_row(count, text_wrapper):
     """
-    Return a list of VerticalText objects that is suitable for the
-    first data row of a Table object.
+    Return a list of VerticalText objects for use as the header row of
+    a Table object.
     """
     texts = [i * 'A' for i in range(1, count + 1)]
     random.shuffle(texts)
@@ -452,16 +477,17 @@ def make_pdf(path):
 
     column_counts = compute_column_counts(make_table, data=data, width=available_width)
 
+    # Display the header on each page.
     table = make_table(data, repeatRows=1)
 
     # First split the table along rows.
-    tables = table.split(*available)
+    tables = split_table_along_rows(table, available)
 
     story = []
     for table in tables:
         # Then split each sub-table along columns, using the column
         # counts we already computed.
-        new_tables = split_table_vertically(make_table, table=table, column_counts=column_counts)
+        new_tables = split_table_along_columns(make_table, table=table, column_counts=column_counts)
         _log.debug(f'split table into {len(new_tables)} tables')
 
         for new_table in new_tables:
