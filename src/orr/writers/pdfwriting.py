@@ -206,17 +206,21 @@ def split_table_along_columns(make_table, table, column_counts):
 class CanvasState:
 
     def __init__(self):
-        self.page_column = 1
-        self.page_row = 1
+        self._page_row = 1
+        self._page_column = 1
 
     def get_page_size(self, canvas):
         # TODO: is it okay to depend on this internal API?
         return canvas._pagesize
 
+    def start_new_page_row(self):
+        self._page_row += 1
+        self._page_column = 1
+
     def _write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
 
-        text = f'Page {page_number} [row {self.page_row}: col {self.page_column}]'
+        text = f'Page {page_number} [row {self._page_row}: col {self._page_column}]'
         _log.debug(f'writing page number: {text})')
 
         # Center the page number near the very bottom.
@@ -224,6 +228,8 @@ class CanvasState:
         width = canvas.stringWidth(text)
         x = (page_width - width) / 2
         canvas.drawString(x, 0.5 * inch, text)
+
+        self._page_column += 1
 
     def onFirstPage(self, canvas, document):
         self._write_page_number(canvas)
@@ -445,10 +451,7 @@ def make_pdf(path):
             super().drawOn(*args, **kwargs)
 
             if self.last_in_row:
-                canvas_state.page_row += 1
-                canvas_state.page_column = 1
-            else:
-                canvas_state.page_column += 1
+                canvas_state.start_new_page_row()
 
         # Override Table._calcPreliminaryWidths() to prevent ReportLab
         # from expanding the table columns to fill the entire width of
