@@ -65,7 +65,7 @@ def create_jinja_env(output_dir, template_dirs=None):
     )
 
     filters = dict(
-        file_uri=templating.output_file_uri,
+        output_file_uri=templating.output_file_uri,
         format_date=templating.format_date,
         translate=templating.translate
     )

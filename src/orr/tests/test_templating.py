@@ -42,3 +42,11 @@ class TemplatingModuleTest(TestCase):
         env = self.make_test_env(output_dir=output_dir)
         actual = templating.get_output_path(env, rel_path='html/index.html')
         self.assertEqual(actual, Path('my/path/html/index.html'))
+
+    def test_output_file_uri(self):
+        # Use an absolute path for this test so we can know the complete
+        # return value.
+        output_dir = '/my/path'
+        env = self.make_test_env(output_dir=output_dir)
+        actual = templating.output_file_uri(env, rel_path='html/index.html')
+        self.assertEqual(actual, 'file:///my/path/html/index.html')
