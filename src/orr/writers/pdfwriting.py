@@ -177,24 +177,6 @@ def split_table_vertically(make_table, table, column_counts):
     return tables
 
 
-# TODO: remove this (it's only for testing).
-def make_sample_table_data(row_count):
-    """
-    Args:
-      rows: the number of data rows.
-    """
-    column_count = 20
-    first_row = [f'Column{i}' for i in range(column_count)]
-
-    data = [first_row]
-    for i in range(row_count):
-        value = (i + 1) * 10000
-        row = [value + j for j in range(20)]
-        data.append(row)
-
-    return data
-
-
 class CanvasState:
 
     def __init__(self):
@@ -247,11 +229,30 @@ def wrap_text(canvas, text):
 
     Returns: (width, height)
     """
+    assert canvas is not None
     width = canvas.stringWidth(text)
     # TODO: compute height.
     height = 20
 
     return width, height
+
+
+class TextWrapper:
+
+    """
+    An object to help measure the dimensions of text.
+    """
+
+    def __init__(self, document):
+        """
+        Args:
+          document: a ReportLab BaseDocTemplate object.
+        """
+        self.document = document
+
+    @property
+    def canvas(self):
+        return self.document.canv
 
 
 class VerticalText(Flowable):
@@ -260,15 +261,16 @@ class VerticalText(Flowable):
     Represents a single line of unwrapped text.
     """
 
-    def __init__(self, text):
+    def __init__(self, text, text_wrapper=None):
         """
         Args:
           text: a string.
         """
         self.text = text
+        self.text_wrapper = text_wrapper
 
     def wrap(self, available_width, available_height):
-        canvas = self.canv
+        canvas = self.text_wrapper.canvas
         width, height = wrap_text(canvas, self.text)
 
         # Swap the dimensions to reflect 90-degree rotation.
@@ -277,6 +279,41 @@ class VerticalText(Flowable):
     def draw(self):
         canvas = self.canv
         draw_vertical_text(canvas, self.text)
+
+
+# TODO: remove this (it's only for testing).
+def make_sample_table_data(row_count, text_wrapper):
+    """
+    Args:
+      rows: the number of data rows.
+      text_wrapper: a TextWrapper object.
+    """
+    column_count = 20
+    first_row = [f'Column{i}' for i in range(column_count)]
+    # Try some vertical text.
+    first_row[0] = VerticalText('Vertical text test...', text_wrapper=text_wrapper)
+
+    data = [first_row]
+    for i in range(row_count):
+        value = (i + 1) * 10000
+        row = [value + j for j in range(20)]
+        data.append(row)
+
+    return data
+
+
+def make_doc_template_factory(path, page_size):
+    """
+    Return a concrete BaseDocTemplate object.
+    """
+    # Add a little margin cushion to prevent overflow.
+    margin = 0.9 * inch
+    margins = {key: margin for key in MARGIN_NAMES}
+
+    def make_doc_template():
+        return SimpleDocTemplate(path, pagesize=page_size, **margins)
+
+    return make_doc_template
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
@@ -296,18 +333,18 @@ def make_pdf(path):
     # return
 
     page_size = DEFAULT_PAGE_SIZE
+    make_doc_template = make_doc_template_factory(path, page_size=page_size)
 
-    # Add a little margin cushion to prevent overflow.
-    margin = 0.9 * inch
-    margins = {key: margin for key in MARGIN_NAMES}
-
-    document = SimpleDocTemplate(path, pagesize=page_size, **margins)
+    document = make_doc_template()
+    # Do a fake build to set document.canv.
+    document.build([])
+    text_wrapper = TextWrapper(document=document)
+    data = make_sample_table_data(row_count=60, text_wrapper=text_wrapper)
 
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
     _log.debug(f'computed available width: {available_width} ({available_width / inch} inches)')
 
-    data = make_sample_table_data(row_count=60)
 
     canvas_state = CanvasState()
 
@@ -366,6 +403,9 @@ def make_pdf(path):
         for new_table in new_tables:
             # Force a page break after each part of the table.
             story.extend([new_table, PageBreak()])
+
+    # Create a new document since we called build() on the first one.
+    document = make_doc_template()
 
     _log.info(f'writing PDF to: {path}')
     document.build(story, onFirstPage=canvas_state.onFirstPage, onLaterPages=canvas_state.onLaterPages)
