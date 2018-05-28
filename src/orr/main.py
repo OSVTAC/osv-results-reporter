@@ -36,11 +36,10 @@ from pprint import pprint
 import re
 import sys
 
-import jinja2
-from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
-from jinja2.utils import Namespace
+from jinja2 import TemplateSyntaxError
 import yaml
 
+import orr.configlib as configlib
 import orr.templating as templating
 
 
@@ -271,50 +270,6 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
-#--- Template global setup: ---
-
-def create_jinja_env(template_dirs, output_dir):
-    """
-    Create and return the Jinja2 Environment object.
-
-    Args:
-      output_dir: a Path object.
-    """
-    env = Environment(
-        loader=FileSystemLoader(template_dirs),
-        autoescape=jinja2.select_autoescape(['html', 'xml']),
-        # Enable the expression-statement extension:
-        # http://jinja.pocoo.org/docs/2.10/templates/#expression-statement
-        extensions=['jinja2.ext.do'],
-    )
-
-    # Using a Namespace object lets us change the context inside a
-    # template, e.g. by calling "{% set options.lang = lang %}" from
-    # within a with block.  Doing this lets us access the option values
-    # from within a custom filter, without having to pass the option
-    # values explicitly.
-    options = Namespace()
-    # Apparently we need to set using index rather than attribute notation.
-    options['output_dir'] = output_dir
-
-    env.globals.update(options=options,
-        open_xlsx=templating.open_xlsx,
-        subtemplate=templating.subtemplate
-    )
-
-    filters = dict(
-        file_uri=templating.output_file_uri,
-        format_date=templating.format_date,
-        translate=templating.translate
-    )
-    tests = {}
-
-    env.filters.update(filters)
-    env.tests.update(tests)
-
-    return env
-
-
 #--- Top level processing: ---
 
 # TODO: render the directory recursively.
@@ -388,7 +343,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir] + extra_template_dirs
-    env = create_jinja_env(template_dirs, output_dir=output_dir)
+    env = configlib.create_jinja_env(template_dirs, output_dir=output_dir)
 
     context = {}
     for input_path in input_paths:
