@@ -9,14 +9,14 @@
     </ul>
   </li>
 
-{% with rel_path='sample' %}
+{% with base_name='sample' %}
 
-  {% with path=create_xlsx(rel_path, contests) %}
-    <li><a href="{{ path|output_file_uri }}">{{ path.suffix }}</a></li>
+  {% with rel_path=create_xlsx(base_name, contests) %}
+    <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
   {% endwith %}
 
-  {% with path=create_pdf(rel_path, contests, title="Sample Totals") %}
-    <li><a href="{{ path|output_file_uri }}">{{ path.suffix }}</a></li>
+  {% with rel_path=create_pdf(base_name, contests, title="Sample Totals") %}
+    <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
   {% endwith %}
 
 {% endwith %}
