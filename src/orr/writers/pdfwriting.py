@@ -378,7 +378,7 @@ def prepare_table_data(rows, text_wrapper):
     return data
 
 
-def make_doc_template_factory(path, page_size):
+def make_doc_template_factory(path, page_size, title=None):
     """
     Return a concrete BaseDocTemplate object.
     """
@@ -387,17 +387,18 @@ def make_doc_template_factory(path, page_size):
     margins = {key: margin for key in MARGIN_NAMES}
 
     def make_doc_template():
-        return SimpleDocTemplate(path, pagesize=page_size, **margins)
+        return SimpleDocTemplate(path, pagesize=page_size, title=title, **margins)
 
     return make_doc_template
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
-def make_pdf(path, rows):
+def make_pdf(path, rows, title=None):
     """
     Args:
       path: a path-like object.
       text: the text to include, as a string.
+      title: an optional title to set on the PDF's properties.
     """
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
@@ -409,7 +410,7 @@ def make_pdf(path, rows):
     # return
 
     page_size = DEFAULT_PAGE_SIZE
-    make_doc_template = make_doc_template_factory(path, page_size=page_size)
+    make_doc_template = make_doc_template_factory(path, page_size=page_size, title=title)
 
     document = make_doc_template()
     # Do a fake build to set document.canv.

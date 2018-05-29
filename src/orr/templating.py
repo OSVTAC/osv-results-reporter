@@ -185,7 +185,7 @@ def open_xlsx(env, rel_path):
 
 
 @environmentfunction
-def create_pdf(env, rel_path, rows):
+def create_pdf(env, rel_path, rows, title=None):
     """
     Create a PDF of row data.
 
@@ -198,4 +198,4 @@ def create_pdf(env, rel_path, rows):
 
     output_path = get_output_path(env, rel_path)
 
-    pdfwriting.make_pdf(output_path, rows)
+    pdfwriting.make_pdf(output_path, rows=rows, title=title)
