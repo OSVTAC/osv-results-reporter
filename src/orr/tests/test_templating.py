@@ -51,6 +51,16 @@ class TemplatingModuleTest(TestCase):
         # Use an absolute path for this test so we can know the complete
         # return value.
         output_dir = '/my/path'
+
+        cases = [
+            # Test a path with more than one path part.
+            ('html/index.html', 'file:///my/path/html/index.html'),
+            # Test a path whose file name contains a space.
+            ('Vice President.tsv', 'file:///my/path/Vice%20President.tsv'),
+        ]
+
         env = self.make_test_env(output_dir=output_dir)
-        actual = templating.output_file_uri(env, rel_path='html/index.html')
-        self.assertEqual(actual, 'file:///my/path/html/index.html')
+        for rel_path, expected in cases:
+            with self.subTest(rel_path=rel_path):
+                actual = templating.output_file_uri(env, rel_path=rel_path)
+                self.assertEqual(actual, expected)
