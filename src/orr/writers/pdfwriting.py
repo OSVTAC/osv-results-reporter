@@ -406,14 +406,6 @@ def prepare_table_data(rows, text_wrapper):
     return data
 
 
-class TableProperties:
-
-    def __init__(self, table_name, grid_row, grid_column):
-        self.table_name = table_name
-        self.grid_row = grid_row
-        self.grid_column = grid_column
-
-
 def iter_table_story(data, available, make_table, table_name=None):
     """
     Create and yield "story" elements for a new table.
@@ -445,6 +437,14 @@ def iter_table_story(data, available, make_table, table_name=None):
             yield new_table
             # Force a page break after each part of the table.
             yield PageBreak()
+
+
+class TableProperties:
+
+    def __init__(self, table_name, grid_row, grid_column):
+        self.table_name = table_name
+        self.grid_row = grid_row
+        self.grid_column = grid_column
 
 
 class OrrTable(Table):
