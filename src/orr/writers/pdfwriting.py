@@ -22,6 +22,7 @@
 Support for creating PDF files.
 """
 
+import functools
 import logging
 import os
 import random
@@ -504,7 +505,7 @@ class OrrTable(Table):
         # Set the last drawn table so it's available inside
         # BaseDocTemplate.afterPage() when we write the page header
         # and footer.
-        canvas_state.last_table = self
+        self.canvas_state.last_table = self
 
     # Override Table._calcPreliminaryWidths() to prevent ReportLab
     # from expanding the table columns to fill the entire width of
@@ -512,6 +513,26 @@ class OrrTable(Table):
     # TODO: find a way to avoid having to use this hack.
     def _calcPreliminaryWidths(self, available_width):
         return super()._calcPreliminaryWidths(availWidth=0)
+
+
+def make_orr_table(data, canvas_state=None, table_props=None, **kwargs):
+    """
+    Args:
+      table_props: a TableProperties object.
+      **kwargs: additional keyword arguments to pass to the Table
+        constructor.
+    """
+    table = OrrTable(data, canvas_state=canvas_state, table_props=table_props, **kwargs)
+
+    table.setStyle(TableStyle([
+        # Add grid lines to the table.
+        # The third element is the width of the grid lines.
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        # Shade the first (header) row.
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgoldenrodyellow),
+    ]))
+
+    return table
 
 
 def make_pdf(path, contests, title=None):
@@ -540,25 +561,7 @@ def make_pdf(path, contests, title=None):
 
     # Create a CanvasState for the real build() stage.
     canvas_state = CanvasState()
-
-    def make_table(data, table_props=None, **kwargs):
-        """
-        Args:
-          table_props: a TableProperties object.
-          **kwargs: additional keyword arguments to pass to the Table
-            constructor.
-        """
-        table = OrrTable(data, canvas_state=canvas_state, table_props=table_props, **kwargs)
-
-        table.setStyle(TableStyle([
-            # Add grid lines to the table.
-            # The third element is the width of the grid lines.
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            # Shade the first (header) row.
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgoldenrodyellow),
-        ]))
-
-        return table
+    make_table = functools.partial(make_orr_table, canvas_state=canvas_state)
 
     story = []
     for contest_name, rows in contests:
