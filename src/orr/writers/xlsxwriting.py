@@ -66,6 +66,7 @@ class XLSXBook:
           path: a path-like object.
         """
         # TODO: open the file in a create method and not __init__().
+        _log.info(f'opening Excel file for writing: {path}')
         self.workbook = xlsxwriter.Workbook(path)
 
         self.closed = False

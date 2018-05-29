@@ -53,7 +53,8 @@ def make_tsv_file(path, rows):
 def make_tsv_directory(root_dir, rel_dir, contests):
     """
     Create TSV files (one for each contest), and yield the path to each
-    file as it is created, as a Path object.
+    file as it is created, as a Path object relative to the given root
+    directory.
 
     Args:
       rel_dir: the directory in which to write the TSV files, as a

@@ -62,7 +62,7 @@ def create_jinja_env(output_dir, template_dirs=None):
     env.globals.update(options=options,
         create_pdf=templating.create_pdf,
         create_tsv_files=templating.create_tsv_files,
-        open_xlsx=templating.open_xlsx,
+        create_xlsx=templating.create_xlsx,
         subtemplate=templating.subtemplate
     )
 

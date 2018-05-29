@@ -23,6 +23,7 @@
 Includes custom template filters and context functions.
 """
 
+import functools
 import logging
 from pathlib import Path
 
@@ -180,6 +181,13 @@ def subtemplate(context, template_name, file_name):
 
 
 def make_contest_pairs(contests):
+    """
+    Return an iterable of pairs (contest_name, rows).
+
+    Args:
+      contests: an iterable of contest data, where each element is a dict
+        with keys "name" and "rows".
+    """
     return [(contest['name'], contest['rows']) for contest in contests]
 
 
@@ -198,39 +206,89 @@ def create_tsv_files(env, rel_dir, contests):
     yield from tsvwriting.make_tsv_directory(output_dir, rel_dir, contests)
 
 
-# TODO: finish implementing (this is still experimental).
-@environmentfunction
-def open_xlsx(env, rel_path):
+def create_file(do_create, rel_path, contests, type_name, ext, env):
     """
-    Create and return an XLSXBook object, for use inside a template.
+    Create a file of contest data using the given function, and return
+    a Path object.
+
+    Args:
+      do_create: a function with signature create(output_path, contests)
+        that creates the file.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object. This can be any path-like object
+        and should **not** have the file extension added (the function
+        will add it).
+      type_name: the name of the file type, for logging purposes.
+      ext: the file extension to use, including the leading dot.
+      env: a Jinja2 Environment object.
+    """
+    rel_path = Path(rel_path)
+    # Add the suffix.
+    rel_path = rel_path.with_suffix(ext)
+    output_path = get_output_path(env, rel_path)
+
+    contests = make_contest_pairs(contests)
+
+    do_create(output_path, contests=contests)
+
+    return rel_path
+
+
+@environmentfunction
+def create_xlsx(env, rel_path, contests):
+    """
+    Create an XLSX file of contest data, and return a path to the file
+    relative to the output directory, as a Path object.
+
+    Args:
+      env: a Jinja2 Environment object.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object. This can be any path-like object
+        and should **not** have the file extension added (the function
+        will add it).
+      contests: an iterable of contest data, where each element is a dict
+        with keys "name" and "rows".
 
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
     """
-    rel_path = Path(rel_path)
-    if rel_path.suffix != '.xlsx':
-        raise RuntimeError(f'workbook path does not have extension .xlsx: {rel_path}')
+    def do_create(output_path, contests):
+        # TODO: convert to with-block syntax.
+        try:
+            book = XLSXBook(output_path)
+            for contest_name, rows in contests:
+                book.add_sheet(contest_name, rows)
+        finally:
+            book.close()
 
-    output_path = get_output_path(env, rel_path)
-    book = XLSXBook(output_path)
+    rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
+                        type_name='Excel', ext='.xlsx', env=env)
 
-    return book
+    return rel_path
 
 
 @environmentfunction
 def create_pdf(env, rel_path, contests, title=None):
     """
-    Create a PDF of row data.
+    Create a PDF of contest data, and return a path to the file relative
+    to the output directory, as a Path object.
+
+    Args:
+      env: a Jinja2 Environment object.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object. This can be any path-like object
+        and should **not** have the file extension added (the function
+        will add it).
+      contests: an iterable of contest data, where each element is a dict
+        with keys "name" and "rows".
+      title: an optional title to set on the PDF's properties.
 
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
     """
-    rel_path = Path(rel_path)
-    if rel_path.suffix != '.pdf':
-        raise RuntimeError(f'PDF path does not have extension .pdf: {rel_path}')
+    do_create = functools.partial(pdfwriting.make_pdf, title=title)
 
-    output_path = get_output_path(env, rel_path)
+    rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
+                        type_name='PDF', ext='.pdf', env=env)
 
-    contests = make_contest_pairs(contests)
-
-    pdfwriting.make_pdf(output_path, contests=contests, title=title)
+    return rel_path

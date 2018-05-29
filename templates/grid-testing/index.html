@@ -9,19 +9,15 @@
     </ul>
   </li>
 
-{% with rel_path='sample.xlsx' %}
-  {% with book=open_xlsx(rel_path) %}
-      {% for contest in contests %}
-        {% do book.add_sheet(contest.name, contest.rows) %}
-      {% endfor %}
+{% with rel_path='sample' %}
+
+  {% with path=create_xlsx(rel_path, contests) %}
+    <li><a href="{{ path|output_file_uri }}">{{ path.suffix }}</a></li>
   {% endwith %}
-  <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
 
-{% endwith %}
-
-{% with rel_path='sample.pdf' %}
-  {% do create_pdf(rel_path, contests=contests, title="Sample Totals") %}
-  <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
+  {% with path=create_pdf(rel_path, contests, title="Sample Totals") %}
+    <li><a href="{{ path|output_file_uri }}">{{ path.suffix }}</a></li>
+  {% endwith %}
 
 {% endwith %}
 
