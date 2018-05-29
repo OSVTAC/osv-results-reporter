@@ -248,6 +248,7 @@ class CanvasState:
         self.write_centered_text(canvas, text=text, height=(0.5 * inch))
 
     def write_page_header(self, canvas):
+        # Write the name of the current table at the top of each page.
         text = self.table_name
         text = f'{self.table_name} (page_col: {self.table_grid_column})'
         _log.debug(f'writing page header: {text}')
@@ -256,6 +257,13 @@ class CanvasState:
         height = page_height - 0.5 * inch
 
         self.write_centered_text(canvas, text=text, height=height)
+
+    def write_page_header_footer(self, canvas):
+        """
+        Write the page header and footer.
+        """
+        self.write_page_header(canvas)
+        self.write_page_number(canvas)
 
 
 def draw_vertical_text(canvas, text, x=0, y=0):
@@ -398,50 +406,6 @@ def prepare_table_data(rows, text_wrapper):
     return data
 
 
-class DocumentTemplate(SimpleDocTemplate):
-
-    """
-    Our customized DocTemplate.
-    """
-
-    def __init__(self, *args, canvas_state=None, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.canvas_state = canvas_state
-
-    def afterPage(self):
-        canvas_state = self.canvas_state
-        canvas = self.canv
-        page_number = canvas.getPageNumber()
-        _log.debug(f'afterPage: writing header and footer for: page {page_number}')
-
-        # Write the name of the current table at the top of each page.
-        canvas_state.write_page_header(canvas)
-
-        canvas_state.write_page_number(canvas)
-
-
-def make_doc_template_factory(path, page_size, title=None):
-    """
-    Return a concrete BaseDocTemplate object.
-    """
-    # Add a little margin cushion to prevent overflow.
-    margin = 0.9 * inch
-    margins = {key: margin for key in MARGIN_NAMES}
-
-    def make_doc_template(canvas_state=None):
-        """
-        Args:
-          canvas_state: a CanvasState object.
-        """
-        doc_template = DocumentTemplate(path, canvas_state=canvas_state,
-                            pagesize=page_size, title=title, **margins)
-
-        return doc_template
-
-    return make_doc_template
-
-
 class TableProperties:
 
     def __init__(self, table_name, grid_row, grid_column):
@@ -535,6 +499,48 @@ def make_orr_table(data, canvas_state=None, table_props=None, **kwargs):
     return table
 
 
+def make_orr_doc_template(path, page_size, title=None, canvas_state=None):
+    """
+    Return a concrete BaseDocTemplate object.
+
+    Args:
+      canvas_state: a CanvasState object.
+    """
+    # Add a little margin cushion to prevent overflow.
+    margin = 0.9 * inch
+    margins = {key: margin for key in MARGIN_NAMES}
+
+    doc_template = DocumentTemplate(path, pagesize=page_size, title=title,
+                                canvas_state=canvas_state, **margins)
+
+    return doc_template
+
+
+class DocumentTemplate(SimpleDocTemplate):
+
+    """
+    Our customized DocTemplate.
+    """
+
+    def __init__(self, *args, canvas_state=None, **kwargs):
+        """
+        Args:
+          canvas_state: a CanvasState object.
+        """
+        super().__init__(*args, **kwargs)
+        self.canvas_state = canvas_state
+
+    # We use afterPage() because it occurs after flowables have been
+    # drawn on the canvas.  This is useful because it lets us know what
+    # table was drawn on the page, along with its properties.
+    def afterPage(self):
+        canvas = self.canv
+        page_number = canvas.getPageNumber()
+        _log.debug(f'afterPage: writing header and footer for: page {page_number}')
+
+        self.canvas_state.write_page_header_footer(canvas)
+
+
 def make_pdf(path, contests, title=None):
     """
     Args:
@@ -546,7 +552,7 @@ def make_pdf(path, contests, title=None):
     path = os.fspath(path)
     page_size = DEFAULT_PAGE_SIZE
 
-    make_doc_template = make_doc_template_factory(path, page_size=page_size, title=title)
+    make_doc_template = functools.partial(make_orr_doc_template, path, page_size=page_size, title=title)
 
     document = make_doc_template()
 
@@ -575,19 +581,3 @@ def make_pdf(path, contests, title=None):
 
     _log.info(f'writing PDF to: {path}')
     document.build(story)
-
-
-if __name__ == '__main__':
-    # The code below is for testing purposes.
-    #
-    # To run:
-    #
-    #     $ python src/orr/writers/pdfwriting.py
-    #
-    logging.basicConfig(level=logging.DEBUG)
-    try:
-        path = sys.argv[1]
-    except IndexError:
-        path = 'sample.pdf'
-
-    make_pdf(path)
