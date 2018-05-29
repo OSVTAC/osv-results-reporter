@@ -173,7 +173,7 @@ def compute_column_counts(make_table, data, width):
     return counts
 
 
-def split_table_along_columns(make_table, table, column_counts):
+def split_table_along_columns(make_table, table, column_counts, table_name=None):
     """
     Split a table along columns, iteratively.
 
@@ -194,7 +194,7 @@ def split_table_along_columns(make_table, table, column_counts):
     for column_count in column_counts:
         stop = start + column_count
         new_data = slice_data_vertically(data, start=start, stop=stop)
-        table = make_table(new_data)
+        table = make_table(new_data, table_name=table_name)
         tables.append(table)
         start = stop
 
@@ -208,6 +208,8 @@ class CanvasState:
     def __init__(self):
         self._page_row = 1
         self._page_column = 1
+
+        self.table_name = None
 
     def get_page_size(self, canvas):
         # TODO: is it okay to depend on this internal API?
@@ -223,7 +225,7 @@ class CanvasState:
         x = (page_width - width) / 2
         canvas.drawString(x=x, y=height, text=text)
 
-    def _write_page_number(self, canvas):
+    def write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
 
         text = f'Page {page_number} [{self._page_row} : {self._page_column}]'
@@ -232,26 +234,25 @@ class CanvasState:
         # Center the page number near the very bottom.
         self.write_centered_text(canvas, text=text, height=(0.5 * inch))
 
-    def write_page_header(self, canvas, text):
-        page_height = self.get_page_size(canvas)[1]
-        height = page_height - 0.5 * inch
-        self.write_centered_text(canvas, text=text, height=height)
-
-    def write_page_boilerplate(self, canvas, document):
-        text = 'Sample Title'
-        page_number = canvas.getPageNumber()
-        _log.debug(f'writing page boilerplate: page {page_number}')
-
-        self.write_page_header(canvas, text=document.title)
-        self._write_page_number(canvas)
-
         self._page_column += 1
 
+    def write_page_header(self, canvas):
+        page_number = canvas.getPageNumber()
+        text = self.table_name
+        _log.debug(f'writing page {page_number} header: {text}')
+
+        page_height = self.get_page_size(canvas)[1]
+        height = page_height - 0.5 * inch
+
+        self.write_centered_text(canvas, text=text, height=height)
+
     def onFirstPage(self, canvas, document):
-        self.write_page_boilerplate(canvas, document)
+        # TODO: instead do this inside DocumentTemplate.afterPage().
+        self.write_page_number(canvas)
 
     def onLaterPages(self, canvas, document):
-        self.write_page_boilerplate(canvas, document)
+        # TODO: instead do this inside DocumentTemplate.afterPage().
+        self.write_page_number(canvas)
 
 
 def draw_vertical_text(canvas, text, x=0, y=0):
@@ -394,6 +395,17 @@ def prepare_table_data(rows, text_wrapper):
     return data
 
 
+class DocumentTemplate(SimpleDocTemplate):
+
+    """
+    Our customized DocTemplate.
+    """
+
+    def afterPage(self):
+        # Write the name of the current table at the top of each page.
+        self.canvas_state.write_page_header(self.canv)
+
+
 def make_doc_template_factory(path, page_size, title=None):
     """
     Return a concrete BaseDocTemplate object.
@@ -402,36 +414,76 @@ def make_doc_template_factory(path, page_size, title=None):
     margin = 0.9 * inch
     margins = {key: margin for key in MARGIN_NAMES}
 
-    def make_doc_template():
-        return SimpleDocTemplate(path, pagesize=page_size, title=title, **margins)
+    def make_doc_template(canvas_state=None):
+        """
+        Args:
+          canvas_state: a CanvasState object.
+        """
+        doc_template = DocumentTemplate(path, pagesize=page_size, title=title, **margins)
+        doc_template.canvas_state = canvas_state
+
+        return doc_template
 
     return make_doc_template
 
 
-def make_pdf(path, rows, title=None):
+def iter_table_story(data, available, make_table, table_name=None):
+    """
+    Create and yield "story" elements for a new table.
+
+    Args:
+      available: the space available for the table as a pair (width, height).
+    """
+    assert table_name is not None
+    available_width = available[0]
+
+    column_counts = compute_column_counts(make_table, data=data, width=available_width)
+    _log.debug(f'will split table along columns into {len(column_counts)}: {column_counts}')
+
+    # Display the header on each page.
+    table = make_table(data, table_name=table_name, repeatRows=1)
+
+    # First split the table along rows.
+    tables = split_table_along_rows(table, available)
+    _log.debug(f'split table along rows into {len(tables)}')
+
+    for table in tables:
+        # Then split each sub-table along columns, using the column
+        # counts we already computed.
+        new_tables = split_table_along_columns(make_table, table=table,
+                            column_counts=column_counts, table_name=table_name)
+
+        for new_table in new_tables:
+            yield new_table
+            # Force a page break after each part of the table.
+            yield PageBreak()
+
+
+def make_pdf(path, contests, title=None):
     """
     Args:
       path: a path-like object.
-      text: the text to include, as a string.
+      contests: an iterable of pairs (contest_name, rows).
       title: an optional title to set on the PDF's properties.
     """
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
-
     page_size = DEFAULT_PAGE_SIZE
+
     make_doc_template = make_doc_template_factory(path, page_size=page_size, title=title)
 
     document = make_doc_template()
+
     # Do a fake build to set document.canv.
     # TODO: eliminate needing to do the fake build.
     document.build([])
     text_wrapper = TextWrapper(document=document)
-    data = prepare_table_data(rows, text_wrapper=text_wrapper)
 
     available = get_available_size(page_size=page_size)
     available_width, available_height = available
     _log.debug(f'computed available width: {available_width} ({available_width / inch} inches)')
 
+    # Create a CanvasState for the real build() stage.
     canvas_state = CanvasState()
 
     class TrackingTable(Table):
@@ -440,12 +492,18 @@ def make_pdf(path, rows, title=None):
         A table that tells CanvasState which table has been drawn.
         """
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, table_name=None, **kwargs):
             super().__init__(*args, **kwargs)
+
             self.last_in_row = False
+            self.table_name = table_name
 
         def drawOn(self, *args, **kwargs):
             super().drawOn(*args, **kwargs)
+
+            # Set the name of the current table so it's available inside
+            # BaseDocTemplate.afterPage() when we write the page header.
+            canvas_state.table_name = self.table_name
 
             if self.last_in_row:
                 # The document's onFirstPage() and onLaterPages() functions
@@ -462,13 +520,13 @@ def make_pdf(path, rows, title=None):
         def _calcPreliminaryWidths(self, available_width):
             return super()._calcPreliminaryWidths(availWidth=0)
 
-    def make_table(data, **kwargs):
+    def make_table(data, table_name=None, **kwargs):
         """
         Args:
           **kwargs: additional keyword arguments to pass to the Table
             constructor.
         """
-        table = TrackingTable(data, **kwargs)
+        table = TrackingTable(data, table_name=table_name, **kwargs)
 
         table.setStyle(TableStyle([
             # Add grid lines to the table.
@@ -480,28 +538,15 @@ def make_pdf(path, rows, title=None):
 
         return table
 
-    column_counts = compute_column_counts(make_table, data=data, width=available_width)
-    _log.debug(f'will split table along columns into {len(column_counts)}: {column_counts}')
-
-    # Display the header on each page.
-    table = make_table(data, repeatRows=1)
-
-    # First split the table along rows.
-    tables = split_table_along_rows(table, available)
-    _log.debug(f'split table along rows into {len(tables)}')
-
     story = []
-    for table in tables:
-        # Then split each sub-table along columns, using the column
-        # counts we already computed.
-        new_tables = split_table_along_columns(make_table, table=table, column_counts=column_counts)
-
-        for new_table in new_tables:
-            # Force a page break after each part of the table.
-            story.extend([new_table, PageBreak()])
+    for contest_name, rows in contests:
+        assert contest_name is not None
+        data = prepare_table_data(rows, text_wrapper=text_wrapper)
+        for flowable in iter_table_story(data, available, make_table=make_table, table_name=contest_name):
+            story.append(flowable)
 
     # Create a new document since we called build() on the first one.
-    document = make_doc_template()
+    document = make_doc_template(canvas_state=canvas_state)
 
     _log.info(f'writing PDF to: {path}')
     document.build(story, onFirstPage=canvas_state.onFirstPage, onLaterPages=canvas_state.onLaterPages)

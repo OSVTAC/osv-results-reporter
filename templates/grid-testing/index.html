@@ -16,7 +16,7 @@
 
 {% with rel_path='sample.pdf' %}
   <a href="{{ rel_path|output_file_uri}}">{{ rel_path }}</a>
-  {% do create_pdf(rel_path, contests[0].rows, title="Sample Totals") %}
+  {% do create_pdf(rel_path, contests=contests, title="Sample Totals") %}
 
 {% endwith %}
 </ul>
