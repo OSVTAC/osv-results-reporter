@@ -65,15 +65,18 @@ class TsvWritingModuleTest(TestCase):
             self.assertEqual(actual, expected)
 
     def test_make_tsv_directory(self):
+        rel_dir = 'my/path'
         contests = [
             ('President', [('A', 'B'), (1, 2)]),
             ('Vice President', [('C', 'D'), (3, 4)]),
         ]
+        expected = [
+            Path('my/path/President.tsv'),
+            Path('my/path/Vice President.tsv'),
+        ]
         with TemporaryDirectory() as temp_dir:
-            parent_dir = Path(temp_dir) / 'my'
-            parent_dir.mkdir()
-            dir_path = parent_dir / 'path'
+            paths = list(tsvwriting.make_tsv_directory(temp_dir, rel_dir=rel_dir,
+                                                    contests=contests))
 
-            paths = list(tsvwriting.make_tsv_directory(dir_path, contests))
-            self.assertTrue(str(paths[0]).endswith('/my/path/President.tsv'))
-            self.assertTrue(str(paths[1]).endswith('/my/path/Vice President.tsv'))
+            # TODO: also check the content of the files.
+            self.assertEqual(paths, expected)

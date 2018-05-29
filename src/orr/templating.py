@@ -32,10 +32,25 @@ from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Environment)
 
 import orr.writers.pdfwriting as pdfwriting
+import orr.writers.tsvwriting as tsvwriting
 from orr.writers.xlsxwriting import XLSXBook
 
 
 _log = logging.getLogger(__name__)
+
+
+
+def get_output_dir(env):
+    """
+    Return the output directory, as a Path object.
+
+    Args:
+      env: a Jinja2 Environment object.
+    """
+    options = env.globals['options']
+    output_dir = options.output_dir
+
+    return output_dir
 
 
 def get_output_path(env, rel_path):
@@ -47,8 +62,7 @@ def get_output_path(env, rel_path):
       rel_path: a path relative to the output directory configured in the
         Jinja2 Environment object. This can be any path-like object.
     """
-    options = env.globals['options']
-    output_dir = options.output_dir
+    output_dir = get_output_dir(env)
     path = output_dir / rel_path
 
     return path
@@ -165,6 +179,25 @@ def subtemplate(context, template_name, file_name):
         context=context)
 
 
+def make_contest_pairs(contests):
+    return [(contest['name'], contest['rows']) for contest in contests]
+
+
+@environmentfunction
+def create_tsv_files(env, rel_dir, contests):
+    """
+    Create a TSV file of row data, one for each contest.
+
+    Args:
+      rel_dir: a directory relative to the output path configured in the
+        given Jinja2 environment.
+    """
+    output_dir = get_output_dir(env)
+    contests = make_contest_pairs(contests)
+
+    yield from tsvwriting.make_tsv_directory(output_dir, rel_dir, contests)
+
+
 # TODO: finish implementing (this is still experimental).
 @environmentfunction
 def open_xlsx(env, rel_path):
@@ -198,6 +231,6 @@ def create_pdf(env, rel_path, contests, title=None):
 
     output_path = get_output_path(env, rel_path)
 
-    contests = [(contest['name'], contest['rows']) for contest in contests]
+    contests = make_contest_pairs(contests)
 
     pdfwriting.make_pdf(output_path, contests=contests, title=title)

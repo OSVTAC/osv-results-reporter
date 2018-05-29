@@ -50,23 +50,25 @@ def make_tsv_file(path, rows):
             f.write(line)
 
 
-def make_tsv_directory(dir_path, contests):
+def make_tsv_directory(root_dir, rel_dir, contests):
     """
-    Create TSV files, one for each contest, and yield the paths as
-    each file is created.
+    Create TSV files (one for each contest), and yield the path to each
+    file as it is created, as a Path object.
 
     Args:
-      dir_path: the directory in which to write the TSV files, as a
-        path-like object.  The directory will be created if it doesn't
-        already exist.
+      rel_dir: the directory in which to write the TSV files, as a
+        path-like object relative to the given root directory.  The
+        directory will be created if it doesn't already exist.
       contests: an iterable of pairs (contest_name, rows).
     """
-    dir_path = Path(dir_path)
+    root_dir = Path(root_dir)
+    rel_dir = Path(rel_dir)
     # It's okay if the directory already exists.
-    dir_path.mkdir(exist_ok=True)
+    (root_dir / rel_dir).mkdir(parents=True, exist_ok=True)
 
     for contest_name, rows in contests:
-        contest_path = make_tsv_path(dir_path, contest_name)
-        make_tsv_file(contest_path, rows)
+        rel_path = make_tsv_path(rel_dir, contest_name)
+        path = root_dir / rel_path
+        make_tsv_file(path, rows)
 
-        yield contest_path
+        yield rel_path

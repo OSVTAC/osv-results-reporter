@@ -1,22 +1,28 @@
-<h1>Excel Test</h1>
+<h1>“Grid” Test</h1>
 
 <ul>
-{% with rel_path='sample.xlsx' %}
-  <a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a>
-  {% with book=open_xlsx(rel_path) %}
+  <li>TSV
+    <ul>
+      {% for rel_path in create_tsv_files("sample-tsv", contests) %}
+        <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
+      {% endfor %}
+    </ul>
+  </li>
 
+{% with rel_path='sample.xlsx' %}
+  {% with book=open_xlsx(rel_path) %}
       {% for contest in contests %}
         {% do book.add_sheet(contest.name, contest.rows) %}
-        <li>Wrote: {{ contest.name}}</li>
       {% endfor %}
-
   {% endwith %}
+  <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
 
 {% endwith %}
 
 {% with rel_path='sample.pdf' %}
-  <a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a>
   {% do create_pdf(rel_path, contests=contests, title="Sample Totals") %}
+  <li><a href="{{ rel_path|output_file_uri }}">{{ rel_path }}</a></li>
 
 {% endwith %}
+
 </ul>
