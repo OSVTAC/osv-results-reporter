@@ -12,7 +12,8 @@ Following an election orr can be used to create results summary
 pages on election night, and detailed Statement of Vote reports
 with precinct detail on each contest.
 
-To install:
+
+### To install
 
 * Requires python version 3.6
 
@@ -20,13 +21,16 @@ To install:
 $ pip install -e ./src
 ```
 
+
+### To run
+
 For command-line help:
 
 ```
 $ orr -h
 ```
 
-For a simple example:
+For an HTML example:
 
 ```
 $ orr -v --input sampledata/results.json --output-dir html
@@ -49,7 +53,8 @@ Jinja2 templates.
 
 See the `doc` directory for more info.
 
-To run tests:
+
+### To run tests
 
 ```
 $ python -m unittest discover orr
