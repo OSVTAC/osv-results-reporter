@@ -32,7 +32,15 @@ $ orr -h
 $ orr -v --input sampledata/results.json --output-dir html
 ```
 
-  The above writes the output to the directory `_build`.
+or, to try creating XLSX and PDF files:
+
+```
+$ orr -v --input sampledata/contest-totals.json \
+      --template templates/grid-testing --output-dir grid
+```
+
+Both of the above write the output files to a subdirectory of the
+directory `_build`.
 
 * Open `_build/html/index.html` in a browser.
 
