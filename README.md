@@ -20,31 +20,34 @@ To install:
 $ pip install -e ./src
 ```
 
-To run:
+For command-line help:
 
 ```
 $ orr -h
 ```
 
-* The templates dir has named jinja templates
+For a simple example:
 
 ```
 $ orr -v --input sampledata/results.json --output-dir html
 ```
 
-or, to try creating XLSX and PDF files:
+Then open `_build/html/index.html` in a browser.
+
+Or to try creating an XLSX and PDF file:
 
 ```
 $ orr -v --input sampledata/contest-totals.json \
       --template templates/grid-testing --output-dir grid
 ```
 
+Then open `_build/grid/index.html`.
+
 Both of the above write the output files to a subdirectory of the
-directory `_build`.
+directory `_build`.  The `templates` directory contains more sample
+Jinja2 templates.
 
-* Open `_build/html/index.html` in a browser.
-
-* See doc dir
+See the `doc` directory for more info.
 
 To run tests:
 
