@@ -16,3 +16,5 @@ PyYAML
 reportlab
 # For writing Excel files.
 XlsxWriter
+# For parsing human full names to name parts
+nameparser
