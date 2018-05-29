@@ -482,6 +482,38 @@ def iter_table_story(data, available, make_table, table_name=None):
             yield PageBreak()
 
 
+class OrrTable(Table):
+
+    """
+    A table that tells CanvasState when it has been drawn.
+    """
+
+    def __init__(self, *args, canvas_state=None, table_props=None, **kwargs):
+        """
+        Args:
+          table_props: a TableProperties object.
+        """
+        super().__init__(*args, **kwargs)
+
+        self.canvas_state = canvas_state
+        self.table_props = table_props
+
+    def drawOn(self, *args, **kwargs):
+        super().drawOn(*args, **kwargs)
+
+        # Set the last drawn table so it's available inside
+        # BaseDocTemplate.afterPage() when we write the page header
+        # and footer.
+        canvas_state.last_table = self
+
+    # Override Table._calcPreliminaryWidths() to prevent ReportLab
+    # from expanding the table columns to fill the entire width of
+    # the page.  There doesn't seem to be a nicer way to do this.
+    # TODO: find a way to avoid having to use this hack.
+    def _calcPreliminaryWidths(self, available_width):
+        return super()._calcPreliminaryWidths(availWidth=0)
+
+
 def make_pdf(path, contests, title=None):
     """
     Args:
@@ -509,36 +541,6 @@ def make_pdf(path, contests, title=None):
     # Create a CanvasState for the real build() stage.
     canvas_state = CanvasState()
 
-    class OrrTable(Table):
-
-        """
-        A table that tells CanvasState which table has been drawn.
-        """
-
-        def __init__(self, *args, table_props=None, **kwargs):
-            """
-            Args:
-              table_props: a TableProperties object.
-            """
-            super().__init__(*args, **kwargs)
-
-            self.table_props = table_props
-
-        def drawOn(self, *args, **kwargs):
-            super().drawOn(*args, **kwargs)
-
-            # Set the last drawn table so it's available inside
-            # BaseDocTemplate.afterPage() when we write the page header
-            # and footer.
-            canvas_state.last_table = self
-
-        # Override Table._calcPreliminaryWidths() to prevent ReportLab
-        # from expanding the table columns to fill the entire width of
-        # the page.  There doesn't seem to be a nicer way to do this.
-        # TODO: find a way to avoid having to use this hack.
-        def _calcPreliminaryWidths(self, available_width):
-            return super()._calcPreliminaryWidths(availWidth=0)
-
     def make_table(data, table_props=None, **kwargs):
         """
         Args:
@@ -546,7 +548,7 @@ def make_pdf(path, contests, title=None):
           **kwargs: additional keyword arguments to pass to the Table
             constructor.
         """
-        table = OrrTable(data, table_props=table_props, **kwargs)
+        table = OrrTable(data, canvas_state=canvas_state, table_props=table_props, **kwargs)
 
         table.setStyle(TableStyle([
             # Add grid lines to the table.
