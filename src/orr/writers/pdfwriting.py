@@ -401,6 +401,11 @@ class DocumentTemplate(SimpleDocTemplate):
     Our customized DocTemplate.
     """
 
+    def __init__(self, *args, canvas_state=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.canvas_state = canvas_state
+
     def afterPage(self):
         # Write the name of the current table at the top of each page.
         self.canvas_state.write_page_header(self.canv)
@@ -419,8 +424,8 @@ def make_doc_template_factory(path, page_size, title=None):
         Args:
           canvas_state: a CanvasState object.
         """
-        doc_template = DocumentTemplate(path, pagesize=page_size, title=title, **margins)
-        doc_template.canvas_state = canvas_state
+        doc_template = DocumentTemplate(path, canvas_state=canvas_state,
+                            pagesize=page_size, title=title, **margins)
 
         return doc_template
 
