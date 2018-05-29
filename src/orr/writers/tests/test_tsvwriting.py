@@ -63,3 +63,17 @@ class TsvWritingModuleTest(TestCase):
             tsvwriting.make_tsv_file(path, rows=rows)
             actual = path.read_text()
             self.assertEqual(actual, expected)
+
+    def test_make_tsv_directory(self):
+        contests = [
+            ('President', [('A', 'B'), (1, 2)]),
+            ('Vice President', [('C', 'D'), (3, 4)]),
+        ]
+        with TemporaryDirectory() as temp_dir:
+            parent_dir = Path(temp_dir) / 'my'
+            parent_dir.mkdir()
+            dir_path = parent_dir / 'path'
+
+            paths = list(tsvwriting.make_tsv_directory(dir_path, contests))
+            self.assertTrue(str(paths[0]).endswith('/my/path/President.tsv'))
+            self.assertTrue(str(paths[1]).endswith('/my/path/Vice President.tsv'))

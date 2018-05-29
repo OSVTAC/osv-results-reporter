@@ -61,12 +61,12 @@ def make_tsv_directory(dir_path, contests):
         already exist.
       contests: an iterable of pairs (contest_name, rows).
     """
-    path = Path(path)
+    dir_path = Path(dir_path)
     # It's okay if the directory already exists.
-    path.mkdir(exist_ok=True)
+    dir_path.mkdir(exist_ok=True)
 
     for contest_name, rows in contests:
-        contest_path = make_tsv_path(dir_path, name)
+        contest_path = make_tsv_path(dir_path, contest_name)
         make_tsv_file(contest_path, rows)
 
         yield contest_path
