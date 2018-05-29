@@ -28,7 +28,7 @@ from pathlib import Path
 TSV_SUFFIX = '.tsv'
 
 
-def make_tsv_file(dir_path, name):
+def make_tsv_path(dir_path, name):
     """
     Return the path to the file, as a Path object.
 
@@ -43,8 +43,18 @@ def make_tsv_file(dir_path, name):
     return path
 
 
+def make_tsv_file(path, rows):
+    with path.open('w') as f:
+        for row in rows:
+            line = '\t'.join(str(value) for value in row) + '\n'
+            f.write(line)
+
+
 def make_tsv_directory(dir_path, contests):
     """
+    Create TSV files, one for each contest, and yield the paths as
+    each file is created.
+
     Args:
       dir_path: the directory in which to write the TSV files, as a
         path-like object.  The directory will be created if it doesn't
@@ -56,6 +66,7 @@ def make_tsv_directory(dir_path, contests):
     path.mkdir(exist_ok=True)
 
     for contest_name, rows in contests:
-        contest_path = make_tsv_file(dir_path, name)
-        # TODO
+        contest_path = make_tsv_path(dir_path, name)
+        make_tsv_file(contest_path, rows)
 
+        yield contest_path

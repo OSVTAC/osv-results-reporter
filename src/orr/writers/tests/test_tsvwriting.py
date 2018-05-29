@@ -23,6 +23,8 @@ Test the orr.writers.tsvwriting module.
 """
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from textwrap import dedent
 from unittest import TestCase
 
 import orr.writers.tsvwriting as tsvwriting
@@ -34,7 +36,7 @@ class TsvWritingModuleTest(TestCase):
     Test the functions in orr.writers.tsvwriting.
     """
 
-    def test_make_tsv_file(self):
+    def test_make_tsv_path(self):
         dir_path = 'my/output'
         cases = [
             ('President', Path('my/output/President.tsv')),
@@ -42,5 +44,22 @@ class TsvWritingModuleTest(TestCase):
         ]
         for name, expected in cases:
             with self.subTest(name=name):
-                actual = tsvwriting.make_tsv_file(dir_path, name)
+                actual = tsvwriting.make_tsv_path(dir_path, name)
                 self.assertEqual(actual, expected)
+
+    def test_make_tsv_file(self):
+        rows = [
+            ('Alice', 'Bill'),
+            (100, 200),
+        ]
+        expected = dedent("""\
+        Alice\tBill
+        100\t200
+        """)
+        with TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            path = temp_dir / 'test.tsv'
+
+            tsvwriting.make_tsv_file(path, rows=rows)
+            actual = path.read_text()
+            self.assertEqual(actual, expected)
