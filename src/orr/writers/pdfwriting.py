@@ -186,6 +186,8 @@ def split_table_along_columns(make_table, table, column_counts, table_name=None)
       column_counts: an iterable of the number of columns of data to use
         in each table split from the original.
     """
+    assert column_counts
+
     # TODO: don't rely on an internal API.
     data = table._cellvalues
 
@@ -198,7 +200,7 @@ def split_table_along_columns(make_table, table, column_counts, table_name=None)
         tables.append(table)
         start = stop
 
-    table.last_in_row = True
+    tables[0].first_in_row = True
 
     return tables
 
@@ -206,7 +208,7 @@ def split_table_along_columns(make_table, table, column_counts, table_name=None)
 class CanvasState:
 
     def __init__(self):
-        self._page_row = 1
+        self._page_row = 0
         self._page_column = 1
 
         self.table_name = None
@@ -227,9 +229,8 @@ class CanvasState:
 
     def write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
-
         text = f'Page {page_number} [{self._page_row} : {self._page_column}]'
-        _log.debug(f'writing page number: {text!r}')
+        _log.debug(f'writing page footer: {text!r}')
 
         # Center the page number near the very bottom.
         self.write_centered_text(canvas, text=text, height=(0.5 * inch))
@@ -237,22 +238,13 @@ class CanvasState:
         self._page_column += 1
 
     def write_page_header(self, canvas):
-        page_number = canvas.getPageNumber()
         text = self.table_name
-        _log.debug(f'writing page {page_number} header: {text}')
+        _log.debug(f'writing page header: {text}')
 
         page_height = self.get_page_size(canvas)[1]
         height = page_height - 0.5 * inch
 
         self.write_centered_text(canvas, text=text, height=height)
-
-    def onFirstPage(self, canvas, document):
-        # TODO: instead do this inside DocumentTemplate.afterPage().
-        self.write_page_number(canvas)
-
-    def onLaterPages(self, canvas, document):
-        # TODO: instead do this inside DocumentTemplate.afterPage().
-        self.write_page_number(canvas)
 
 
 def draw_vertical_text(canvas, text, x=0, y=0):
@@ -407,8 +399,15 @@ class DocumentTemplate(SimpleDocTemplate):
         self.canvas_state = canvas_state
 
     def afterPage(self):
+        canvas_state = self.canvas_state
+        canvas = self.canv
+        page_number = canvas.getPageNumber()
+        _log.debug(f'afterPage: writing header and footer for: page {page_number}')
+
         # Write the name of the current table at the top of each page.
-        self.canvas_state.write_page_header(self.canv)
+        canvas_state.write_page_header(canvas)
+
+        canvas_state.write_page_number(canvas)
 
 
 def make_doc_template_factory(path, page_size, title=None):
@@ -500,7 +499,7 @@ def make_pdf(path, contests, title=None):
         def __init__(self, *args, table_name=None, **kwargs):
             super().__init__(*args, **kwargs)
 
-            self.last_in_row = False
+            self.first_in_row = False
             self.table_name = table_name
 
         def drawOn(self, *args, **kwargs):
@@ -510,12 +509,12 @@ def make_pdf(path, contests, title=None):
             # BaseDocTemplate.afterPage() when we write the page header.
             canvas_state.table_name = self.table_name
 
-            if self.last_in_row:
+            if self.first_in_row:
                 # The document's onFirstPage() and onLaterPages() functions
                 # fire **before** any flowables are drawn (and in particular
                 # before start_new_page_row() is called below), so
-                # start_new_page_row() below takes effect for the next
-                # page and table.
+                # start_new_page_row() below only takes effect for the
+                # next page and table (or BaseDocTemplate.afterPage()).
                 canvas_state.start_new_page_row()
 
         # Override Table._calcPreliminaryWidths() to prevent ReportLab
@@ -554,7 +553,7 @@ def make_pdf(path, contests, title=None):
     document = make_doc_template(canvas_state=canvas_state)
 
     _log.info(f'writing PDF to: {path}')
-    document.build(story, onFirstPage=canvas_state.onFirstPage, onLaterPages=canvas_state.onLaterPages)
+    document.build(story)
 
 
 if __name__ == '__main__':
