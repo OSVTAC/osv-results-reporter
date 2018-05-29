@@ -217,25 +217,41 @@ class CanvasState:
         self._page_row += 1
         self._page_column = 1
 
+    def write_centered_text(self, canvas, text, height):
+        page_width = self.get_page_size(canvas)[0]
+        width = canvas.stringWidth(text)
+        x = (page_width - width) / 2
+        canvas.drawString(x=x, y=height, text=text)
+
     def _write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
 
         text = f'Page {page_number} [{self._page_row} : {self._page_column}]'
-        _log.debug(f'writing page: {text!r}')
+        _log.debug(f'writing page number: {text!r}')
 
         # Center the page number near the very bottom.
-        page_width = self.get_page_size(canvas)[0]
-        width = canvas.stringWidth(text)
-        x = (page_width - width) / 2
-        canvas.drawString(x, 0.5 * inch, text)
+        self.write_centered_text(canvas, text=text, height=(0.5 * inch))
+
+    def write_page_header(self, canvas, text):
+        page_height = self.get_page_size(canvas)[1]
+        height = page_height - 0.5 * inch
+        self.write_centered_text(canvas, text=text, height=height)
+
+    def write_page_boilerplate(self, canvas, document):
+        text = 'Sample Title'
+        page_number = canvas.getPageNumber()
+        _log.debug(f'writing page boilerplate: page {page_number}')
+
+        self.write_page_header(canvas, text=document.title)
+        self._write_page_number(canvas)
 
         self._page_column += 1
 
     def onFirstPage(self, canvas, document):
-        self._write_page_number(canvas)
+        self.write_page_boilerplate(canvas, document)
 
     def onLaterPages(self, canvas, document):
-        self._write_page_number(canvas)
+        self.write_page_boilerplate(canvas, document)
 
 
 def draw_vertical_text(canvas, text, x=0, y=0):
@@ -392,7 +408,6 @@ def make_doc_template_factory(path, page_size, title=None):
     return make_doc_template
 
 
-# TODO: keep working on PDF generation.  This is a scratch function.
 def make_pdf(path, rows, title=None):
     """
     Args:
@@ -402,12 +417,6 @@ def make_pdf(path, rows, title=None):
     """
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
-
-    # canvas = Canvas(path)
-    # text = 'Hello, world'
-    # draw_vertical_text(canvas, text, x=200, y=200)
-    # canvas.save()
-    # return
 
     page_size = DEFAULT_PAGE_SIZE
     make_doc_template = make_doc_template_factory(path, page_size=page_size, title=title)
