@@ -31,6 +31,7 @@ import dateutil.parser
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Environment)
 
+import orr.writers.pdfwriting as pdfwriting
 from orr.writers.xlsxwriting import XLSXBook
 
 
@@ -181,3 +182,20 @@ def open_xlsx(env, rel_path):
     book = XLSXBook(output_path)
 
     return book
+
+
+@environmentfunction
+def create_pdf(env, rel_path, rows):
+    """
+    Create a PDF of row data.
+
+    The file is written to the given path, relative to the output path
+    configured in the given Jinja2 environment.
+    """
+    rel_path = Path(rel_path)
+    if rel_path.suffix != '.pdf':
+        raise RuntimeError(f'PDF path does not have extension .pdf: {rel_path}')
+
+    output_path = get_output_path(env, rel_path)
+
+    pdfwriting.make_pdf(output_path, rows)

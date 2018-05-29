@@ -348,15 +348,11 @@ class TextWrapper:
         return vertical_text
 
 
-def make_header_row(count, text_wrapper):
+def make_header_row(texts, text_wrapper):
     """
     Return a list of VerticalText objects for use as the header row of
     a Table object.
     """
-    texts = [i * 'A' for i in range(1, count + 1)]
-    random.shuffle(texts)
-    texts = [f'{text} {i + 1}' for text, i in zip(texts, range(count))]
-
     # A list of ordered pairs (width, height).
     dimensions = [text_wrapper.compute_vertical_text_dimensions(text) for text in texts]
     max_height = max(dimension[1] for dimension in dimensions)
@@ -367,25 +363,17 @@ def make_header_row(count, text_wrapper):
     return vertical_texts
 
 
-# TODO: remove this (it's only for testing).
-def make_sample_table_data(text_wrapper, row_count=None):
+def prepare_table_data(rows, text_wrapper):
     """
     Args:
       rows: the number of data rows.
       text_wrapper: a TextWrapper object.
     """
-    if row_count is None:
-        row_count = 60
-
-    column_count = 20
-
-    header_row = make_header_row(count=column_count, text_wrapper=text_wrapper)
+    headers = rows[0]
+    header_row = make_header_row(headers, text_wrapper=text_wrapper)
 
     data = [header_row]
-    for i in range(row_count):
-        value = (i + 1) * 100000
-        row = [value + j for j in range(column_count)]
-        data.append(row)
+    data.extend(rows[1:])
 
     return data
 
@@ -405,7 +393,7 @@ def make_doc_template_factory(path, page_size):
 
 
 # TODO: keep working on PDF generation.  This is a scratch function.
-def make_pdf(path):
+def make_pdf(path, rows):
     """
     Args:
       path: a path-like object.
@@ -428,7 +416,7 @@ def make_pdf(path):
     # TODO: eliminate needing to do the fake build.
     document.build([])
     text_wrapper = TextWrapper(document=document)
-    data = make_sample_table_data(text_wrapper=text_wrapper)
+    data = prepare_table_data(rows, text_wrapper=text_wrapper)
 
     available = get_available_size(page_size=page_size)
     available_width, available_height = available

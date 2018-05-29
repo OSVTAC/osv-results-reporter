@@ -60,6 +60,7 @@ def create_jinja_env(output_dir, template_dirs=None):
     options['output_dir'] = Path(output_dir)
 
     env.globals.update(options=options,
+        create_pdf=templating.create_pdf,
         open_xlsx=templating.open_xlsx,
         subtemplate=templating.subtemplate
     )
