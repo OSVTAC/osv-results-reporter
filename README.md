@@ -38,7 +38,7 @@ $ orr -v --input sampledata/results.json --output-dir html
 
 Then open `_build/html/index.html` in a browser.
 
-Or for an example that creates TSV, XLSX, and PDF file:
+Or for an example that creates TSV, XLSX, and PDF files:
 
 ```
 $ orr -v --input sampledata/contest-totals.json \
