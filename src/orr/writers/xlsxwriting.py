@@ -31,6 +31,29 @@ import xlsxwriter
 _log = logging.getLogger(__name__)
 
 
+class XLSXSheet:
+
+    """
+    Encapsulates an XLSX worksheet.
+    """
+
+    def __init__(self, worksheet):
+        """
+        Args:
+          worksheet: an xlsxwriter.worksheet.Worksheet object.
+        """
+        self.row_index = 0
+
+        self.worksheet = worksheet
+
+    def add_row(self, row):
+        row_index = self.row_index
+        for i, value in enumerate(row):
+            self.worksheet.write(row_index, i, value)
+
+        self.row_index += 1
+
+
 class XLSXBook:
 
     """
@@ -59,40 +82,23 @@ class XLSXBook:
             _log.debug(f'calling close from __del__: {self.workbook!r}')
             self.close()
 
-    def add_sheet(self, name=None):
+    def add_sheet(self, name=None, rows=None):
         """
         Create, and return an XLSXSheet object.
 
         Args:
           name: an optional name for the worksheet. Defaults to e.g. "Sheet1".
         """
+        if rows is None:
+            rows = []
+
         worksheet = self.workbook.add_worksheet(name)
         sheet = XLSXSheet(worksheet)
 
+        for row in rows:
+            sheet.add_row(row)
+
         return sheet
-
-
-class XLSXSheet:
-
-    """
-    Encapsulates an XLSX worksheet.
-    """
-
-    def __init__(self, worksheet):
-        """
-        Args:
-          worksheet: an xlsxwriter.worksheet.Worksheet object.
-        """
-        self.row_index = 0
-
-        self.worksheet = worksheet
-
-    def add_row(self, row):
-        row_index = self.row_index
-        for i, value in enumerate(row):
-            self.worksheet.write(row_index, i, value)
-
-        self.row_index += 1
 
 
 @contextmanager

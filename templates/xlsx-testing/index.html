@@ -1,12 +1,15 @@
 <h1>Excel Test</h1>
 
+<ul>
 {% with rel_path='sample.xlsx' %}
   <a href="{{ rel_path|output_file_uri}}">{{ rel_path }}</a>
   {% with book=open_xlsx('sample.xlsx') %}
-    {% with sheet=book.add_sheet('My Sheet') %}
-      {% for row in rows %}
-        {% do sheet.add_row(row) %}
+
+      {% for contest in contests %}
+        {% do sheet=book.add_sheet(contest.name, contest.rows) %}
+        <li>Wrote: {{ contest.name}}</li>
       {% endfor %}
-    {% endwith %}
+
   {% endwith %}
 {% endwith %}
+</ul>

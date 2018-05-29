@@ -220,7 +220,7 @@ class CanvasState:
     def _write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
 
-        text = f'Page {page_number} [row {self._page_row}: col {self._page_column}]'
+        text = f'Page {page_number} [{self._page_row} : {self._page_column}]'
         _log.debug(f'writing page: {text!r}')
 
         # Center the page number near the very bottom.
@@ -425,6 +425,7 @@ def make_pdf(path):
 
     document = make_doc_template()
     # Do a fake build to set document.canv.
+    # TODO: eliminate needing to do the fake build.
     document.build([])
     text_wrapper = TextWrapper(document=document)
     data = make_sample_table_data(text_wrapper=text_wrapper)
