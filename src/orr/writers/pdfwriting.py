@@ -173,7 +173,7 @@ def compute_column_counts(make_table, data, width):
     return counts
 
 
-def split_table_along_columns(make_table, table, column_counts, table_name=None):
+def split_table_along_columns(make_table, table, column_counts, table_name=None, grid_row=None):
     """
     Split a table along columns, iteratively.
 
@@ -187,20 +187,21 @@ def split_table_along_columns(make_table, table, column_counts, table_name=None)
         in each table split from the original.
     """
     assert column_counts
+    assert grid_row
 
     # TODO: don't rely on an internal API.
     data = table._cellvalues
 
     tables = []
     start = 0
-    for column_count in column_counts:
+    for column_number, column_count in enumerate(column_counts, start=1):
         stop = start + column_count
         new_data = slice_data_vertically(data, start=start, stop=stop)
-        table = make_table(new_data, table_name=table_name)
+        table_props = TableProperties(table_name, grid_row=grid_row, grid_column=column_number)
+
+        table = make_table(new_data, table_props=table_props)
         tables.append(table)
         start = stop
-
-    tables[0].first_in_row = True
 
     return tables
 
@@ -208,18 +209,28 @@ def split_table_along_columns(make_table, table, column_counts, table_name=None)
 class CanvasState:
 
     def __init__(self):
-        self._page_row = 0
-        self._page_column = 1
+        # An OrrTable object corresponding to the last drawn table.
+        self.last_table = None
 
-        self.table_name = None
+    @property
+    def table_props(self):
+        return self.last_table.table_props
+
+    @property
+    def table_name(self):
+        return self.table_props.table_name
+
+    @property
+    def table_grid_row(self):
+        return self.table_props.grid_row
+
+    @property
+    def table_grid_column(self):
+        return self.table_props.grid_column
 
     def get_page_size(self, canvas):
         # TODO: is it okay to depend on this internal API?
         return canvas._pagesize
-
-    def start_new_page_row(self):
-        self._page_row += 1
-        self._page_column = 1
 
     def write_centered_text(self, canvas, text, height):
         page_width = self.get_page_size(canvas)[0]
@@ -229,16 +240,15 @@ class CanvasState:
 
     def write_page_number(self, canvas):
         page_number = canvas.getPageNumber()
-        text = f'Page {page_number} [{self._page_row} : {self._page_column}]'
+        text = f'Page {page_number} [{self.table_grid_row} : {self.table_grid_column}]'
         _log.debug(f'writing page footer: {text!r}')
 
         # Center the page number near the very bottom.
         self.write_centered_text(canvas, text=text, height=(0.5 * inch))
 
-        self._page_column += 1
-
     def write_page_header(self, canvas):
         text = self.table_name
+        text = f'{self.table_name} (page_col: {self.table_grid_column})'
         _log.debug(f'writing page header: {text}')
 
         page_height = self.get_page_size(canvas)[1]
@@ -431,6 +441,14 @@ def make_doc_template_factory(path, page_size, title=None):
     return make_doc_template
 
 
+class TableProperties:
+
+    def __init__(self, table_name, grid_row, grid_column):
+        self.table_name = table_name
+        self.grid_row = grid_row
+        self.grid_column = grid_column
+
+
 def iter_table_story(data, available, make_table, table_name=None):
     """
     Create and yield "story" elements for a new table.
@@ -445,17 +463,18 @@ def iter_table_story(data, available, make_table, table_name=None):
     _log.debug(f'will split table along columns into {len(column_counts)}: {column_counts}')
 
     # Display the header on each page.
-    table = make_table(data, table_name=table_name, repeatRows=1)
+    table = make_table(data, repeatRows=1)
 
     # First split the table along rows.
     tables = split_table_along_rows(table, available)
     _log.debug(f'split table along rows into {len(tables)}')
 
-    for table in tables:
+    for row_number, table in enumerate(tables, start=1):
         # Then split each sub-table along columns, using the column
         # counts we already computed.
         new_tables = split_table_along_columns(make_table, table=table,
-                            column_counts=column_counts, table_name=table_name)
+                            column_counts=column_counts, table_name=table_name,
+                            grid_row=row_number)
 
         for new_table in new_tables:
             yield new_table
@@ -490,32 +509,28 @@ def make_pdf(path, contests, title=None):
     # Create a CanvasState for the real build() stage.
     canvas_state = CanvasState()
 
-    class TrackingTable(Table):
+    class OrrTable(Table):
 
         """
         A table that tells CanvasState which table has been drawn.
         """
 
-        def __init__(self, *args, table_name=None, **kwargs):
+        def __init__(self, *args, table_props=None, **kwargs):
+            """
+            Args:
+              table_props: a TableProperties object.
+            """
             super().__init__(*args, **kwargs)
 
-            self.first_in_row = False
-            self.table_name = table_name
+            self.table_props = table_props
 
         def drawOn(self, *args, **kwargs):
             super().drawOn(*args, **kwargs)
 
-            # Set the name of the current table so it's available inside
-            # BaseDocTemplate.afterPage() when we write the page header.
-            canvas_state.table_name = self.table_name
-
-            if self.first_in_row:
-                # The document's onFirstPage() and onLaterPages() functions
-                # fire **before** any flowables are drawn (and in particular
-                # before start_new_page_row() is called below), so
-                # start_new_page_row() below only takes effect for the
-                # next page and table (or BaseDocTemplate.afterPage()).
-                canvas_state.start_new_page_row()
+            # Set the last drawn table so it's available inside
+            # BaseDocTemplate.afterPage() when we write the page header
+            # and footer.
+            canvas_state.last_table = self
 
         # Override Table._calcPreliminaryWidths() to prevent ReportLab
         # from expanding the table columns to fill the entire width of
@@ -524,13 +539,14 @@ def make_pdf(path, contests, title=None):
         def _calcPreliminaryWidths(self, available_width):
             return super()._calcPreliminaryWidths(availWidth=0)
 
-    def make_table(data, table_name=None, **kwargs):
+    def make_table(data, table_props=None, **kwargs):
         """
         Args:
+          table_props: a TableProperties object.
           **kwargs: additional keyword arguments to pass to the Table
             constructor.
         """
-        table = TrackingTable(data, table_name=table_name, **kwargs)
+        table = OrrTable(data, table_props=table_props, **kwargs)
 
         table.setStyle(TableStyle([
             # Add grid lines to the table.
