@@ -53,10 +53,10 @@ RESULT_ATTRIBUTES = OrderedDict([
 SUBTOTAL_TYPES = OrderedDict([
     ('TO','Total'),             # Total of all subtotals
     ('ED','Election Day'),      # Election day precinct voting (in county)
-    ('MV','Vote by Mail'),     # Vote by mail ballots (in county)
+    ('MV','Vote by Mail'),      # Vote by mail ballots (in county)
     ('EV','Early Voting'),      # Early voting/vote centers (in county)
-    ('XA','Outside County'),    # Votes from other counties (multi-county contest)
-    ('OA','In-County Total')    # Subtotal this county only (multi-county contest)
+    ('IA','In-County Total'),   # Subtotal this county only (multi-county contest)
+    ('XA','Other Counties')     # Votes from other counties (multi-county contest)
     ])
 
 def append_id_index(idlist,index:dict,obj,
@@ -163,7 +163,8 @@ class Election:
                     raise RuntimeError(f'Unknown header id "{bi.header_id}"')
                 header.ballot_items.append(bi)
                 bi.header = header  # back reference
-            else bi.header = None
+            else:
+                bi.header = None
             append_id_index(self.ballot_items,self.ballot_items_by_id,bi)
 
 
@@ -257,6 +258,7 @@ class OfficeContest(Contest):
     def from_data(self,data:dict):
         copy_from_data(self,data,{
             'choices':OfficeContest.enter_candidates,
+            'subtotal_types':Contest.enter_subtotal_types,
             'result_attributes':Contest.enter_result_attributes})
 
     def enter_candidates(self,candidates):
@@ -285,6 +287,7 @@ class MeasureContest(Contest):
     def from_data(self,data:dict):
         copy_from_data(self,data,{
             'choices':MeasureContest.enter_choices,
+            'subtotal_types':Contest.enter_subtotal_types,
             'result_attributes':Contest.enter_result_attributes})
 
     def enter_choices(self,choices):
