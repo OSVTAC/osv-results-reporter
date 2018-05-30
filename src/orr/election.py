@@ -116,12 +116,6 @@ def copy_from_data(obj:dict, data:dict, handler:dict={}):
             # All others are just copied
             obj[k] = v
 
-def enter_ballot_items(election,data:dict):
-    """
-    Creates a new Header, OfficeContest, MeasureContest, or YNOfficeContest
-    object from a dict. The 'type' attribute will identify which item
-    """
-
 class Election:
     """
     The election is the root object for all content defined for an
@@ -216,6 +210,7 @@ class Contest(BallotItem):
         self.choices_by_id = {}     # index of choices by id
         self.subtotal_types = []    # summary subtotals available
         self.result_details = []    # result detail definitions
+        self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
     def enter_result_attributes(self,result_attributes):
         """
