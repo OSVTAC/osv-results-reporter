@@ -530,9 +530,21 @@ class DocumentTemplate(SimpleDocTemplate):
         super().__init__(*args, **kwargs)
         self.canvas_state = canvas_state
 
-    # We use afterPage() because it occurs after flowables have been
-    # drawn on the canvas.  This is useful because it lets us know what
-    # table was drawn on the page, along with its properties.
+    # This is called at the very end of BaseDocTemplate._startBuild(),
+    # which in turn is called near the very beginning of
+    # BaseDocTemplate.build().
+    #    For our purposes, the important characteristic of _startBuild()
+    # is that tne end of _startBuild() marks the first point at which
+    # self.canv can be considered "done."  The main job of _startBuild()
+    # is constructing and setting self.canv.
+    def handle_documentBegin(self):
+        _log.debug('starting: handle_documentBegin')
+        super().handle_documentBegin()
+
+    # We use afterPage() to draw the page header and footer because it's
+    # called after the flowables have been drawn on the page.  This is
+    # useful because it lets us look at what was drawn on the page to
+    # construct the header and footer text.
     def afterPage(self):
         canvas = self.canv
         page_number = canvas.getPageNumber()
