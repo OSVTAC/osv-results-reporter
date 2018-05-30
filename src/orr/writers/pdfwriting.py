@@ -209,9 +209,12 @@ def split_table_along_columns(make_table, table, column_counts, table_name=None,
 
 class CanvasState:
 
-    def __init__(self):
+    def __init__(self, contests, flowables):
         # An OrrTable object corresponding to the last drawn table.
         self.last_table = None
+
+        self.contests = contests
+        self.flowables = flowables
 
     @property
     def table_props(self):
@@ -534,11 +537,35 @@ class DocumentTemplate(SimpleDocTemplate):
     # which in turn is called near the very beginning of
     # BaseDocTemplate.build().
     #    For our purposes, the important characteristic of _startBuild()
-    # is that tne end of _startBuild() marks the first point at which
+    # is that the end of _startBuild() marks the first point at which
     # self.canv can be considered "done."  The main job of _startBuild()
     # is constructing and setting self.canv.
+    #    In our implementation, we construct the flowables we'll be
+    # drawing, using the Canvas object constructed earlier in the build()
+    # phase.  By inspecting build(), we can see that "flowables" isn't
+    # used prior to handle_documentBegin(), so it's okay for us to be
+    # setting it here.
     def handle_documentBegin(self):
         _log.debug('starting: handle_documentBegin')
+        canvas_state = self.canvas_state
+        flowables = canvas_state.flowables
+
+        # Compute the flowables now that we have access to the canvas.
+        text_wrapper = TextWrapper(document=self)
+
+        available = get_available_size(page_size=self.pagesize)
+        available_width, available_height = available
+        _log.debug(f'computed available width: {available_width} ({available_width / inch} inches)')
+
+        # Create a CanvasState for the real build() stage.
+        make_table = functools.partial(make_orr_table, canvas_state=canvas_state)
+
+        for contest_name, rows in canvas_state.contests:
+            assert contest_name is not None
+            data = prepare_table_data(rows, text_wrapper=text_wrapper)
+            for flowable in iter_table_story(data, available, make_table=make_table, table_name=contest_name):
+                flowables.append(flowable)
+
         super().handle_documentBegin()
 
     # We use afterPage() to draw the page header and footer because it's
@@ -560,36 +587,20 @@ def make_pdf(path, contests, title=None):
       contests: an iterable of pairs (contest_name, rows).
       title: an optional title to set on the PDF's properties.
     """
+    _log.info(f'writing PDF to: {path}')
+
     # Convert the path to a string for reportlab.
     path = os.fspath(path)
     page_size = DEFAULT_PAGE_SIZE
 
-    make_doc_template = functools.partial(make_orr_doc_template, path, page_size=page_size, title=title)
+    # We pass an empty list of flowables to build() as we will be adding
+    # the flowables in DocumentTemplate.handle_documentBegin().
+    # We do this so we can use the document's Canvas object to split
+    # the flowables ourself (since a Canvas is required to measure the
+    # size of strings, etc).
+    flowables = []
+    canvas_state = CanvasState(contests, flowables=flowables)
+    document = make_orr_doc_template(path, page_size=page_size, title=title,
+                                canvas_state=canvas_state)
 
-    document = make_doc_template()
-
-    # Do a fake build to set document.canv.
-    # TODO: eliminate needing to do the fake build.
-    document.build([])
-    text_wrapper = TextWrapper(document=document)
-
-    available = get_available_size(page_size=page_size)
-    available_width, available_height = available
-    _log.debug(f'computed available width: {available_width} ({available_width / inch} inches)')
-
-    # Create a CanvasState for the real build() stage.
-    canvas_state = CanvasState()
-    make_table = functools.partial(make_orr_table, canvas_state=canvas_state)
-
-    story = []
-    for contest_name, rows in contests:
-        assert contest_name is not None
-        data = prepare_table_data(rows, text_wrapper=text_wrapper)
-        for flowable in iter_table_story(data, available, make_table=make_table, table_name=contest_name):
-            story.append(flowable)
-
-    # Create a new document since we called build() on the first one.
-    document = make_doc_template(canvas_state=canvas_state)
-
-    _log.info(f'writing PDF to: {path}')
-    document.build(story)
+    document.build(flowables)
