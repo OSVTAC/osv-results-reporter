@@ -59,7 +59,7 @@ SUBTOTAL_TYPES = OrderedDict([
     ('XA','Other Counties')     # Votes from other counties (multi-county contest)
     ])
 
-def append_id_index(idlist,index:dict,obj,
+def append_id_index(idlist, index:dict, obj,
                     errmsg="duplicate id"):
     """
     This routine contains common code for appending an object to an
@@ -81,7 +81,7 @@ def append_id_index(idlist,index:dict,obj,
     index[obj.id] = obj
 
 
-def append_result_subtotal(contest,obj,data:dict,listattr:list):
+def append_result_subtotal(contest, obj, data:dict, listattr:list):
     """
     This routine contains common processing to append a
     SubtotalType or ResultDetail to a list within the contest.
@@ -111,7 +111,7 @@ def copy_from_data(obj:dict, data:dict, handler:dict={}):
     for k, v in data:
         if k in handler:
             # This attribute will be processed with a handler function
-            handler[k](obj,v)
+            handler[k](obj, v)
         else:
             # All others are just copied
             obj[k] = v
@@ -132,15 +132,16 @@ class Election:
         self.ballot_items = []  # ordered list of headers and contests
         self.ballot_items_by_id = {} # index of headers and contests by id
 
-    def from_data(self,data:dict):
+    def from_data(self, data:dict):
         """
         The from_data will copy string attributes from an external attribute:value
         dict, expanding the member ballot_items.
         """
-        copy_from_data(self,data,{'ballot_items':Election.enter_ballot_items })
+        copy_from_data(self, data,
+                       {'ballot_items':Election.enter_ballot_items })
 
 
-    def enter_ballot_items(self,ballot_items:list):
+    def enter_ballot_items(self, ballot_items:list):
         """
         Scan the list of source data representing ballot items.
         """
@@ -156,7 +157,7 @@ class Election:
             else:
                 raise RuntimeError('Invalid ballot item type')
             bi.from_data(bi_input)
-            if bi.get('header_id',None):
+            if bi.get('header_id', None):
                 # Add this bi to the header's bi list
                 header = self.ballot_items_by_id.get(bi.header_id, None)
                 if not header:
@@ -165,7 +166,7 @@ class Election:
                 bi.header = header  # back reference
             else:
                 bi.header = None
-            append_id_index(self.ballot_items,self.ballot_items_by_id,bi)
+            append_id_index(self.ballot_items, self.ballot_items_by_id, bi)
 
 
 class BallotItem:
@@ -178,18 +179,18 @@ class BallotItem:
       ballot_title: text appearing on ballots representing the header/contest
       ballot_subtitle: second level title for this item
       """
-    def __init__(self,id_=None,ballot_title=None,ballot_subtitle=""):
+    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         self.id = id_
         self.ballot_subtitle = ballot_subtitle
         self.ballot_title = ballot_title
 
 class Header(BallotItem):
-    def __init__(self,id_=None,ballot_title=None,ballot_subtitle=""):
-        BallotItem.__init__(self,id_,ballot_title,ballot_subtitle)
+    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
+        BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
         self.ballot_items = []
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data)
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
 
 
 class Contest(BallotItem):
@@ -204,8 +205,8 @@ class Contest(BallotItem):
                and recall/retention contests
     """
 
-    def __init__(self,id_=None,ballot_title=None,ballot_subtitle=""):
-        BallotItem.__init__(self,id_,ballot_title,ballot_subtitle)
+    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
+        BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
         self.choices = []           # ordered list of all contest choices
         self.result_attributes = [] # Pseudo choice for result summary attrs
         self.choices_by_id = {}     # index of choices by id
@@ -213,38 +214,38 @@ class Contest(BallotItem):
         self.result_details = []    # result detail definitions
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
-    def enter_result_attributes(self,result_attributes):
+    def enter_result_attributes(self, result_attributes):
         """
         Scan summary result attributes for a contest
         """
         for c_input in result_attributes:
             c = ResultAttribute()
             c.from_data(c_input)
-            append_id_index(self.result_attributes,self.choices_by_id,c)
+            append_id_index(self.result_attributes, self.choices_by_id, c)
 
-    def enter_subtotal_types(self,subtotal_types):
+    def enter_subtotal_types(self, subtotal_types):
         """
         Scan summary subtotals available for this contest
         """
         for s_input in subtotal_types:
-            append_result_subtotal(self,SubtotalType(),
-                                       s_input,self.subtotal_types)
+            append_result_subtotal(self, SubtotalType(),
+                                       s_input, self.subtotal_types)
 
-    def enter_result_details(self,result_details):
+    def enter_result_details(self, result_details):
         """
         Scan detail subtotals available for this contest
         """
         for s_input in result_details:
-            append_result_subtotal(self,ResultDetail(),
-                                       s_input,self.result_details)
+            append_result_subtotal(self, ResultDetail(),
+                                       s_input, self.result_details)
 
-    def enter_choice(self,choice,choice_input):
+    def enter_choice(self, choice, choice_input):
         """
         Common processing to enter a candidate or measure choice
         """
         enter_choicec.from_data(choice_input)
         choice.contest = self     # Add back reference
-        append_id_index(self.choices,self.choices_by_id,choice)
+        append_id_index(self.choices, self.choices_by_id, choice)
 
 
 class OfficeContest(Contest):
@@ -252,21 +253,21 @@ class OfficeContest(Contest):
     The OfficeContest represents an elected office where choices are
     a set of candidates.
     """
-    def __init__(self,id_=None,ballot_title=None,ballot_subtitle=""):
-        Contest.__init__(self,id_,ballot_title,ballot_subtitle)
+    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
+        Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data,{
+    def from_data(self, data:dict):
+        copy_from_data(self, data,{
             'choices':OfficeContest.enter_candidates,
             'subtotal_types':Contest.enter_subtotal_types,
             'result_attributes':Contest.enter_result_attributes})
 
-    def enter_candidates(self,candidates):
+    def enter_candidates(self, candidates):
         """
         Scan an input data list of candidate entries to create
         """
         for c_input in candidates:
-            c = Contest.enter_choice(self,Candidate(),c_input)
+            c = Contest.enter_choice(self, Candidate(), c_input)
 
 
 class MeasureContest(Contest):
@@ -281,21 +282,21 @@ class MeasureContest(Contest):
     multiple choice measure.
     """
 
-    def __init__(self,id_=None,ballot_title=None,ballot_subtitle=""):
-        Contest.__init__(self,id_,ballot_title,ballot_subtitle)
+    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
+        Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data,{
+    def from_data(self, data:dict):
+        copy_from_data(self, data,{
             'choices':MeasureContest.enter_choices,
             'subtotal_types':Contest.enter_subtotal_types,
             'result_attributes':Contest.enter_result_attributes})
 
-    def enter_choices(self,choices):
+    def enter_choices(self, choices):
         """
         Scan an input data list of measure choie entries to create
         """
         for c_input in choices:
-            c = Contest.enter_choice(self,Choice(),c_input)
+            c = Contest.enter_choice(self, Choice(), c_input)
 
 class YNOfficeContest(MeasureContest):
     """
@@ -304,12 +305,12 @@ class YNOfficeContest(MeasureContest):
     The attributes defining an elected office are included, and information
     on the incumbent/candidate can be defined.
     """
-    def __init__(self,id_=None,ballot_title=None,ballot_subtitle=""):
-        Contest.__init__(self,id_,ballot_title,ballot_subtitle)
+    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
+        Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
-    def from_data(self,data:dict):
+    def from_data(self, data:dict):
         # In orr we don't need to distinguish with a measure
-        MeasureContest.from_data(self,data)
+        MeasureContest.from_data(self, data)
 
 class Choice:
     """
@@ -318,23 +319,23 @@ class Choice:
     Multiple choice for a measure is a selection other than yes/no for
     a pass/fail contest, e.g. preferred name of a proposed city incorporation.
     """
-    def __init__(self,id_=None,ballot_title=None):
+    def __init__(self, id_=None, ballot_title=None):
         self.id = id_
         self.ballot_title = ballot_title
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data)
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
 
 
 class Candidate(Choice):
     """
     A candidate can have additional attributes
     """
-    def __init__(self,id_=None,ballot_title=None):
-        Choice.__init__(self,id_,ballot_title)
+    def __init__(self, id_=None, ballot_title=None):
+        Choice.__init__(self, id_, ballot_title)
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data)
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
 
 class ResultAttribute(Choice):
     """
@@ -344,11 +345,11 @@ class ResultAttribute(Choice):
     (that is distinct from a candidate/choice id) and "ballot_title"
     that can be used as a label in a report analogous to a candidate/choice name.
     """
-    def __init__(self,id_=None,ballot_title=None):
-        Choice.__init__(self,id_,ballot_title)
+    def __init__(self, id_=None, ballot_title=None):
+        Choice.__init__(self, id_, ballot_title)
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data)
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
 
 class SubtotalType:
     """
@@ -360,12 +361,12 @@ class SubtotalType:
     as a label.
     """
 
-    def __init__(self,id_=None,heading=None):
+    def __init__(self, id_=None, heading=None):
        self.id = id
        self.heading = heading
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data)
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
 
 class ResultDetail:
     """
@@ -373,12 +374,12 @@ class ResultDetail:
     exists for a set of ResultDetail
     """
 
-    def __init__(self,id_=None,area_heading=None,subtotal_heading=None,
+    def __init__(self, id_=None, area_heading=None, subtotal_heading=None,
                  is_vbm=False):
        self.id = id
        self.area_heading = area_heading
        self.subtotal_heading =subtotal_heading
        self.is_vbm = is_vbm
 
-    def from_data(self,data:dict):
-        copy_from_data(self,data)
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
