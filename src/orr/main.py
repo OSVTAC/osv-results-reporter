@@ -392,6 +392,8 @@ def run(config_path=None, input_paths=None, template_dir=None,
     _log.info(f'writing the output directory to stdout: {output_dir}')
     print(output_dir)
 
+    return output_dir
+
 
 def main():
     ns = parse_args()
