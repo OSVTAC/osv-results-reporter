@@ -1,0 +1,10 @@
+<body>
+  {{ election.ballot_title }} - {{ election.election_date }}
+
+  <ol>
+    {% for item in election.ballot_items %}
+      <li>{{ item.ballot_title}}</li>
+    {% endfor %}
+  </ol>
+
+</body>
