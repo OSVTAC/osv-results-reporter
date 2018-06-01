@@ -39,7 +39,7 @@ def main():
     with open(path) as f:
         data = json.load(f)
 
-    serialized = json.dumps(data, sort_keys=True, indent=4)
+    serialized = json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)
 
     print(serialized)
 
