@@ -168,6 +168,7 @@ def ballot_item_from_data(data, ballot_items_by_id):
 
 
 class Election:
+
     """
     The election is the root object for all content defined for an
     election operated by an Election Administration (EA), e.g. a
@@ -224,6 +225,7 @@ class Election:
 
 
 class BallotItem:
+
     """
     The BallotItem are items that appear on ballots-- either headers or
     contests. Each ballot item can be a subitem of a parent header.
@@ -232,11 +234,13 @@ class BallotItem:
       id: must be unique across all contests or headers
       ballot_title: text appearing on ballots representing the header/contest
       ballot_subtitle: second level title for this item
-      """
+    """
+
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         self.id = id_
         self.ballot_subtitle = ballot_subtitle
         self.ballot_title = ballot_title
+
 
 class Header(BallotItem):
 
@@ -252,6 +256,7 @@ class Header(BallotItem):
 
 
 class Contest(BallotItem):
+
     """
     The contest is a superclass of all contest types: offices, measures,
     and retention/recall. All contests have the following common attributes:
@@ -307,10 +312,12 @@ class Contest(BallotItem):
 
 
 class OfficeContest(Contest):
+
     """
     The OfficeContest represents an elected office where choices are
     a set of candidates.
     """
+
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
@@ -329,6 +336,7 @@ class OfficeContest(Contest):
 
 
 class MeasureContest(Contest):
+
     """
     The MeasureContest represents a ballot measure question posed to voters.
     Most measures have a Yes/No question though the text that can appear on
@@ -356,13 +364,16 @@ class MeasureContest(Contest):
         for c_input in choices:
             c = Contest.enter_choice(self, Choice(), c_input)
 
+
 class YNOfficeContest(MeasureContest):
+
     """
     A YNOfficeContest is a hybrid of MeasureContest and OfficeContest,
     used for approval voting (retention contest) or for a recall question.
     The attributes defining an elected office are included, and information
     on the incumbent/candidate can be defined.
     """
+
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
@@ -370,13 +381,16 @@ class YNOfficeContest(MeasureContest):
         # In orr we don't need to distinguish with a measure
         MeasureContest.from_data(self, data)
 
+
 class Choice:
+
     """
     Choice represents a selection on a ballot-- a candidate for an elected
     office, or Yes/No for a ballot measure, retention or recall office.
     Multiple choice for a measure is a selection other than yes/no for
     a pass/fail contest, e.g. preferred name of a proposed city incorporation.
     """
+
     def __init__(self, id_=None, ballot_title=None):
         self.id = id_
         self.ballot_title = ballot_title
@@ -386,16 +400,20 @@ class Choice:
 
 
 class Candidate(Choice):
+
     """
     A candidate can have additional attributes
     """
+
     def __init__(self, id_=None, ballot_title=None):
         Choice.__init__(self, id_, ballot_title)
 
     def from_data(self, data:dict):
         copy_from_data(self, data)
 
+
 class ResultAttribute(Choice):
+
     """
     Besides votes for a candidate or measure choice, a set of vote/ballot
     totals are computed for a set of summary attributes that represent
@@ -409,7 +427,9 @@ class ResultAttribute(Choice):
     def from_data(self, data:dict):
         copy_from_data(self, data)
 
+
 class SubtotalType:
+
     """
     When reporting summary data, the votes reported may include a total
     as well as a set of contest or election configurable subtotals. For
@@ -426,7 +446,9 @@ class SubtotalType:
     def from_data(self, data:dict):
         copy_from_data(self, data)
 
+
 class ResultDetail:
+
     """
     When reporting detailed results data, a set of separate total/subtotal
     exists for a set of ResultDetail
