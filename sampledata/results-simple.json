@@ -71,6 +71,10 @@
          "number_elected" : 1,
          "vote_for_msg_tl" : "Bumoto ng Isa",
          "ballot_title_tl" : "MIYEMBRO NG ASEMBLEYA NG ESTADO",
+         "ballot_subtitle" : "DISTRICT 17",
+         "ballot_subtitle_es" : "DISTRITO 17",
+         "ballot_subtitle_tl" : "DISTRITO 17",
+         "ballot_subtitle_zh" : "第17選區",
          "subtotal_types" : [
             {
                "id" : "TO",
