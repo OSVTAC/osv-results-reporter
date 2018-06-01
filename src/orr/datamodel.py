@@ -27,6 +27,7 @@ yes/no.
 """
 
 from collections import OrderedDict
+from datetime import datetime
 import logging
 
 
@@ -184,6 +185,16 @@ class Election:
         dict, expanding the member ballot_items.
         """
         election = cls()
+
+        # TODO: make a function for setting the date, and test.
+        date_string = data.pop('election_date', None)
+        if date_string is None:
+            election_date = None
+        else:
+            election_date = datetime.strptime(date_string, '%Y-%m-%d').date()
+
+        election.date = election_date
+
         copy_from_data(election, data, {'ballot_items':Election.enter_ballot_items })
 
         return election
@@ -195,6 +206,13 @@ class Election:
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'
+
+    @property
+    def display_date(self):
+        """
+        Return the date of the election in the form, "June 5, 2018".
+        """
+        return self.date.strftime(f'%B {self.date.day}, %Y')
 
     def enter_ballot_items(self, ballot_items:list):
         """
