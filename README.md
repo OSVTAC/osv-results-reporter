@@ -53,6 +53,15 @@ Jinja2 templates.
 
 See the `doc` directory for more info.
 
+#### Using data model (experimental / in progress)
+
+This is still being worked on:
+
+```
+$ orr --debug --use-data-model --input sampledata/test-minimal/ \
+      --template templates/test-minimal/ --output-dir html
+```
+
 
 ### To run tests
 
