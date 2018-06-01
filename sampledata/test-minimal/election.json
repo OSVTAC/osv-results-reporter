@@ -281,6 +281,7 @@
                     "heading": "Vote by Mail"
                 }
             ],
+            "type": "office",
             "vote_for_msg": "Vote your first, second, and third choices",
             "vote_for_msg_es": "Vote por su primera, segunda y tercera preferencias",
             "vote_for_msg_tl": "Iboto ang inyong una, pangalawa, at pangatlong pinili",
