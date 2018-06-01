@@ -27,7 +27,7 @@ Documentation: [TODO]
 """
 
 import argparse
-import datetime
+from datetime import datetime
 import json
 import logging
 import os
@@ -109,12 +109,14 @@ def parse_args():
 
 #--- Utility Routines: ---
 
-def generate_output_name():
+def generate_output_name(dt):
     """
     Return a name of the form "build_20180511_224339".
+
+    Args:
+      dt: a datetime object.
     """
-    now = datetime.datetime.now()
-    name = 'build_{:%Y%m%d_%H%M%S}'.format(now)
+    name = 'build_{:%Y%m%d_%H%M%S}'.format(dt)
 
     return name
 
@@ -273,19 +275,21 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
-def load_model(dir_path):
+def load_model(dir_path, build_time):
     """
     Populate our data model, and return the context to use for Jinja2.
 
     Args:
       dir_path: the path to the input directory.
+      build_time: a datetime object representing the current build time
+        (e.g. datetime.datetime.now()).
     """
     path = dir_path / 'election.json'
     data = utils.read_json(path)
 
     election = Election.from_data(data)
 
-    context = dict(election=election)
+    context = dict(election=election, build_time=build_time)
 
     return context
 
@@ -337,8 +341,11 @@ def run(config_path=None, input_paths=None, template_dir=None,
         extra_template_dirs = []
     if output_parent is None:
         output_parent = DEFAULT_OUTPUT_PARENT_DIR
+
+    dt_now = datetime.now()
+
     if output_dir_name is None:
-        output_dir_name = generate_output_name()
+        output_dir_name = generate_output_name(dt_now)
 
     assert template_dir is not None
 
@@ -371,7 +378,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
         input_dir = Path(input_paths[0])
         if not input_dir.is_dir():
             raise RuntimeError(f'input path is not a directory: {input_path}')
-        context = load_model(input_dir)
+        context = load_model(input_dir, build_time=dt_now)
     else:
         context = {}
         for input_path in input_paths:
