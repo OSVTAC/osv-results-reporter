@@ -42,16 +42,16 @@ _log = logging.getLogger(__name__)
 # "vote for 3", if only 1 choice was made, there would be 2 undervotes,
 # and if 4 or more choices were made, there would be 3 overvotes
 RESULT_ATTRIBUTES = OrderedDict([
-    ('SVTot', 'Ballots Counted'),   # Sum of valid votes reported
-    ('SVCst', 'Ballots Cast'),      # Ballot sheets submitted by voters
-    ('SVReg', 'Registered Voters'), # Voters registered for computing turnout
-    ('SVTrn', 'Voter Turnout'),     # (SVCst/SVReg)*100
-    ('SVRej', 'Ballots Rejected'),  # Not countable
-    ('SVUnc', 'Ballots Uncounted'), # Not yet counted or needing adjudication
-    ('SVWri', 'Writein Votes'),     # Write-in candidates not explicitly listed
-    ('SVUnd', 'Undervotes'),        # Blank votes or additional votes not made
-    ('SVOvr', 'Overvotes'),         # Possible votes rejected by overvoting
-    ('SVExh', 'Exhausted Ballots')  # All RCV choices were eliminated (RCV only)
+    ('RSTot', 'Ballots Counted'),   # Sum of valid votes reported
+    ('RSCst', 'Ballots Cast'),      # Ballot sheets submitted by voters
+    ('RSReg', 'Registered Voters'), # Voters registered for computing turnout
+    ('RSTrn', 'Voter Turnout'),     # (SVCst/SVReg)*100
+    ('RSRej', 'Ballots Rejected'),  # Not countable
+    ('RSUnc', 'Ballots Uncounted'), # Not yet counted or needing adjudication
+    ('RSWri', 'Writein Votes'),     # Write-in candidates not explicitly listed
+    ('RSUnd', 'Undervotes'),        # Blank votes or additional votes not made
+    ('RSOvr', 'Overvotes'),         # Possible votes rejected by overvoting
+    ('RSExh', 'Exhausted Ballots')  # All RCV choices were eliminated (RCV only)
     ])
 
 # Both detailed reports and contest summary reports might list a vote
