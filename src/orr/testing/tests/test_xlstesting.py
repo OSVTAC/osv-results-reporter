@@ -22,7 +22,11 @@ from pathlib import Path
 from unittest import TestCase
 
 import orr.testing.xlstesting as xlstesting
-from orr.testing.xlstesting import SAMPLE_XLSX_PATH
+
+
+SAMPLE_DIR = Path(__file__).parent / 'data'
+# The path to our sample xlsx file.
+SAMPLE_XLSX_PATH = SAMPLE_DIR / 'sample.xlsx'
 
 
 class ModuleTest(TestCase):

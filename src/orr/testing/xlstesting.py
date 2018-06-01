@@ -29,11 +29,6 @@ from pathlib import Path
 import openpyxl
 
 
-SAMPLE_DIR = Path(__file__).parent / 'data'
-# The path to our sample xlsx file.
-SAMPLE_XLSX_PATH = SAMPLE_DIR / 'sample.xlsx'
-
-
 # TODO: document / encourage passing a binary stream.
 def load(path):
     """
