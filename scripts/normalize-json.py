@@ -29,6 +29,8 @@ Prints the normalized json to stdout.
 import json
 import sys
 
+import orr.utils as utils
+
 
 def main():
     try:
@@ -36,8 +38,7 @@ def main():
     except IndexError:
         raise RuntimeError('path not provided')
 
-    with open(path) as f:
-        data = json.load(f)
+    data = utils.read_json(path)
 
     serialized = json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)
 
