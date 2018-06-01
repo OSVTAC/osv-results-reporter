@@ -27,6 +27,11 @@ yes/no.
 """
 
 from collections import OrderedDict
+import logging
+
+
+_log = logging.getLogger(__name__)
+
 
 # Besides the votes for candidates and measure choices counted, there
 # are a set of summary results with ballots not counted by category,
@@ -59,6 +64,7 @@ SUBTOTAL_TYPES = OrderedDict([
     ('XA','Other Counties')     # Votes from other counties (multi-county contest)
     ])
 
+
 def append_id_index(idlist, index:dict, obj,
                     errmsg="duplicate id"):
     """
@@ -73,7 +79,7 @@ def append_id_index(idlist, index:dict, obj,
         errmsg: object specific error message (optional)
     """
     if not obj.id:
-        raise RuntimeError('A unique ID is required')
+        raise RuntimeError(f'object does not have an id: {obj!r}')
     if obj.id in index:
         raise RuntimeError(errmsg)
     obj.index = len(idlist)   # Assign a sequence
@@ -97,24 +103,68 @@ def append_result_subtotal(contest, obj, data:dict, listattr:list):
     obj.contest = contest       # Back reference
     listattr.append(obj)
 
-def copy_from_data(obj:dict, data:dict, handler:dict={}):
+
+def copy_from_data(obj, data:dict, handler:dict={}):
     """
     Copies data from a loaded dict into an object. If a key is found
     with a handler, then the handler function is called.
 
     Args:
-        obj: an object with data loaded
+        obj: an object in our data model.
         data: a dict with attributes and values to copy
         handler: a dict of attribute names with a special handler function
                  (handlers process arrays with member objects to create/copy)
     """
-    for k, v in data:
-        if k in handler:
+    for key, value in data.items():
+        _log.debug(f'processing key-value: {key}: {str(value)[:60]!r}...')
+        if key == '_id':
+            key = 'id'
+        if key in handler:
             # This attribute will be processed with a handler function
-            handler[k](obj, v)
+            handler[key](obj, value)
         else:
             # All others are just copied
-            obj[k] = v
+            setattr(obj, key, value)
+
+
+def get_ballot_item_class(type_name):
+    # Dict mapping ballot item type name to class.
+    # TODO: make this module-level.
+    BALLOT_ITEM_CLASSES = {
+        'header': Header,
+        'office': OfficeContest,
+        'measure': MeasureContest,
+        'ynoffice': YNOfficeContest,
+    }
+
+    try:
+        cls = BALLOT_ITEM_CLASSES[type_name]
+    except KeyError:
+        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
+
+    return cls
+
+
+def ballot_item_from_data(data, ballot_items_by_id):
+    try:
+        type_name = data['type']
+    except KeyError:
+        raise RuntimeError(f"key 'type' missing from data: {data}")
+    cls = get_ballot_item_class(type_name)
+    bi = cls()
+    bi.from_data(data)
+    if data.get('header_id', None):
+        # Add this bi to the header's bi list
+        header = ballot_items_by_id.get(bi.header_id, None)
+        if not header:
+            raise RuntimeError(f'Unknown header id "{bi.header_id}"')
+        header.ballot_items.append(bi)
+        bi.header = header  # back reference
+    else:
+        bi.header = None
+
+    return bi
+
 
 class Election:
     """
@@ -127,46 +177,32 @@ class Election:
     represented as candidate objects.
     """
 
+    @classmethod
+    def from_data(cls, data:dict):
+        """
+        The from_data will copy string attributes from an external attribute:value
+        dict, expanding the member ballot_items.
+        """
+        election = cls()
+        copy_from_data(election, data, {'ballot_items':Election.enter_ballot_items })
+
+        return election
+
     def __init__(self):
         # Initialize the lists and dictionaries
         self.ballot_items = []  # ordered list of headers and contests
         self.ballot_items_by_id = {} # index of headers and contests by id
 
-    def from_data(self, data:dict):
-        """
-        The from_data will copy string attributes from an external attribute:value
-        dict, expanding the member ballot_items.
-        """
-        copy_from_data(self, data,
-                       {'ballot_items':Election.enter_ballot_items })
-
+    def __repr__(self):
+        return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'
 
     def enter_ballot_items(self, ballot_items:list):
         """
         Scan the list of source data representing ballot items.
         """
-        for bi_input in ballot_items:
-            if bi_input.type == 'header':
-                bi = Header()
-            elif bi_input.type == 'office':
-                bi = OfficeContest()
-            elif bi_input.type == 'measure':
-                bi = MeasureContest()
-            elif bi_input.type == 'ynoffice':
-                bi = YNOfficeContest()
-            else:
-                raise RuntimeError('Invalid ballot item type')
-            bi.from_data(bi_input)
-            if bi.get('header_id', None):
-                # Add this bi to the header's bi list
-                header = self.ballot_items_by_id.get(bi.header_id, None)
-                if not header:
-                    raise RuntimeError(f'Unknown header id "{bi.header_id}"')
-                header.ballot_items.append(bi)
-                bi.header = header  # back reference
-            else:
-                bi.header = None
-            append_id_index(self.ballot_items, self.ballot_items_by_id, bi)
+        for data in ballot_items:
+            ballot_item = ballot_item_from_data(data, self.ballot_items_by_id)
+            append_id_index(self.ballot_items, self.ballot_items_by_id, ballot_item)
 
 
 class BallotItem:
@@ -185,9 +221,13 @@ class BallotItem:
         self.ballot_title = ballot_title
 
 class Header(BallotItem):
+
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
         self.ballot_items = []
+
+    def __repr__(self):
+        return f'<Header ballot_title={self.ballot_title!r}>'
 
     def from_data(self, data:dict):
         copy_from_data(self, data)
@@ -243,7 +283,7 @@ class Contest(BallotItem):
         """
         Common processing to enter a candidate or measure choice
         """
-        enter_choicec.from_data(choice_input)
+        choice.from_data(choice_input)
         choice.contest = self     # Add back reference
         append_id_index(self.choices, self.choices_by_id, choice)
 

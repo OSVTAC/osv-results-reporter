@@ -283,14 +283,11 @@ def load_model(dir_path):
     path = dir_path / 'election.json'
     data = utils.read_json(path)
 
-    election = Election()
-    election.from_data(data)
+    election = Election.from_data(data)
 
-    raise RuntimeError(election)
+    context = dict(election=election)
 
-
-    raise RuntimeError(f'TODO: {str(data)[:300]}')
-    return {}
+    return context
 
 
 #--- Top level processing: ---
