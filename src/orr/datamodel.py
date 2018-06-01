@@ -341,7 +341,7 @@ class Contest(BallotItem):
         Scan summary result attributes for a contest
         """
         for c_input in result_stats:
-            c = ResultAttribute()
+            c = ResultStat()
             c.from_data(c_input)
             append_id_index(self.result_stats, self.choices_by_id, c)
 
