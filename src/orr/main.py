@@ -271,6 +271,17 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
+def load_model(dir_path):
+    """
+    Populate our data model, and return the context to use for Jinja2.
+
+    Args:
+      dir_path: the path to the input directory.
+    """
+    raise RuntimeError('TODO')
+    return {}
+
+
 #--- Top level processing: ---
 
 # TODO: render the directory recursively.
@@ -349,11 +360,10 @@ def run(config_path=None, input_paths=None, template_dir=None,
     if use_data_model:
         if len(input_paths) != 1:
             raise RuntimeError(f'only one input path can be provided: {input_paths}')
-        input_path = Path(input_paths[0])
-        if not input_path.is_dir():
+        input_dir = Path(input_paths[0])
+        if not input_dir.is_dir():
             raise RuntimeError(f'input path is not a directory: {input_path}')
-        context = {}
-        raise RuntimeError('TODO')
+        context = load_model(input_dir)
     else:
         context = {}
         for input_path in input_paths:
