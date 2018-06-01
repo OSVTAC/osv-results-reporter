@@ -33,7 +33,7 @@ $ orr -h
 For an HTML example:
 
 ```
-$ orr -v --input sampledata/results.json --output-dir html
+$ orr -v --input sampledata/results-sv.json --output-dir html
 ```
 
 Then open `_build/html/index.html` in a browser.
@@ -72,7 +72,7 @@ To render a template directory to the build directory using Docker:
 ```
 $ docker build -t orr . \
     && docker rm orr_builder; echo "removed container: orr_builder" \
-    && docker run --name orr_builder orr --input sampledata/results.json \
+    && docker run --name orr_builder orr --input sampledata/results-sv.json \
     && docker cp orr_builder:/app/_build/. _build
 ```
 
