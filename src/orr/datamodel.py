@@ -181,6 +181,27 @@ def parse_date(data, key):
     return date
 
 
+def parse_i18n(data, key):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    value = data.pop(key, None)
+    if value is None:
+        return None
+
+    texts = {'en': value}
+    # Now check for other languages.
+    start = f'{key}_'
+    for key in list(data):
+        if not key.startswith(start):
+            continue
+        suffix = key[len(start):]
+        assert len(suffix) == 2
+        texts[suffix] = data.pop(key)
+
+    return texts
+
+
 class Election:
 
     """
@@ -199,18 +220,25 @@ class Election:
         The from_data will copy string attributes from an external attribute:value
         dict, expanding the member ballot_items.
         """
-        election = cls()
+        ballot_title = parse_i18n(data, 'ballot_title')
+        election_area = parse_i18n(data, 'election_area')
+        election_date = parse_date(data, 'election_date')
+        ballot_items = data.pop('ballot_items', None)
 
-        election.date = parse_date(data, 'election_date')
+        election = cls(ballot_title=ballot_title, election_area=election_area, **data)
+        election.date = election_date
 
-        copy_from_data(election, data, {'ballot_items':Election.enter_ballot_items })
+        election.enter_ballot_items(ballot_items)
 
         return election
 
-    def __init__(self):
+    def __init__(self, ballot_title=None, election_area=None):
         # Initialize the lists and dictionaries
         self.ballot_items = []  # ordered list of headers and contests
         self.ballot_items_by_id = {} # index of headers and contests by id
+
+        self.ballot_title = ballot_title
+        self.election_area = election_area
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'

@@ -1,5 +1,6 @@
 <body>
-  {{ election.ballot_title }} - {{ election.display_date }}
+  <h1>{{ election.ballot_title.en }}</h1>
+  <h2>{{ election.display_date }}</h2>
 
   <ol>
     {% for item in election.ballot_items %}
