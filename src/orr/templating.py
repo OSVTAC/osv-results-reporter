@@ -155,18 +155,22 @@ def format_date(value,format_str:str='medium'):
 
 
 @contextfilter
-def translate(context, label):
+def translate(context, value):
     """
     Return the translation using the currently set language.
     """
     options = context['options']
     lang = options.lang
 
-    all_trans = context['translations']
-    translations = all_trans[label]
-    translated = translations[lang]
+    if type(value) == dict:
+        text = value[lang]
+    else:
+        # Then assume the value is the key for a translation.
+        all_trans = context['translations']
+        translations = all_trans[label]
+        text = translations[lang]
 
-    return translated
+    return text
 
 
 @contextfunction

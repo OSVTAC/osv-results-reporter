@@ -1,11 +1,14 @@
 <body>
-  <h1>{{ election.ballot_title.en }}</h1>
-  <h2>{{ election.display_date }}</h2>
+Translated Results Pages
+<ul>
+{% for lang in ('en', 'es', 'tl', 'zh') %}
+  {% with %}
+    {% set options.lang = lang %}
+    {% set src = "election-{}.html".format(lang) %}
+    <li><a href="{{ src }}">{{ src }}</a></li>
+    {% do subtemplate('election.html', src) %}
+  {% endwith %}
 
-  <ol>
-    {% for item in election.ballot_items %}
-      <li>{{ item.ballot_title}}</li>
-    {% endfor %}
-  </ol>
-
+{% endfor %}
+</ul>
 </body>

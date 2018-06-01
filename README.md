@@ -58,8 +58,9 @@ See the `doc` directory for more info.
 This is still being worked on:
 
 ```
-$ orr --debug --use-data-model --input sampledata/test-minimal/ \
-      --template templates/test-minimal/ --output-dir html
+$ orr --debug --use-data-model --input sampledata/test-minimal \
+      --extra templates/test-minimal/extra \
+      --template templates/test-minimal --output-dir minimal
 ```
 
 
