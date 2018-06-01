@@ -41,7 +41,7 @@ _log = logging.getLogger(__name__)
 # For n of m voting (Vote for n), a voter can make n selections, so for
 # "vote for 3", if only 1 choice was made, there would be 2 undervotes,
 # and if 4 or more choices were made, there would be 3 overvotes
-RESULT_ATTRIBUTES = OrderedDict([
+RESULT_STATS = OrderedDict([
     ('RSTot', 'Ballots Counted'),   # Sum of valid votes reported
     ('RSCst', 'Ballots Cast'),      # Ballot sheets submitted by voters
     ('RSReg', 'Registered Voters'), # Voters registered for computing turnout
@@ -330,20 +330,20 @@ class Contest(BallotItem):
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
         self.choices = []           # ordered list of all contest choices
-        self.result_attributes = [] # Pseudo choice for result summary attrs
-        self.choices_by_id = {}     # index of choices by id
+        self.result_stats = []      # Pseudo choice for result summary attrs
+        self.choices_by_id = {}     # index of choices+result_stats by id
         self.subtotal_types = []    # summary subtotals available
         self.result_details = []    # result detail definitions
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
-    def enter_result_attributes(self, result_attributes):
+    def enter_result_stats(self, result_stats):
         """
         Scan summary result attributes for a contest
         """
-        for c_input in result_attributes:
+        for c_input in result_stats:
             c = ResultAttribute()
             c.from_data(c_input)
-            append_id_index(self.result_attributes, self.choices_by_id, c)
+            append_id_index(self.result_stats, self.choices_by_id, c)
 
     def enter_subtotal_types(self, subtotal_types):
         """
@@ -384,7 +384,7 @@ class OfficeContest(Contest):
         copy_from_data(self, data,{
             'choices':OfficeContest.enter_candidates,
             'subtotal_types':Contest.enter_subtotal_types,
-            'result_attributes':Contest.enter_result_attributes})
+            'result_stats':Contest.enter_result_stats})
 
     def enter_candidates(self, candidates):
         """
@@ -414,7 +414,7 @@ class MeasureContest(Contest):
         copy_from_data(self, data,{
             'choices':MeasureContest.enter_choices,
             'subtotal_types':Contest.enter_subtotal_types,
-            'result_attributes':Contest.enter_result_attributes})
+            'result_stats':Contest.enter_result_stats})
 
     def enter_choices(self, choices):
         """
@@ -471,12 +471,12 @@ class Candidate(Choice):
         copy_from_data(self, data)
 
 
-class ResultAttribute(Choice):
+class ResultStat(Choice):
 
     """
     Besides votes for a candidate or measure choice, a set of vote/ballot
     totals are computed for a set of summary attributes that represent
-    rejected votes and totals. The RESULT_ATTRIBUTES contain an id
+    rejected votes and totals. The RESULT_STATS contain an id
     (that is distinct from a candidate/choice id) and "ballot_title"
     that can be used as a label in a report analogous to a candidate/choice name.
     """

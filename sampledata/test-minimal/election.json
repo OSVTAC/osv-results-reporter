@@ -61,7 +61,7 @@
             "header_id": "HDR05",
             "is_partisan": "Y",
             "number_elected": 1,
-            "result_attributes": [
+            "result_stats": [
                 {
                     "_id": "'SVTot'",
                     "ballot_title": "'Ballots Counted'"
@@ -225,7 +225,7 @@
             "instructions_text_tl": "Maaari ninyong pagsunud-sunurin ang hanggang sa tatlong pinili. Para pagsunud-sunurin ang mas kaunti sa tatlong kandidato, iwanan na blangko ang anumang mga natitirang pagpipilian.",
             "instructions_text_zh": "您最多可以投選三個選擇。如果投選的候選人少於三名候選人，多餘欄目可留為空白。",
             "number_elected": 1,
-            "result_attributes": [
+            "result_stats": [
                 {
                     "_id": "'SVTot'",
                     "ballot_title": "'Ballots Counted'"
@@ -337,7 +337,7 @@
             "question_text_es": "PLAN PARA DISMINUIR EL TRÁFICO EN EL ÁREA DE LA BAHÍA. ¿Deben autorizar los votantes un plan para disminuir el tráfico de camiones y automóviles, disminuir el congestionamiento en BART, descongestionar los embotellamientos en las autopistas y mejorar los servicios de autobuses, transbordadores, BART y ferrovías suburbanas según lo especificado en el plan en este folleto para el votante, con un aumento de $1 efectivo en 2019, un aumento de $1 en 2022 y un aumento de $1 en 2025, en todos los puentes de peaje del Área de la Bahía, excepto el Puente Golden Gate, con una supervisión independiente de todos los fondos?",
             "question_text_tl": "PLANO SA PAGPAPAHUPA NG TRAPIKO SA BAY AREA. Dapat bang pahintulutan ng mga botante ang isang planong bawasan ang trapiko ng auto at trak, bawasan ang siksikan sa BART, ayusin ang daloy sa mga pagsisiksikan sa freeway, at pabutihin ang serbisyo ng bus, ferry, BART at commuter rail alinsunod sa nakasaad sa plano sa librito ng botante na ito, sa pamamagitan ng $1 na dagdag sa toll simula 2019, $1 na dagdag sa 2022, at $1 na dagdag sa 2025, sa lahat ng tulay ng toll sa Bay Area maliban sa Golden Gate Bridge, na may independiyenteng pagbabantay sa lahat ng pondo?",
             "question_text_zh": "灣區交通舒緩計劃。選民是否應授權一項計劃以減少汽車及卡車車流、舒緩灣區捷運人潮、疏通高速公路瓶頸，並改善公車、渡輪、灣區捷運和通勤鐵路運輸服務，按照選民手冊中所詳細說明之計劃，針對於除了金門大橋外，所有灣區收取通行費之橋樑，生效於2019年增加1美元通行費，2022年增加1美元並於2025年增加1美元，並對所有資金採取獨立監督？",
-            "result_attributes": [
+            "result_stats": [
                 {
                     "_id": "'SVTot'",
                     "ballot_title": "'Ballots Counted'"
