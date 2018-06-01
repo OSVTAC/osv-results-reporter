@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head><title>{{election_area}} {{ballot_title}} {{ election_date|format_date }}</title>
+<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">-->
+<style type="text/css">
+<!--
+div.contests {width:500px}
+.contest table {border:0px solid;border-spacing:0px;width:100%}
+.contest table td {border:1px solid;margin:0px;padding:4px}
+.contest table th {margin:0px;padding:4px}
+.pctrep {font:normal small sans-serif;line-height:1.0}
+.choice {width:50%}
+.votes, .pct {text-align:right}
+.contest {font:normal medium sans-serif;line-height:1.0}
+-->
+</style>
+</head>
+<body>
+<h1>{{election_area}} {{ballot_title}} {{ election_date|format_date }}</h1>
+<div class='contests'>
+{% for bi in ballot_items %}
+{% if bi.type == 'header' %}
+<div class='header'>{{bi.ballot_title}}
+{% if bi.ballot_subtitle %}
+<p class='subtitle'>{{bi.ballot_subtitle}}</p>
+{% endif %}
+</div>
+{% else %} {# If not a header, then it's a contest #}
+<div class='contest'><h2>{{bi.ballot_title}}</h2>
+{% if bi.ballot_subtitle %}
+<p class='subtitle'>{{bi.ballot_subtitle}}</p>
+{% endif %}
+<p class="vote4">{{bi.vote_for_msg}}</p>
+<table><thead><tr><th class='pctrep'>{% if bi.total_precincts %}{{bi.precincts_reporting}}/{{bi.total_precincts}} Precincts Reporting {{bi.precincts_reporting_percent}}%{% endif %}</th><th>Percentage</th>
+{%- for s in bi.subtotal_types -%}
+<th>{{s.heading}}</th>
+{%- endfor -%}
+</tr></thead>
+{% for c in bi.choices -%}
+<tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'>{{c.votes_percent}}%</td>
+{%- for v in c.vote_subtotals -%}
+<td class='votes'>{{v}}</td>
+{%- endfor -%}</tr>
+{% endfor -%}
+{% for c in bi.result_stats -%}
+<tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'></td>
+{%- for v in c.vote_subtotals -%}
+<td class='votes'>{{v}}</td>
+{%- endfor -%}</tr>
+{% endfor -%}
+</table></div>
+{%- endfor -%}
+</div>
+</body>
+</html>
