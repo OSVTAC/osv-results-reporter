@@ -35,24 +35,13 @@ class DataModelModuleTest(TestCase):
     """
 
     def test_parse_date(self):
-        data = {'date-xxx': '2016-11-08'}
-        actual = datamodel.parse_date(data, 'date-xxx')
+        data = {}
+        actual = datamodel.parse_date(data, 'date', '2016-11-08')
         self.assertEqual(type(actual), datetime.date)
         self.assertEqual(actual, datetime.date(2016, 11, 8))
-        # Check that the date was removed from the dict.
-        self.assertEqual(data, {})
-
-    def test_parse_date__missing(self):
-        """
-        Check the date being missing from the dict.
-        """
-        data = {}
-        actual = datamodel.parse_date(data, 'date-xxx')
-        self.assertIsNone(actual)
 
     def test_parse_i18n(self):
         data = {
-            'greeting': 'Hello',
             'title': 'The Art of Programming',
             'greeting_es': 'Hola',
             'greeting_fr': 'Bonjour',
@@ -62,7 +51,7 @@ class DataModelModuleTest(TestCase):
             'es': 'Hola',
             'fr': 'Bonjour'
         }
-        actual = datamodel.parse_i18n(data, 'greeting')
+        actual = datamodel.parse_i18n(data, 'greeting', 'Hello')
         self.assertEqual(actual, expected)
         # Check that the translations were removed.
         self.assertEqual(data, {'title': 'The Art of Programming'})

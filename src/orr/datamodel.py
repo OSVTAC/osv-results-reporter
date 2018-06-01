@@ -129,6 +129,28 @@ def copy_from_data(obj, data:dict, handler:dict={}):
             setattr(obj, key, value)
 
 
+def load_values(obj, data):
+    """
+    Set the attributes configured in the object's `auto_attrs` class
+    attribute, from the given deserialized json data.
+    """
+    for info in obj.auto_attrs:
+        name, load_value, *remaining = info
+
+        if remaining:
+            assert len(remaining) == 1
+            attr_name = remaining[0]
+        else:
+            attr_name = name
+
+        _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
+        value = data.pop(name, None)
+        if value is not None:
+            value = load_value(data, name, value)
+
+        setattr(obj, attr_name, value)
+
+
 def get_ballot_item_class(type_name):
     # Dict mapping ballot item type name to class.
     # TODO: make this module-level.
@@ -168,28 +190,27 @@ def ballot_item_from_data(data, ballot_items_by_id):
     return bi
 
 
-def parse_date(data, key):
+def parse_date(data, key, value):
     """
     Remove and parse a date from the given data.
+
+    Args:
+      value: a date string, e.g. of the form "2016-11-08".
     """
-    date_string = data.pop(key, None)
-    if date_string is None:
-        date = None
-    else:
-        date = datetime.strptime(date_string, '%Y-%m-%d').date()
+    _log.debug(f'processing parse_date: {key}, {value}')
+
+    date = datetime.strptime(value, '%Y-%m-%d').date()
 
     return date
 
 
-def parse_i18n(data, key):
+def parse_i18n(data, key, value):
     """
     Remove and parse an i18n string from the given data.
     """
-    value = data.pop(key, None)
-    if value is None:
-        return None
-
+    _log.debug(f'processing parse_i18n: {key}, {value}')
     texts = {'en': value}
+
     # Now check for other languages.
     start = f'{key}_'
     for key in list(data):
@@ -214,31 +235,34 @@ class Election:
     represented as candidate objects.
     """
 
+    auto_attrs = [
+        ('ballot_title', parse_i18n),
+        ('election_area', parse_i18n),
+        ('election_date', parse_date, 'date'),
+    ]
+
     @classmethod
     def from_data(cls, data:dict):
         """
         The from_data will copy string attributes from an external attribute:value
         dict, expanding the member ballot_items.
         """
-        ballot_title = parse_i18n(data, 'ballot_title')
-        election_area = parse_i18n(data, 'election_area')
-        election_date = parse_date(data, 'election_date')
-        ballot_items = data.pop('ballot_items', None)
+        election = cls()
+        load_values(election, data)
 
-        election = cls(ballot_title=ballot_title, election_area=election_area, **data)
-        election.date = election_date
+        ballot_items = data.pop('ballot_items', None)
+        if data:
+            raise RuntimeError(f'data not empty: {data}')
+        assert not data
 
         election.enter_ballot_items(ballot_items)
 
         return election
 
-    def __init__(self, ballot_title=None, election_area=None):
+    def __init__(self):
         # Initialize the lists and dictionaries
         self.ballot_items = []  # ordered list of headers and contests
         self.ballot_items_by_id = {} # index of headers and contests by id
-
-        self.ballot_title = ballot_title
-        self.election_area = election_area
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'
