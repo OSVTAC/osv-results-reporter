@@ -76,13 +76,14 @@ def parse_args():
                         help='enable verbose info printout')
     parser.add_argument('-t',dest='test',action='store_true',
                         help='test mode, print files to expand')
-    parser.add_argument('--debug',action='store_true',
-                        help='enable debug printout')
+    parser.add_argument('--debug',action='store_true', help='enable debug printout')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
     parser.add_argument('--input-paths', metavar='PATH', nargs='+',
                         help=('paths to files containing election data '
                               '(e.g. in json format).'))
+    parser.add_argument('--use-data-model',action='store_true',
+                        help='use datamodel.py (experimental / still in progress).')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
