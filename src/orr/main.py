@@ -40,7 +40,9 @@ from jinja2 import TemplateSyntaxError
 import yaml
 
 import orr.configlib as configlib
+from orr.datamodel import Election
 import orr.templating as templating
+import orr.utils as utils
 
 
 _log = logging.getLogger(__name__)
@@ -278,7 +280,16 @@ def load_model(dir_path):
     Args:
       dir_path: the path to the input directory.
     """
-    raise RuntimeError('TODO')
+    path = dir_path / 'election.json'
+    data = utils.read_json(path)
+
+    election = Election()
+    election.from_data(data)
+
+    raise RuntimeError(election)
+
+
+    raise RuntimeError(f'TODO: {str(data)[:300]}')
     return {}
 
 
