@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
 """
 Class definitions to represent an election definition, with
 contests containing a list of choices, either an OfficeContest with list
@@ -167,6 +168,19 @@ def ballot_item_from_data(data, ballot_items_by_id):
     return bi
 
 
+def parse_date(data, key):
+    """
+    Remove and parse a date from the given data.
+    """
+    date_string = data.pop(key, None)
+    if date_string is None:
+        date = None
+    else:
+        date = datetime.strptime(date_string, '%Y-%m-%d').date()
+
+    return date
+
+
 class Election:
 
     """
@@ -187,14 +201,7 @@ class Election:
         """
         election = cls()
 
-        # TODO: make a function for setting the date, and test.
-        date_string = data.pop('election_date', None)
-        if date_string is None:
-            election_date = None
-        else:
-            election_date = datetime.strptime(date_string, '%Y-%m-%d').date()
-
-        election.date = election_date
+        election.date = parse_date(data, 'election_date')
 
         copy_from_data(election, data, {'ballot_items':Election.enter_ballot_items })
 
