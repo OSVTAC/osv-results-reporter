@@ -316,6 +316,23 @@ class Election:
         yield from self.ballot_items_by_id.values()
 
 
+def get_path_difference(new_seq, old_seq):
+    """
+    Return the sequence items that are **new** compared with the old.
+    """
+    index = min(len(new_seq), len(old_seq)) - 1
+    while index >= 0:
+        new_item, old_item = (path[index] for path in (new_seq, old_seq))
+        if new_item is old_item:
+            index += 1
+            break
+        index -= 1
+    else:
+        index = 0
+
+    return list(pair for pair in enumerate(new_seq[index:], start=index+1))
+
+
 class BallotItem:
 
     """
@@ -340,6 +357,9 @@ class BallotItem:
         self.ballot_title = ballot_title
         self.parent_header = None
 
+    def __repr__(self):
+        return f'<BallotItem id={self.id!r}>'
+
     def _iter_headers(self):
         item = self
         while item.parent_header:
@@ -349,9 +369,19 @@ class BallotItem:
 
     def make_header_path(self):
         """
-        Return the list of successive parent headers, to the root.
+        Return the list of successive parent headers, starting from the root.
         """
-        return list(self._iter_headers())
+        return list(reversed(list(self._iter_headers())))
+
+    def get_new_headers(self, header_path):
+        """
+        Return the headers that are **new** compared with header_path.
+
+        Returns: a list of pairs (i, header), where i is the (1-based)
+          integer level of the header.
+        """
+        my_header_path = self.make_header_path()
+        return get_path_difference(my_header_path, header_path)
 
 
 class Header(BallotItem):

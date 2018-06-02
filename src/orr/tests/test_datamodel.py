@@ -41,6 +41,49 @@ class DataModelModuleTest(TestCase):
         self.assertEqual(type(actual), datetime.date)
         self.assertEqual(actual, datetime.date(2016, 11, 8))
 
+    def test_get_path_difference(self):
+        """
+        Test the typical case.
+        """
+        obj1, obj2, obj3, obj4, obj5 = ([i] for i in range(5))
+        old_seq = [obj1, obj2, obj3]
+        new_seq = [obj1, obj2, obj4, obj5]
+
+        expected = [
+            (3, obj4),
+            (4, obj5),
+        ]
+        actual = datamodel.get_path_difference(new_seq, old_seq)
+        self.assertEqual(actual, expected)
+
+    def test_get_path_difference__new_is_subset(self):
+        """
+        Test the new path being a proper subset.
+        """
+        objects = [[i] for i in range(4)]
+        old_seq = objects
+        new_seq = objects[:2]
+
+        # Then no elements are new.
+        expected = []
+        actual = datamodel.get_path_difference(new_seq, old_seq)
+        self.assertEqual(actual, expected)
+
+    def test_get_path_difference__new_is_superset(self):
+        """
+        Test the new path being a proper superset.
+        """
+        objs = [[i] for i in range(4)]
+        old_seq = objs[:2]
+        new_seq = objs
+
+        expected = [
+            (3, objs[2]),
+            (4, objs[3]),
+        ]
+        actual = datamodel.get_path_difference(new_seq, old_seq)
+        self.assertEqual(actual, expected)
+
 
 class BallotItemTest(TestCase):
 
@@ -49,6 +92,22 @@ class BallotItemTest(TestCase):
         item2.parent_header = item1
         item3.parent_header = item2
 
-        expected = [item2, item1]
+        expected = [item1, item2]
         actual = item3.make_header_path()
+        self.assertEqual(actual, expected)
+
+    def test_get_new_headers(self):
+        item1, item2, item3, item4, item5 = (BallotItem(id_=i) for i in range(1, 6))
+        item2.parent_header = item1
+        item3.parent_header = item2
+
+        item4.parent_header = item1
+        item5.parent_header = item4
+
+        header_path = item3.make_header_path()
+
+        expected = [
+            (2, item4),
+        ]
+        actual = item5.get_new_headers(header_path)
         self.assertEqual(actual, expected)
