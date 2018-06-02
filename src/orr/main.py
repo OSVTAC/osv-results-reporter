@@ -40,6 +40,7 @@ from jinja2 import TemplateSyntaxError
 import yaml
 
 import orr.configlib as configlib
+import orr.datamodel as datamodel
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
@@ -292,7 +293,7 @@ def load_model(dir_path, build_time):
     data = utils.read_json(path)
 
     languages = data.pop('languages')
-    election = Election.from_data(data)
+    election = datamodel.load_object(Election, data)
 
     context = dict(
         build_time=build_time,

@@ -68,6 +68,57 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
+def load_values(cls, data, unprocessed_keys=None):
+    """
+    Set the attributes configured in the object's `auto_attrs` class
+    attribute, from the given deserialized json data.
+
+    Args:
+      unprocessed_keys: keys that are allowed to exist in `data` after
+        processing.
+    """
+    if unprocessed_keys is None:
+        unprocessed_keys = []
+
+    obj = cls()
+
+    for info in cls.auto_attrs:
+        name, load_value, *remaining = info
+
+        if remaining:
+            assert len(remaining) == 1
+            attr_name = remaining[0]
+        else:
+            attr_name = name
+
+        _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
+        value = data.pop(name, None)
+        if value is not None:
+            value = load_value(obj, data, name, value)
+
+        try:
+            setattr(obj, attr_name, value)
+        except Exception:
+            raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
+
+    for key in data.keys():
+        if key in unprocessed_keys:
+            continue
+
+        raise RuntimeError(f'unrecognized key for obj {obj!r}: {key!r}')
+
+    return obj
+
+
+def load_object(cls, data):
+    if hasattr(cls, 'from_data'):
+        obj = cls.from_data(data)
+    else:
+        obj = load_values(cls, data)
+
+    return obj
+
+
 def index_object(mapping, obj):
     """
     Add an object in our data model to a lookup dict that references
@@ -98,48 +149,10 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
         data:       source data to copy
         listattr:   list attribute or contest to append
     """
-    obj = subtotal_cls.from_data(data)  # Copy data
+    obj = load_object(subtotal_cls, data)  # Copy data
     obj.index = len(listattr)   # Assign a sequence
     obj.contest = contest       # Back reference
     listattr.append(obj)
-
-
-def load_values(obj, data, unprocessed_keys=None):
-    """
-    Set the attributes configured in the object's `auto_attrs` class
-    attribute, from the given deserialized json data.
-
-    Args:
-      unprocessed_keys: keys that are allowed to exist in `data` after
-        processing.
-    """
-    if unprocessed_keys is None:
-        unprocessed_keys = []
-
-    for info in obj.auto_attrs:
-        name, load_value, *remaining = info
-
-        if remaining:
-            assert len(remaining) == 1
-            attr_name = remaining[0]
-        else:
-            attr_name = name
-
-        _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
-        value = data.pop(name, None)
-        if value is not None:
-            value = load_value(obj, data, name, value)
-
-        try:
-            setattr(obj, attr_name, value)
-        except Exception:
-            raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
-
-    for key in data.keys():
-        if key in unprocessed_keys:
-            continue
-
-        raise RuntimeError(f'unrecognized key for obj {obj!r}: {key!r}')
 
 
 def get_ballot_item_class(type_name):
@@ -170,7 +183,8 @@ def ballot_item_from_data(data, ballot_items_by_id):
         raise RuntimeError(f"key 'type' missing from data: {data}")
     cls = get_ballot_item_class(type_name)
 
-    item = cls.from_data(data)
+    item = load_object(cls, data)
+
     if data.get('header_id', None):
         # Add this ballot item to the header's ballot item list.
         header = ballot_items_by_id.get(item.header_id, None)
@@ -254,13 +268,6 @@ class Choice:
         ('ballot_title', parse_i18n),
     ]
 
-    @classmethod
-    def from_data(cls, data:dict):
-        obj = cls()
-        load_values(obj, data)
-
-        return obj
-
     def __init__(self, id_=None, ballot_title=None):
         self.id = id_
         self.ballot_title = ballot_title
@@ -298,20 +305,6 @@ class Election:
         ('election_date', parse_date, 'date'),
         ('ballot_items', process_ballot_items, 'ballot_items_by_id'),
     ]
-
-    @classmethod
-    def from_data(cls, data:dict):
-        """
-        The from_data will copy string attributes from an external attribute:value
-        dict, expanding the member ballot_items.
-        """
-        election = cls()
-        load_values(election, data)
-
-        if data:
-            raise RuntimeError(f'data not empty: {data}')
-
-        return election
 
     def __init__(self):
         pass
@@ -358,13 +351,6 @@ class Header(BallotItem):
         ('type', parse_text),
     ]
 
-    @classmethod
-    def from_data(cls, data:dict):
-        obj = cls()
-        load_values(obj, data)
-
-        return obj
-
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
         self.ballot_items = []
@@ -405,8 +391,7 @@ class Contest(BallotItem):
 
     @classmethod
     def from_data(cls, data:dict):
-        item = cls()
-        load_values(item, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
+        item = load_values(cls, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
 
         # TODO: move the below into auto_attrs.
         choices_data = data.pop('choices')
@@ -439,7 +424,7 @@ class Contest(BallotItem):
         Scan summary result attributes for a contest
         """
         for data in result_stats:
-            stat = ResultStat.from_data(data)
+            stat = load_object(ResultStat, data)
             index_object(self.choices_by_id, stat)
             self.result_stats.append(stat)
 
@@ -466,7 +451,7 @@ class Contest(BallotItem):
         Args:
           choice_cls: the class to use to instantiate the choice.
         """
-        choice = choice_cls.from_data(data)
+        choice = load_object(choice_cls, data)
         choice.contest = self     # Add back reference
 
         index_object(self.choices_by_id, choice)
@@ -548,13 +533,6 @@ class SubtotalType:
         ('heading', parse_text),
     ]
 
-    @classmethod
-    def from_data(cls, data:dict):
-        obj = cls()
-        load_values(obj, data)
-
-        return obj
-
     def __init__(self, id_=None, heading=None):
        self.id = id
        self.heading = heading
@@ -570,13 +548,6 @@ class ResultDetail:
     auto_attrs = [
         ('_id', parse_id, 'id'),
     ]
-
-    @classmethod
-    def from_data(cls, data:dict):
-        obj = cls()
-        load_values(obj, data)
-
-        return obj
 
     def __init__(self, id_=None, area_heading=None, subtotal_heading=None,
                  is_vbm=False):
