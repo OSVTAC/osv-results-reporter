@@ -250,12 +250,16 @@ class Choice:
 
     auto_attrs = [
         ('_id', parse_id, 'id'),
+        ('ballot_title', parse_i18n),
     ]
 
     @classmethod
     def from_data(cls, data:dict):
         obj = cls()
-        copy_from_data(obj, data)
+        load_values(obj, data)
+
+        if data:
+            raise RuntimeError(f'unrecognized data: {data}')
 
         return obj
 
@@ -270,8 +274,12 @@ class Candidate(Choice):
     A candidate can have additional attributes
     """
 
-    def __init__(self, id_=None, ballot_title=None):
-        Choice.__init__(self, id_, ballot_title)
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+        ('ballot_designation', parse_i18n),
+        ('ballot_title', parse_i18n),
+        ('candidate_party', parse_i18n),
+    ]
 
 
 class Election:
