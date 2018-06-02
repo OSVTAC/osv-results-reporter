@@ -19,24 +19,28 @@
 #
 
 """
-Simple helper functions.
+Test the orr.utils module.
 """
 
-import json
+from unittest import TestCase
+
+import orr.utils as utils
 
 
-def read_json(path):
-    with open(path) as f:
-        data = json.load(f)
+class UtilsModuleTest(TestCase):
 
-    return data
-
-
-def strip_trailing_whitespace(text):
     """
-    Strip trailing whitespace from the end of each line.
+    Test the functions in orr.utils.
     """
-    lines = text.splitlines()
-    text = ''.join(line.rstrip() + '\n' for line in lines)
 
-    return text
+    def test_strip_trailing_whitespace(self):
+        cases = [
+            # Test the last line ending in a trailing newline.
+            ('abc  \ndef\n', 'abc\ndef\n'),
+            # Test the last line **not** ending in a trailing newline.
+            ('abc  \ndef', 'abc\ndef\n'),
+        ]
+        for text, expected in cases:
+            with self.subTest(text=text):
+                actual = utils.strip_trailing_whitespace(text)
+                self.assertEqual(actual, expected)
