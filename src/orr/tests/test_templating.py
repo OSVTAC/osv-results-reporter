@@ -78,8 +78,7 @@ class TemplatingModuleTest(TestCase):
         ]
         for lang, expected in cases:
             with self.subTest(lang=lang):
-                options = Namespace()
-                options['lang'] = lang
+                options = Namespace(lang=lang)
                 context = {'options': options}
 
                 actual = templating.format_date(context, day)
