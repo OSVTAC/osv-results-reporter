@@ -27,8 +27,6 @@ import functools
 import logging
 from pathlib import Path
 
-import babel.dates
-import dateutil.parser
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Environment)
 
@@ -146,22 +144,34 @@ def output_file_uri(env, rel_path):
     return uri
 
 
-@contextfilter
-def format_date(context, day):
-    """
-    Return a date in the form "June 5, 2018" (internationalized).
+def _format_date(context, date, format_=None):
+    lang = context['options'].lang
+    return utils.format_date(date, lang=lang, format_=format_)
 
-    Template Filter: Converts a date value (str or datetime) into
-    the internationalized representation. A format parameter
-    can be supplied, either the standard short, medium, long, or
-    full (default is medium), or a pattern in the Locale Data
-    Markup Language specification.
+
+@contextfilter
+def format_date(context, day, format_=None):
+    """
+    Format a date in the form "February 5, 2018" (internationalized).
+
+    Args:
+      day: a datetime.date object.
+      format_: a string format parameter, either the standard "short",
+        "medium", "long", or "full" (default is "long"), or a pattern in
+        the Locale Data Markup Language specification.
+    """
+    return _format_date(context, day, format_=format_)
+
+
+@contextfilter
+def format_date_medium(context, day):
+    """
+    Format a date in the form "Feb 5, 2018" (internationalized).
 
     Args:
       day: a datetime.date object.
     """
-    lang = context['options'].lang
-    return babel.dates.format_date(day, format='long', locale=lang)
+    return _format_date(context, day, format_='medium')
 
 
 @contextfilter

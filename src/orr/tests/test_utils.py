@@ -22,7 +22,7 @@
 Test the orr.utils module.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from unittest import TestCase
 
 import orr.utils as utils
@@ -34,15 +34,6 @@ class UtilsModuleTest(TestCase):
     Test the functions in orr.utils.
     """
 
-    def test_parse_datetime(self):
-        cases = [
-            ('2018-06-01 20:48:12', datetime(2018, 6, 1, 20, 48, 12)),
-        ]
-        for dt_string, expected in cases:
-            with self.subTest(dt_string=dt_string):
-                actual = utils.parse_datetime(dt_string)
-                self.assertEqual(actual, expected)
-
     def test_strip_trailing_whitespace(self):
         cases = [
             # Test the last line ending in a trailing newline.
@@ -53,4 +44,42 @@ class UtilsModuleTest(TestCase):
         for text, expected in cases:
             with self.subTest(text=text):
                 actual = utils.strip_trailing_whitespace(text)
+                self.assertEqual(actual, expected)
+
+    def test_parse_datetime(self):
+        cases = [
+            ('2018-06-01 20:48:12', datetime(2018, 6, 1, 20, 48, 12)),
+        ]
+        for dt_string, expected in cases:
+            with self.subTest(dt_string=dt_string):
+                actual = utils.parse_datetime(dt_string)
+                self.assertEqual(actual, expected)
+
+    def test_format_date__default(self):
+        day = date(2018, 6, 5)
+        cases = [
+            ('en', 'June 5, 2018'),
+            ('es', '5 de junio de 2018'),
+            ('tl', 'Hunyo 5, 2018'),
+            ('zh', '2018年6月5日'),
+        ]
+        for lang, expected in cases:
+            with self.subTest(lang=lang):
+                actual = utils.format_date(day, lang=lang)
+                self.assertEqual(actual, expected)
+
+    def test_format_date__medium(self):
+        """
+        Test passing format_='medium'.
+        """
+        day = date(2018, 6, 5)
+        cases = [
+            ('en', 'Jun 5, 2018'),
+            ('es', '5 jun. 2018'),
+            ('tl', 'Hun 5, 2018'),
+            ('zh', '2018年6月5日'),
+        ]
+        for lang, expected in cases:
+            with self.subTest(lang=lang):
+                actual = utils.format_date(day, lang=lang, format_='medium')
                 self.assertEqual(actual, expected)

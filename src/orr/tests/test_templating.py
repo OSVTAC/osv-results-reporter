@@ -69,17 +69,31 @@ class TemplatingModuleTest(TestCase):
                 self.assertEqual(actual, expected)
 
     def test_format_date(self):
-        day = date(2018, 6, 5)
+        day = date(2018, 2, 5)
         cases = [
-            ('en', 'June 5, 2018'),
-            ('es', '5 de junio de 2018'),
-            ('tl', 'Hunyo 5, 2018'),
-            ('zh', '2018年6月5日'),
+            ('en', 'February 5, 2018'),
+            ('es', '5 de febrero de 2018'),
+            ('tl', 'Pebrero 5, 2018'),
+            ('zh', '2018年2月5日'),
         ]
         for lang, expected in cases:
             with self.subTest(lang=lang):
-                options = Namespace(lang=lang)
-                context = {'options': options}
+                context = {'options': Namespace(lang=lang)}
 
                 actual = templating.format_date(context, day)
+                self.assertEqual(actual, expected)
+
+    def test_format_date_medium(self):
+        day = date(2018, 2, 5)
+        cases = [
+            ('en', 'Feb 5, 2018'),
+            ('es', '5 feb. 2018'),
+            ('tl', 'Peb 5, 2018'),
+            ('zh', '2018年2月5日'),
+        ]
+        for lang, expected in cases:
+            with self.subTest(lang=lang):
+                context = {'options': Namespace(lang=lang)}
+
+                actual = templating.format_date_medium(context, day)
                 self.assertEqual(actual, expected)

@@ -25,16 +25,7 @@ Simple helper functions.
 from datetime import datetime
 import json
 
-
-def parse_datetime(dt_string):
-    """
-    Parse a string in a standard format representing a datetime, and
-    return a datetime.datetime object.
-
-    Args:
-      dt_string: a datetime string in the format, "2018-06-01 20:48:12".
-    """
-    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+import babel.dates
 
 
 def read_json(path):
@@ -52,3 +43,25 @@ def strip_trailing_whitespace(text):
     text = ''.join(line.rstrip() + '\n' for line in lines)
 
     return text
+
+
+def parse_datetime(dt_string):
+    """
+    Parse a string in a standard format representing a datetime, and
+    return a datetime.datetime object.
+
+    Args:
+      dt_string: a datetime string in the format, "2018-06-01 20:48:12".
+    """
+    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+
+
+def format_date(date, lang, format_=None):
+    """
+    Args:
+      date: a datetime.date object.
+      lang: a 2-letter language code.
+    """
+    if format_ is None:
+        format_ = 'long'
+    return babel.dates.format_date(date, format=format_, locale=lang)
