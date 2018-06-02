@@ -280,6 +280,7 @@
                     }
                 }
             ],
+            "header_id": "HDR10",
             "instructions_text": {
                 "en": "You may rank up to three choices. To rank fewer than three candidates, leave any remaining choices blank.",
                 "es": "Puede seleccionar un máximo de tres opciones por orden de preferencia. Para seleccionar por orden de preferencia a menos de tres candidatos, deje en blanco las opciones restantes.",
