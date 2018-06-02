@@ -104,6 +104,28 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
     listattr.append(obj)
 
 
+def load_values(obj, data):
+    """
+    Set the attributes configured in the object's `auto_attrs` class
+    attribute, from the given deserialized json data.
+    """
+    for info in obj.auto_attrs:
+        name, load_value, *remaining = info
+
+        if remaining:
+            assert len(remaining) == 1
+            attr_name = remaining[0]
+        else:
+            attr_name = name
+
+        _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
+        value = data.pop(name, None)
+        if value is not None:
+            value = load_value(data, name, value)
+
+        setattr(obj, attr_name, value)
+
+
 def copy_from_data(obj, data:dict, handler:dict={}):
     """
     Copies data from a loaded dict into an object. If a key is found
@@ -126,28 +148,6 @@ def copy_from_data(obj, data:dict, handler:dict={}):
         else:
             # All others are just copied
             setattr(obj, key, value)
-
-
-def load_values(obj, data):
-    """
-    Set the attributes configured in the object's `auto_attrs` class
-    attribute, from the given deserialized json data.
-    """
-    for info in obj.auto_attrs:
-        name, load_value, *remaining = info
-
-        if remaining:
-            assert len(remaining) == 1
-            attr_name = remaining[0]
-        else:
-            attr_name = name
-
-        _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
-        value = data.pop(name, None)
-        if value is not None:
-            value = load_value(data, name, value)
-
-        setattr(obj, attr_name, value)
 
 
 def get_ballot_item_class(type_name):
