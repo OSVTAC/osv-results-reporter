@@ -13,21 +13,25 @@
   {% with %}
     {% set parent_header = None %}
     {% set header_path = [] %}
-    {% for item in election.contests %}
+    {% for contest in election.contests %}
 
-      {% if item.parent_header != parent_header %}
-        {% for level, header in item.get_new_headers(header_path) %}
+      {% if contest.parent_header != parent_header %}
+        {% for level, header in contest.get_new_headers(header_path) %}
           {% if level == 1 %}
             <h3>{{ header.ballot_title|translate }}</h3>
           {% else %}
             <h4>{{ header.ballot_title|translate }}</h4>
           {% endif %}
         {% endfor %}
-        {% set header_path = item.make_header_path() %}
+        {% set header_path = contest.make_header_path() %}
       {% endif %}
 
-      <p>
-      {{ item.ballot_title|translate}}
+    <p>{{ contest.ballot_title|translate}}
+      {% if contest.ballot_subtitle %}
+        - {{ contest.ballot_subtitle|translate }}
+      {% endif %}
+    </p>
+
     {% endfor %}
   {% endwith %}
 
