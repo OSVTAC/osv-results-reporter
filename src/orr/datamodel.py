@@ -67,8 +67,7 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
-def append_id_index(idlist, index:dict, obj,
-                    errmsg="duplicate id"):
+def append_id_index(idlist, index:dict, obj):
     """
     This routine contains common code for appending an object to an
     ordered list, with an index dictionary to reference the object
@@ -352,10 +351,14 @@ class Contest(BallotItem):
             append_result_subtotal(self, ResultDetail(),
                                        s_input, self.result_details)
 
-    def enter_choice(self, choice, choice_input):
+    def enter_choice(self, choice_input, choice_cls):
         """
         Common processing to enter a candidate or measure choice
+
+        Args:
+          choice_cls: the class to use to instantiate the choice.
         """
+        choice = choice_cls()
         choice.from_data(choice_input)
         choice.contest = self     # Add back reference
         append_id_index(self.choices, self.choices_by_id, choice)
@@ -382,7 +385,7 @@ class OfficeContest(Contest):
         Scan an input data list of candidate entries to create
         """
         for c_input in candidates:
-            c = Contest.enter_choice(self, Candidate(), c_input)
+            c = Contest.enter_choice(self, c_input, choice_cls=Candidate)
 
 
 class MeasureContest(Contest):
@@ -412,7 +415,7 @@ class MeasureContest(Contest):
         Scan an input data list of measure choie entries to create
         """
         for c_input in choices:
-            c = Contest.enter_choice(self, Choice(), c_input)
+            c = Contest.enter_choice(self, c_input, choice_cls=Choice)
 
 
 class YNOfficeContest(MeasureContest):
