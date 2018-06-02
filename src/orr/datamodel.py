@@ -213,6 +213,21 @@ def parse_i18n(data, key, value):
     return value
 
 
+def process_ballot_items(data, key, value):
+    """
+    Scan the list of source data representing ballot items.
+
+    Args:
+      value: a list of dicts corresponding to the ballot items.
+    """
+    ballot_items_by_id = OrderedDict()
+    for data in value:
+        ballot_item = ballot_item_from_data(data, ballot_items_by_id)
+        ballot_items_by_id[ballot_item.id] = ballot_item
+
+    return ballot_items_by_id
+
+
 class Election:
 
     """
@@ -229,6 +244,7 @@ class Election:
         ('ballot_title', parse_i18n),
         ('election_area', parse_i18n),
         ('election_date', parse_date, 'date'),
+        ('ballot_items', process_ballot_items, 'ballot_items_by_id'),
     ]
 
     @classmethod
@@ -240,30 +256,22 @@ class Election:
         election = cls()
         load_values(election, data)
 
-        ballot_items = data.pop('ballot_items', None)
         if data:
             raise RuntimeError(f'data not empty: {data}')
-        assert not data
-
-        election.enter_ballot_items(ballot_items)
 
         return election
 
     def __init__(self):
-        # Initialize the lists and dictionaries
-        self.ballot_items = []  # ordered list of headers and contests
-        self.ballot_items_by_id = {} # index of headers and contests by id
+        pass
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'
 
-    def enter_ballot_items(self, ballot_items:list):
-        """
-        Scan the list of source data representing ballot items.
-        """
-        for data in ballot_items:
-            ballot_item = ballot_item_from_data(data, self.ballot_items_by_id)
-            append_id_index(self.ballot_items, self.ballot_items_by_id, ballot_item)
+    # Also expose the dict values as an ordered list, for convenience.
+    @property
+    def ballot_items(self):
+        # Here we use that ballot_items_by_id is an OrderedDict.
+        yield from self.ballot_items_by_id.values()
 
 
 class BallotItem:
