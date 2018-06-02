@@ -115,10 +115,11 @@ def copy_from_data(obj, data:dict, handler:dict={}):
         handler: a dict of attribute names with a special handler function
                  (handlers process arrays with member objects to create/copy)
     """
+    load_values(obj, data)
+
     for key, value in data.items():
         _log.debug(f'processing key-value: {key}: {str(value)[:60]!r}...')
-        if key == '_id':
-            key = 'id'
+
         if key in handler:
             # This attribute will be processed with a handler function
             handler[key](value)
@@ -247,6 +248,10 @@ class Choice:
     a pass/fail contest, e.g. preferred name of a proposed city incorporation.
     """
 
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+    ]
+
     @classmethod
     def from_data(cls, data:dict):
         obj = cls()
@@ -328,7 +333,7 @@ class BallotItem:
     """
 
     auto_attrs = [
-        # TODO
+        ('_id', parse_id, 'id'),
     ]
 
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
@@ -503,6 +508,10 @@ class SubtotalType:
     as a label.
     """
 
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+    ]
+
     @classmethod
     def from_data(cls, data:dict):
         obj = cls()
@@ -521,6 +530,10 @@ class ResultDetail:
     When reporting detailed results data, a set of separate total/subtotal
     exists for a set of ResultDetail
     """
+
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+    ]
 
     @classmethod
     def from_data(cls, data:dict):
