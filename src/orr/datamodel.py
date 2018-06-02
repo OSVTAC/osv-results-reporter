@@ -340,6 +340,19 @@ class BallotItem:
         self.ballot_title = ballot_title
         self.parent_header = None
 
+    def _iter_headers(self):
+        item = self
+        while item.parent_header:
+            yield item.parent_header
+
+            item = item.parent_header
+
+    def make_header_path(self):
+        """
+        Return the list of successive parent headers, to the root.
+        """
+        return list(self._iter_headers())
+
 
 class Header(BallotItem):
 
@@ -356,7 +369,12 @@ class Header(BallotItem):
         self.ballot_items = []
 
     def __repr__(self):
-        return f'<Header ballot_title={self.ballot_title!r}>'
+        if 'en' in self.ballot_title:
+            title = self.ballot_title['en']
+        else:
+            title = str(self.ballot_title)
+
+        return f'<Header id={self.id!r} title={title[:70]!r}...>'
 
     def add_child_item(self, item):
         """

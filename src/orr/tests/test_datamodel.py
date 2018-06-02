@@ -26,6 +26,7 @@ import datetime
 from unittest import TestCase
 
 import orr.datamodel as datamodel
+from orr.datamodel import BallotItem
 
 
 class DataModelModuleTest(TestCase):
@@ -39,3 +40,15 @@ class DataModelModuleTest(TestCase):
         actual = datamodel.parse_date(None, data, 'date', '2016-11-08')
         self.assertEqual(type(actual), datetime.date)
         self.assertEqual(actual, datetime.date(2016, 11, 8))
+
+
+class BallotItemTest(TestCase):
+
+    def test_make_header_path(self):
+        item1, item2, item3 = (BallotItem(id_=i) for i in range(3))
+        item2.parent_header = item1
+        item3.parent_header = item2
+
+        expected = [item2, item1]
+        actual = item3.make_header_path()
+        self.assertEqual(actual, expected)
