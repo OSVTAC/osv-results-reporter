@@ -94,7 +94,7 @@ def load_values(cls, data, unprocessed_keys=None):
         _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
         value = data.pop(name, None)
         if value is not None:
-            value = load_value(obj, data, name, value)
+            value = load_value(obj, value)
 
         try:
             setattr(obj, attr_name, value)
@@ -174,31 +174,31 @@ def get_ballot_item_class(type_name):
 
 
 # TODO: add validation.
-def parse_id(obj, data, key, value):
+def parse_id(obj, value):
     """
     Remove and parse an i18n string from the given data.
     """
-    _log.debug(f'parsing id: {key}, {value}')
+    _log.debug(f'parsing id: {value}')
     return value
 
 
 # TODO: add validation?
-def parse_text(obj, data, key, value):
+def parse_text(obj, value):
     """
     Remove and parse an i18n string from the given data.
     """
-    _log.debug(f'parsing text: {key}, {value}')
+    _log.debug(f'parsing text: {value}')
     return value
 
 
-def parse_date(obj, data, key, value):
+def parse_date(obj, value):
     """
     Remove and parse a date from the given data.
 
     Args:
       value: a date string, e.g. of the form "2016-11-08".
     """
-    _log.debug(f'processing parse_date: {key}, {value}')
+    _log.debug(f'processing parse_date: {value}')
 
     date = datetime.strptime(value, '%Y-%m-%d').date()
 
@@ -206,11 +206,11 @@ def parse_date(obj, data, key, value):
 
 
 # TODO: add validation.
-def parse_i18n(obj, data, key, value):
+def parse_i18n(obj, value):
     """
     Remove and parse an i18n string from the given data.
     """
-    _log.debug(f'processing parse_i18n: {key}, {value}')
+    _log.debug(f'processing parse_i18n: {value}')
     return value
 
 
@@ -282,7 +282,7 @@ class Election:
     represented as candidate objects.
     """
 
-    def process_ballot_items(self, data, key, value):
+    def process_ballot_items(self, value):
         """
         Scan the list of source data representing ballot items.
 
