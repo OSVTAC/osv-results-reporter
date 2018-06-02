@@ -84,6 +84,10 @@ def parse_args():
     parser.add_argument('--input-paths', metavar='PATH', nargs='+',
                         help=('paths to files containing election data '
                               '(e.g. in json format).'))
+    parser.add_argument('--build-time', metavar='DATETIME',
+                        help=('the datetime to use as the build time, '
+                              'in the format "2018-06-01 20:48:12". '
+                              'Defaults to the current datetime.'))
     parser.add_argument('--use-data-model',action='store_true',
                         help='use datamodel.py (experimental / still in progress).')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
@@ -413,6 +417,7 @@ def main():
     template_dir = ns.template_dir
     extra_template_dirs = ns.extra_template_dirs
     input_paths = ns.input_paths
+    build_time = ns.build_time
     use_data_model = ns.use_data_model
 
     output_parent = ns.output_parent
@@ -421,8 +426,11 @@ def main():
 
     test_mode = ns.test
 
+    if build_time is not None:
+        build_time = utils.parse_datetime(build_time)
+
     run(config_path=config_path, input_paths=input_paths,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
         fresh_output=fresh_output, test_mode=test_mode,
-        use_data_model=use_data_model)
+        use_data_model=use_data_model, build_time=build_time)

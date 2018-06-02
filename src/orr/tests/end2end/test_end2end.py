@@ -51,7 +51,10 @@ class EndToEndTest(TestCase):
         Check that two files have matching content.
         """
         actual_text, expected_text = (path.read_text() for path in (actual_path, expected_path))
-        self.assertEqual(actual_text, expected_text)
+        try:
+            self.assertEqual(actual_text, expected_text)
+        except Exception:
+            raise RuntimeError(f'expected path at: {expected_path}')
 
     def check_directories(self, actual_dir, expected_dir):
         dirs = (actual_dir, expected_dir)
@@ -81,7 +84,7 @@ class EndToEndTest(TestCase):
         extra_template_dirs = [template_dir / 'extra']
         expected_dir = Path(__file__).parent / 'expected_minimal'
         # Pass a fixed datetime for build reproducibility.
-        build_time = datetime(2018, 6, 1, 20, 48, 12, 460024)
+        build_time = datetime(2018, 6, 1, 20, 48, 12)
 
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)

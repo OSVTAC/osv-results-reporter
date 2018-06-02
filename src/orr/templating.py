@@ -32,6 +32,7 @@ import dateutil.parser
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Environment)
 
+import orr.utils as utils
 import orr.writers.pdfwriting as pdfwriting
 import orr.writers.tsvwriting as tsvwriting
 from orr.writers.xlsxwriting import XLSXBook
@@ -110,8 +111,13 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     if not output_dir.exists():
         output_dir.mkdir()
 
-    output_text = template.render(context)
-    output_path.write_text(output_text)
+    rendered = template.render(context)
+
+    # Strip trailing whitespace as a normalization step to simplify
+    # testing.  For example, this way we don't have to check files in
+    # to our repository that have trailing whitespace.
+    rendered = utils.strip_trailing_whitespace(rendered)
+    output_path.write_text(rendered)
     _log.info(f'Created {output_path} from template {template_name}')
 
     if pdf_path:
