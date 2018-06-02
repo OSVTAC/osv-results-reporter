@@ -70,6 +70,16 @@ $ orr --debug --use-data-model --input sampledata/test-minimal \
 $ python -m unittest discover orr
 ```
 
+To regenerate the end-to-end test expectation:
+
+```
+$ orr --debug --input sampledata/test-minimal --use-data-model \
+      --build "2018-06-01 20:48:12" --template templates/test-minimal \
+      --extra templates/test-minimal/extra \
+      --output-parent src/orr/tests/end2end --output-dir expected_minimal
+```
+
+
 ## Docker (experimental)
 
 ```
@@ -93,14 +103,6 @@ $ docker build -t orr . \
     && docker run --entrypoint python orr -m unittest discover orr
 ```
 
-To regenerate the end-to-end test expectation:
-
-```
-$ orr --debug --use-data-model --input sampledata/test-minimal \
-      --template templates/test-minimal --build "2018-06-01 20:48:12" \
-      --extra templates/test-minimal/extra \
-      --output-parent src/orr/tests/end2end --output-dir expected_minimal
-```
 
 TODO: change the above to a bash script?
 
