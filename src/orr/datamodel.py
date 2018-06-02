@@ -173,31 +173,6 @@ def get_ballot_item_class(type_name):
     return cls
 
 
-def ballot_item_from_data(data, ballot_items_by_id):
-    """
-    Return a BallotItem object.
-    """
-    try:
-        type_name = data['type']
-    except KeyError:
-        raise RuntimeError(f"key 'type' missing from data: {data}")
-    cls = get_ballot_item_class(type_name)
-
-    item = load_object(cls, data)
-
-    if data.get('header_id', None):
-        # Add this ballot item to the header's ballot item list.
-        header = ballot_items_by_id.get(item.header_id, None)
-        if not header:
-            raise RuntimeError(f'Unknown header id "{item.header_id}"')
-        header.ballot_items.append(item)
-        item.header = header  # back reference
-    else:
-        item.header = None
-
-    return item
-
-
 # TODO: add validation.
 def parse_id(obj, data, key, value):
     """
@@ -239,21 +214,6 @@ def parse_i18n(obj, data, key, value):
     return value
 
 
-def process_ballot_items(obj, data, key, value):
-    """
-    Scan the list of source data representing ballot items.
-
-    Args:
-      value: a list of dicts corresponding to the ballot items.
-    """
-    ballot_items_by_id = OrderedDict()
-    for data in value:
-        ballot_item = ballot_item_from_data(data, ballot_items_by_id)
-        ballot_items_by_id[ballot_item.id] = ballot_item
-
-    return ballot_items_by_id
-
-
 class Choice:
 
     """
@@ -287,6 +247,29 @@ class Candidate(Choice):
     ]
 
 
+def ballot_item_from_data(data, ballot_items_by_id):
+    """
+    Return a BallotItem object.
+    """
+    try:
+        type_name = data['type']
+    except KeyError:
+        raise RuntimeError(f"key 'type' missing from data: {data}")
+
+    cls = get_ballot_item_class(type_name)
+
+    item = load_object(cls, data)
+
+    if item.header_id:
+        # Add this ballot item to the header's ballot item list.
+        header = ballot_items_by_id.get(item.header_id, None)
+        if not header:
+            raise RuntimeError(f'Unknown header id {item.header_id!r}')
+        header.add_child_item(item)
+
+    return item
+
+
 class Election:
 
     """
@@ -298,6 +281,20 @@ class Election:
     of all current elected offices, represented as a contest and incumbents
     represented as candidate objects.
     """
+
+    def process_ballot_items(self, data, key, value):
+        """
+        Scan the list of source data representing ballot items.
+
+        Args:
+          value: a list of dicts corresponding to the ballot items.
+        """
+        ballot_items_by_id = OrderedDict()
+        for data in value:
+            ballot_item = ballot_item_from_data(data, ballot_items_by_id)
+            ballot_items_by_id[ballot_item.id] = ballot_item
+
+        return ballot_items_by_id
 
     auto_attrs = [
         ('ballot_title', parse_i18n),
@@ -324,11 +321,13 @@ class BallotItem:
     """
     The BallotItem are items that appear on ballots-- either headers or
     contests. Each ballot item can be a subitem of a parent header.
-    All BallotItems have the following common attributes:
-      header_id: id of parent header object containing this item or 0 for root
+
+    Attributes:
       id: must be unique across all contests or headers
       ballot_title: text appearing on ballots representing the header/contest
       ballot_subtitle: second level title for this item
+      header_id: id of parent header object containing this item or 0 for root
+      parent_header: the parent header of the item, as a Header object.
     """
 
     auto_attrs = [
@@ -339,6 +338,7 @@ class BallotItem:
         self.id = id_
         self.ballot_subtitle = ballot_subtitle
         self.ballot_title = ballot_title
+        self.parent_header = None
 
 
 class Header(BallotItem):
@@ -351,12 +351,22 @@ class Header(BallotItem):
         ('type', parse_text),
     ]
 
-    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
-        BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.ballot_items = []
 
     def __repr__(self):
         return f'<Header ballot_title={self.ballot_title!r}>'
+
+    def add_child_item(self, item):
+        """
+        Link a child ballot item with its parent.
+
+        Args:
+          item: a BallotItem object.
+        """
+        self.ballot_items.append(item)
+        item.parent_header = self  # back reference
 
 
 class Contest(BallotItem):
