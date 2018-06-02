@@ -315,6 +315,12 @@ class Election:
         # Here we use that ballot_items_by_id is an OrderedDict.
         yield from self.ballot_items_by_id.values()
 
+    @property
+    def contests(self):
+        for item in self.ballot_items:
+            if isinstance(item, Contest):
+                yield item
+
 
 def get_path_difference(new_seq, old_seq):
     """
