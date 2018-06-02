@@ -29,6 +29,7 @@ yes/no.
 
 from collections import OrderedDict
 from datetime import datetime
+import functools
 import logging
 
 
@@ -351,7 +352,7 @@ class Contest(BallotItem):
             append_result_subtotal(self, ResultDetail(),
                                        s_input, self.result_details)
 
-    def enter_choice(self, choice_input, choice_cls):
+    def enter_choice(self, data, choice_cls):
         """
         Common processing to enter a candidate or measure choice
 
@@ -359,9 +360,20 @@ class Contest(BallotItem):
           choice_cls: the class to use to instantiate the choice.
         """
         choice = choice_cls()
-        choice.from_data(choice_input)
+        choice.from_data(data)
         choice.contest = self     # Add back reference
         append_id_index(self.choices, self.choices_by_id, choice)
+
+    def enter_choices(self, choices, choice_cls):
+        """
+        Scan an input data list of contest choice entries to create.
+
+        Args:
+          choice_cls: the class to use to instantiate the choice (e.g.
+            Candidate or Choice).
+        """
+        for data in choices:
+            c = self.enter_choice(data, choice_cls=choice_cls)
 
 
 class OfficeContest(Contest):
@@ -375,17 +387,12 @@ class OfficeContest(Contest):
         Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
     def from_data(self, data:dict):
-        copy_from_data(self, data,{
-            'choices':OfficeContest.enter_candidates,
+        choices_handler = functools.partial(OfficeContest.enter_choices,
+                                            choice_cls=Candidate)
+        copy_from_data(self, data, {
+            'choices': choices_handler,
             'subtotal_types':Contest.enter_subtotal_types,
             'result_stats':Contest.enter_result_stats})
-
-    def enter_candidates(self, candidates):
-        """
-        Scan an input data list of candidate entries to create
-        """
-        for c_input in candidates:
-            c = Contest.enter_choice(self, c_input, choice_cls=Candidate)
 
 
 class MeasureContest(Contest):
@@ -405,17 +412,12 @@ class MeasureContest(Contest):
         Contest.__init__(self, id_, ballot_title, ballot_subtitle)
 
     def from_data(self, data:dict):
+        choices_handler = functools.partial(OfficeContest.enter_choices,
+                                            choice_cls=Choice)
         copy_from_data(self, data,{
-            'choices':MeasureContest.enter_choices,
+            'choices': choices_handler,
             'subtotal_types':Contest.enter_subtotal_types,
             'result_stats':Contest.enter_result_stats})
-
-    def enter_choices(self, choices):
-        """
-        Scan an input data list of measure choie entries to create
-        """
-        for c_input in choices:
-            c = Contest.enter_choice(self, c_input, choice_cls=Choice)
 
 
 class YNOfficeContest(MeasureContest):
