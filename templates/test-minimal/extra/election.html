@@ -1,6 +1,9 @@
-<html>
+<html lang="{{ options.lang }}">
 <head>
   <meta charset="utf-8">
+  <title>{{ election.date|format_date_medium }} -
+    {{ election.ballot_title|translate }}
+  </title>
 </head>
 <body>
   <h1>{{ election.ballot_title|translate }}</h1>
