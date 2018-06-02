@@ -146,7 +146,7 @@ def split_data_vertically(make_table, data, start_column, width, column_count):
         end_column += 1
 
     if end_column == start_column:
-        _log.warn('split_data_vertically() computed zero columns')
+        _log.warning('split_data_vertically() computed zero columns')
         end_column += 1
 
     return end_column - start_column

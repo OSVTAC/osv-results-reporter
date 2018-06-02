@@ -38,6 +38,7 @@ from orr.writers.xlsxwriting import XLSXBook
 
 _log = logging.getLogger(__name__)
 
+ENGLISH_LANG = 'en'
 
 
 def get_output_dir(env):
@@ -183,7 +184,12 @@ def translate(context, value):
     lang = options.lang
 
     if type(value) == dict:
-        text = value[lang]
+        try:
+            text = value[lang]
+        except KeyError:
+            # Then default to English.
+            _log.warning(f'missing {lang!r} translation: {value}')
+            text = value[ENGLISH_LANG]
     else:
         # Then assume the value is the key for a translation.
         all_trans = context['translations']
