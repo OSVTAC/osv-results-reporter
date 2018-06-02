@@ -379,7 +379,9 @@
         },
         {
             "_id": "617",
-            "ballot_title": "3",
+            "ballot_title": {
+                "en": "3"
+            },
             "choice_names": {
                 "en": "YES;NO",
                 "es": "SÍ;NO",

@@ -204,23 +204,13 @@ def parse_date(data, key, value):
     return date
 
 
+# TODO: remove this?
 def parse_i18n(data, key, value):
     """
     Remove and parse an i18n string from the given data.
     """
     _log.debug(f'processing parse_i18n: {key}, {value}')
-    texts = {'en': value}
-
-    # Now check for other languages.
-    start = f'{key}_'
-    for key in list(data):
-        if not key.startswith(start):
-            continue
-        suffix = key[len(start):]
-        assert len(suffix) == 2
-        texts[suffix] = data.pop(key)
-
-    return texts
+    return value
 
 
 class Election:

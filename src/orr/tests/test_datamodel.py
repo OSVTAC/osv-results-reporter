@@ -39,19 +39,3 @@ class DataModelModuleTest(TestCase):
         actual = datamodel.parse_date(data, 'date', '2016-11-08')
         self.assertEqual(type(actual), datetime.date)
         self.assertEqual(actual, datetime.date(2016, 11, 8))
-
-    def test_parse_i18n(self):
-        data = {
-            'title': 'The Art of Programming',
-            'greeting_es': 'Hola',
-            'greeting_fr': 'Bonjour',
-        }
-        expected = {
-            'en': 'Hello',
-            'es': 'Hola',
-            'fr': 'Bonjour'
-        }
-        actual = datamodel.parse_i18n(data, 'greeting', 'Hello')
-        self.assertEqual(actual, expected)
-        # Check that the translations were removed.
-        self.assertEqual(data, {'title': 'The Art of Programming'})
