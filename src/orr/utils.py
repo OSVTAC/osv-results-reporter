@@ -22,7 +22,19 @@
 Simple helper functions.
 """
 
+from datetime import datetime
 import json
+
+
+def parse_datetime(dt_string):
+    """
+    Parse a string in a standard format representing a datetime, and
+    return a datetime.datetime object.
+
+    Args:
+      dt_string: a datetime string in the format, "2018-06-01 20:48:12".
+    """
+    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
 
 
 def read_json(path):

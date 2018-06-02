@@ -22,6 +22,7 @@
 Test the orr.utils module.
 """
 
+from datetime import datetime
 from unittest import TestCase
 
 import orr.utils as utils
@@ -32,6 +33,15 @@ class UtilsModuleTest(TestCase):
     """
     Test the functions in orr.utils.
     """
+
+    def test_parse_datetime(self):
+        cases = [
+            ('2018-06-01 20:48:12', datetime(2018, 6, 1, 20, 48, 12)),
+        ]
+        for dt_string, expected in cases:
+            with self.subTest(dt_string=dt_string):
+                actual = utils.parse_datetime(dt_string)
+                self.assertEqual(actual, expected)
 
     def test_strip_trailing_whitespace(self):
         cases = [
