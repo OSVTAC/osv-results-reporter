@@ -23,6 +23,7 @@ Contains end-to-end tests (e.g. of template rendering).
 """
 
 
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -43,14 +44,34 @@ class EndToEndTest(TestCase):
     Test end-to-end template rendering.
     """
 
-    def render(self, input_dir, template_dir, extra_template_dirs, output_parent):
+    maxDiff = None
+
+    def assert_files_equal(self, actual_path, expected_path):
+        """
+        Check that two files have matching content.
+        """
+        actual_text, expected_text = (path.read_text() for path in (actual_path, expected_path))
+        self.assertEqual(actual_text, expected_text)
+
+    def check_directories(self, actual_dir, expected_dir):
+        dirs = (actual_dir, expected_dir)
+        # First check the file names.
+        actual_names, expected_names = (get_file_names(dir_path) for dir_path in dirs)
+        self.assertEqual(actual_names, expected_names)
+
+        for file_name in actual_names:
+            actual_path, expected_path = (dir_path / file_name for dir_path in dirs)
+            self.assert_files_equal(actual_path, expected_path)
+
+    def render(self, input_dir, template_dir, extra_template_dirs, output_parent,
+        build_time):
         input_paths = [input_dir]
         output_dir_name = 'actual'
 
         output_dir = main.run(input_paths=input_paths,
             template_dir=template_dir, extra_template_dirs=extra_template_dirs,
             output_parent=output_parent, output_dir_name=output_dir_name,
-            use_data_model=True)
+            use_data_model=True, build_time=build_time)
 
         return output_dir
 
@@ -59,16 +80,13 @@ class EndToEndTest(TestCase):
         template_dir = Path('templates') / 'test-minimal'
         extra_template_dirs = [template_dir / 'extra']
         expected_dir = Path(__file__).parent / 'expected_minimal'
+        # Pass a fixed datetime for build reproducibility.
+        build_time = datetime(2018, 6, 1, 20, 48, 12, 460024)
 
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
             actual_dir = self.render(input_dir=input_dir,
                 template_dir=template_dir, extra_template_dirs=extra_template_dirs,
-                output_parent=temp_dir)
+                output_parent=temp_dir, build_time=build_time)
 
-            # TODO: also check the file contents.
-
-            # Check the file names.
-            expected_names = get_file_names(expected_dir)
-            actual_names = get_file_names(actual_dir)
-            self.assertEqual(actual_names, expected_names)
+            self.check_directories(actual_dir, expected_dir)

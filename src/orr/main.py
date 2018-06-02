@@ -321,7 +321,8 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
 
 def run(config_path=None, input_paths=None, template_dir=None,
     extra_template_dirs=None, output_parent=None, output_dir_name=None,
-    fresh_output=False, test_mode=False, use_data_model=False):
+    fresh_output=False, test_mode=False, use_data_model=False,
+    build_time=None):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -334,6 +335,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
       output_dir_name: the name to give the output directory inside the
         output parent.  Defaults to a name generated using the current
         datetime.
+      build_time: this is exposed to permit reproducible builds more easily.
     """
     if input_paths is None:
         input_paths = []
@@ -341,11 +343,11 @@ def run(config_path=None, input_paths=None, template_dir=None,
         extra_template_dirs = []
     if output_parent is None:
         output_parent = DEFAULT_OUTPUT_PARENT_DIR
-
-    dt_now = datetime.now()
+    if build_time is None:
+        build_time = datetime.now()
 
     if output_dir_name is None:
-        output_dir_name = generate_output_name(dt_now)
+        output_dir_name = generate_output_name(build_time)
 
     assert template_dir is not None
 
@@ -378,7 +380,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
         input_dir = Path(input_paths[0])
         if not input_dir.is_dir():
             raise RuntimeError(f'input path is not a directory: {input_path}')
-        context = load_model(input_dir, build_time=dt_now)
+        context = load_model(input_dir, build_time=build_time)
     else:
         context = {}
         for input_path in input_paths:
