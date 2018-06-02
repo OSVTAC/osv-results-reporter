@@ -22,8 +22,11 @@
 Test the orr.templating module.
 """
 
+from datetime import date
 from pathlib import Path
 from unittest import TestCase
+
+from jinja2.utils import Namespace
 
 import orr.configlib as configlib
 import orr.templating as templating
@@ -63,4 +66,21 @@ class TemplatingModuleTest(TestCase):
         for rel_path, expected in cases:
             with self.subTest(rel_path=rel_path):
                 actual = templating.output_file_uri(env, rel_path=rel_path)
+                self.assertEqual(actual, expected)
+
+    def test_format_date(self):
+        day = date(2018, 6, 5)
+        cases = [
+            ('en', 'June 5, 2018'),
+            ('es', '5 de junio de 2018'),
+            ('tl', 'Hunyo 5, 2018'),
+            ('zh', '2018年6月5日'),
+        ]
+        for lang, expected in cases:
+            with self.subTest(lang=lang):
+                options = Namespace()
+                options['lang'] = lang
+                context = {'options': options}
+
+                actual = templating.format_date(context, day)
                 self.assertEqual(actual, expected)

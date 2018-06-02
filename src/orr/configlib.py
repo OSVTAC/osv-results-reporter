@@ -56,7 +56,7 @@ def create_jinja_env(output_dir, template_dirs=None):
     # from within a custom filter, without having to pass the option
     # values explicitly.
     options = Namespace()
-    # Apparently we need to set using index rather than attribute notation.
+    # Jinja requires you to set using index rather than attribute notation.
     options['output_dir'] = Path(output_dir)
 
     env.globals.update(options=options,

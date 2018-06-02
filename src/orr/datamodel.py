@@ -257,13 +257,6 @@ class Election:
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'
 
-    @property
-    def display_date(self):
-        """
-        Return the date of the election in the form, "June 5, 2018".
-        """
-        return self.date.strftime(f'%B {self.date.day}, %Y')
-
     def enter_ballot_items(self, ballot_items:list):
         """
         Scan the list of source data representing ballot items.

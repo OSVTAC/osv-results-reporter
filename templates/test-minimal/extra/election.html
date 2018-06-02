@@ -7,7 +7,7 @@
 
   <h2>{{ election.election_area|translate }}</h2>
 
-  <h3>{{ election.display_date }}</h3>
+  <h3>{{ election.date|format_date }}</h3>
 
   <ol>
     {% for item in election.ballot_items %}

@@ -146,18 +146,22 @@ def output_file_uri(env, rel_path):
     return uri
 
 
-def format_date(value,format_str:str='medium'):
+@contextfilter
+def format_date(context, day):
     """
+    Return a date in the form "June 5, 2018" (internationalized).
+
     Template Filter: Converts a date value (str or datetime) into
     the internationalized representation. A format parameter
     can be supplied, either the standard short, medium, long, or
     full (default is medium), or a pattern in the Locale Data
     Markup Language specification.
-    """
-    if isinstance(value,str):
-        value = dateutil.parser.parse(value)
 
-    return(babel.dates.format_date(value,format_str))
+    Args:
+      day: a datetime.date object.
+    """
+    lang = context['options'].lang
+    return babel.dates.format_date(day, format='long', locale=lang)
 
 
 @contextfilter
