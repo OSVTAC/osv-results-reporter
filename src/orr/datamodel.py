@@ -168,24 +168,38 @@ def get_ballot_item_class(type_name):
 
 
 def ballot_item_from_data(data, ballot_items_by_id):
+    """
+    Return a BallotItem object.
+    """
     try:
         type_name = data['type']
     except KeyError:
         raise RuntimeError(f"key 'type' missing from data: {data}")
     cls = get_ballot_item_class(type_name)
-    bi = cls()
-    bi.from_data(data)
-    if data.get('header_id', None):
-        # Add this bi to the header's bi list
-        header = ballot_items_by_id.get(bi.header_id, None)
-        if not header:
-            raise RuntimeError(f'Unknown header id "{bi.header_id}"')
-        header.ballot_items.append(bi)
-        bi.header = header  # back reference
-    else:
-        bi.header = None
 
-    return bi
+    item = cls()
+    load_values(item, data)
+    item.from_data(data)
+    if data.get('header_id', None):
+        # Add this ballot item to the header's ballot item list.
+        header = ballot_items_by_id.get(item.header_id, None)
+        if not header:
+            raise RuntimeError(f'Unknown header id "{item.header_id}"')
+        header.ballot_items.append(item)
+        item.header = header  # back reference
+    else:
+        item.header = None
+
+    return item
+
+
+# TODO: add validation.
+def parse_id(data, key, value):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    _log.debug(f'parsing id: {key}, {value}')
+    return value
 
 
 def parse_date(data, key, value):
@@ -202,7 +216,7 @@ def parse_date(data, key, value):
     return date
 
 
-# TODO: remove this?
+# TODO: add validation.
 def parse_i18n(data, key, value):
     """
     Remove and parse an i18n string from the given data.
@@ -224,6 +238,36 @@ def process_ballot_items(data, key, value):
         ballot_items_by_id[ballot_item.id] = ballot_item
 
     return ballot_items_by_id
+
+
+class Choice:
+
+    """
+    Choice represents a selection on a ballot-- a candidate for an elected
+    office, or Yes/No for a ballot measure, retention or recall office.
+    Multiple choice for a measure is a selection other than yes/no for
+    a pass/fail contest, e.g. preferred name of a proposed city incorporation.
+    """
+
+    def __init__(self, id_=None, ballot_title=None):
+        self.id = id_
+        self.ballot_title = ballot_title
+
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
+
+
+class Candidate(Choice):
+
+    """
+    A candidate can have additional attributes
+    """
+
+    def __init__(self, id_=None, ballot_title=None):
+        Choice.__init__(self, id_, ballot_title)
+
+    def from_data(self, data:dict):
+        copy_from_data(self, data)
 
 
 class Election:
@@ -284,6 +328,10 @@ class BallotItem:
       ballot_subtitle: second level title for this item
     """
 
+    auto_attrs = [
+        # TODO
+    ]
+
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         self.id = id_
         self.ballot_subtitle = ballot_subtitle
@@ -324,6 +372,15 @@ class Contest(BallotItem):
         self.result_details = []    # result detail definitions
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
+    def from_data(self, data:dict):
+        choices_handler = functools.partial(Contest.enter_choices,
+                                            choice_cls=self.choice_cls)
+
+        copy_from_data(self, data, {
+            'choices': choices_handler,
+            'subtotal_types':Contest.enter_subtotal_types,
+            'result_stats':Contest.enter_result_stats})
+
     # Also expose the dict values as an ordered list, for convenience.
     @property
     def choices(self):
@@ -334,11 +391,11 @@ class Contest(BallotItem):
         """
         Scan summary result attributes for a contest
         """
-        for c_input in result_stats:
-            c = ResultStat()
-            c.from_data(c_input)
-            index_object(self.choices_by_id, c)
-            self.result_stats.append(c)
+        for data in result_stats:
+            stat = ResultStat()
+            stat.from_data(data)
+            index_object(self.choices_by_id, stat)
+            self.result_stats.append(stat)
 
     def enter_subtotal_types(self, subtotal_types):
         """
@@ -382,26 +439,15 @@ class Contest(BallotItem):
 
 
 class OfficeContest(Contest):
-
     """
     The OfficeContest represents an elected office where choices are
     a set of candidates.
     """
 
-    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
-        Contest.__init__(self, id_, ballot_title, ballot_subtitle)
-
-    def from_data(self, data:dict):
-        choices_handler = functools.partial(OfficeContest.enter_choices,
-                                            choice_cls=Candidate)
-        copy_from_data(self, data, {
-            'choices': choices_handler,
-            'subtotal_types':Contest.enter_subtotal_types,
-            'result_stats':Contest.enter_result_stats})
+    choice_cls = Candidate
 
 
 class MeasureContest(Contest):
-
     """
     The MeasureContest represents a ballot measure question posed to voters.
     Most measures have a Yes/No question though the text that can appear on
@@ -413,63 +459,18 @@ class MeasureContest(Contest):
     multiple choice measure.
     """
 
-    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
-        Contest.__init__(self, id_, ballot_title, ballot_subtitle)
-
-    def from_data(self, data:dict):
-        choices_handler = functools.partial(OfficeContest.enter_choices,
-                                            choice_cls=Choice)
-        copy_from_data(self, data,{
-            'choices': choices_handler,
-            'subtotal_types':Contest.enter_subtotal_types,
-            'result_stats':Contest.enter_result_stats})
+    choice_cls = Candidate
 
 
+# In orr we don't need to distinguish from a measure.
 class YNOfficeContest(MeasureContest):
-
     """
     A YNOfficeContest is a hybrid of MeasureContest and OfficeContest,
     used for approval voting (retention contest) or for a recall question.
     The attributes defining an elected office are included, and information
     on the incumbent/candidate can be defined.
     """
-
-    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
-        Contest.__init__(self, id_, ballot_title, ballot_subtitle)
-
-    def from_data(self, data:dict):
-        # In orr we don't need to distinguish with a measure
-        MeasureContest.from_data(self, data)
-
-
-class Choice:
-
-    """
-    Choice represents a selection on a ballot-- a candidate for an elected
-    office, or Yes/No for a ballot measure, retention or recall office.
-    Multiple choice for a measure is a selection other than yes/no for
-    a pass/fail contest, e.g. preferred name of a proposed city incorporation.
-    """
-
-    def __init__(self, id_=None, ballot_title=None):
-        self.id = id_
-        self.ballot_title = ballot_title
-
-    def from_data(self, data:dict):
-        copy_from_data(self, data)
-
-
-class Candidate(Choice):
-
-    """
-    A candidate can have additional attributes
-    """
-
-    def __init__(self, id_=None, ballot_title=None):
-        Choice.__init__(self, id_, ballot_title)
-
-    def from_data(self, data:dict):
-        copy_from_data(self, data)
+    pass
 
 
 class ResultStat(Choice):
