@@ -36,6 +36,6 @@ class DataModelModuleTest(TestCase):
 
     def test_parse_date(self):
         data = {}
-        actual = datamodel.parse_date(data, 'date', '2016-11-08')
+        actual = datamodel.parse_date(None, data, 'date', '2016-11-08')
         self.assertEqual(type(actual), datetime.date)
         self.assertEqual(actual, datetime.date(2016, 11, 8))

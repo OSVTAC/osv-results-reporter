@@ -104,11 +104,18 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
     listattr.append(obj)
 
 
-def load_values(obj, data):
+def load_values(obj, data, unprocessed_keys=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
+
+    Args:
+      unprocessed_keys: keys that are allowed to exist in `data` after
+        processing.
     """
+    if unprocessed_keys is None:
+        unprocessed_keys = []
+
     for info in obj.auto_attrs:
         name, load_value, *remaining = info
 
@@ -121,33 +128,18 @@ def load_values(obj, data):
         _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
         value = data.pop(name, None)
         if value is not None:
-            value = load_value(data, name, value)
+            value = load_value(obj, data, name, value)
 
-        setattr(obj, attr_name, value)
+        try:
+            setattr(obj, attr_name, value)
+        except Exception:
+            raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
 
+    for key in data.keys():
+        if key in unprocessed_keys:
+            continue
 
-def copy_from_data(obj, data:dict, handler:dict={}):
-    """
-    Copies data from a loaded dict into an object. If a key is found
-    with a handler, then the handler function is called.
-
-    Args:
-        obj: an object in our data model.
-        data: a dict with attributes and values to copy
-        handler: a dict of attribute names with a special handler function
-                 (handlers process arrays with member objects to create/copy)
-    """
-    load_values(obj, data)
-
-    for key, value in data.items():
-        _log.debug(f'processing key-value: {key}: {str(value)[:60]!r}...')
-
-        if key in handler:
-            # This attribute will be processed with a handler function
-            handler[key](value)
-        else:
-            # All others are just copied
-            setattr(obj, key, value)
+        raise RuntimeError(f'unrecognized key for obj {obj!r}: {key!r}')
 
 
 def get_ballot_item_class(type_name):
@@ -193,7 +185,7 @@ def ballot_item_from_data(data, ballot_items_by_id):
 
 
 # TODO: add validation.
-def parse_id(data, key, value):
+def parse_id(obj, data, key, value):
     """
     Remove and parse an i18n string from the given data.
     """
@@ -201,7 +193,16 @@ def parse_id(data, key, value):
     return value
 
 
-def parse_date(data, key, value):
+# TODO: add validation?
+def parse_text(obj, data, key, value):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    _log.debug(f'parsing text: {key}, {value}')
+    return value
+
+
+def parse_date(obj, data, key, value):
     """
     Remove and parse a date from the given data.
 
@@ -216,7 +217,7 @@ def parse_date(data, key, value):
 
 
 # TODO: add validation.
-def parse_i18n(data, key, value):
+def parse_i18n(obj, data, key, value):
     """
     Remove and parse an i18n string from the given data.
     """
@@ -224,7 +225,7 @@ def parse_i18n(data, key, value):
     return value
 
 
-def process_ballot_items(data, key, value):
+def process_ballot_items(obj, data, key, value):
     """
     Scan the list of source data representing ballot items.
 
@@ -257,9 +258,6 @@ class Choice:
     def from_data(cls, data:dict):
         obj = cls()
         load_values(obj, data)
-
-        if data:
-            raise RuntimeError(f'unrecognized data: {data}')
 
         return obj
 
@@ -352,10 +350,18 @@ class BallotItem:
 
 class Header(BallotItem):
 
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+        ('ballot_title', parse_i18n),
+        ('classification', parse_text),
+        ('header_id', parse_text),
+        ('type', parse_text),
+    ]
+
     @classmethod
     def from_data(cls, data:dict):
         obj = cls()
-        copy_from_data(obj, data)
+        load_values(obj, data)
 
         return obj
 
@@ -380,16 +386,37 @@ class Contest(BallotItem):
                and recall/retention contests
     """
 
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+        ('ballot_subtitle', parse_i18n),
+        ('ballot_title', parse_i18n),
+        # TODO: this should be parsed out.
+        ('choice_names', parse_text),
+        ('header_id', parse_text),
+        ('instructions_text', parse_text),
+        ('is_partisan', parse_text),
+        ('number_elected', parse_text),
+        ('question_text', parse_text),
+        ('type', parse_text),
+        ('vote_for_msg', parse_text),
+        ('vote_type_id', parse_text),
+        ('writeins_allowed', parse_text),
+    ]
+
     @classmethod
     def from_data(cls, data:dict):
         item = cls()
-        choices_handler = functools.partial(item.enter_choices,
-                                            choice_cls=item.choice_cls)
+        load_values(item, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
 
-        copy_from_data(item, data, {
-            'choices': choices_handler,
-            'subtotal_types': item.enter_subtotal_types,
-            'result_stats': item.enter_result_stats})
+        # TODO: move the below into auto_attrs.
+        choices_data = data.pop('choices')
+        item.enter_choices(choices_data)
+
+        result_stats = data.pop('result_stats')
+        item.enter_result_stats(result_stats)
+
+        subtotal_types = data.pop('subtotal_types')
+        item.enter_subtotal_types(subtotal_types)
 
         return item
 
@@ -420,16 +447,16 @@ class Contest(BallotItem):
         """
         Scan summary subtotals available for this contest
         """
-        for s_input in subtotal_types:
-            append_result_subtotal(self, s_input, self.subtotal_types,
+        for data in subtotal_types:
+            append_result_subtotal(self, data, self.subtotal_types,
                 subtotal_cls=SubtotalType)
 
     def enter_result_details(self, result_details):
         """
         Scan detail subtotals available for this contest
         """
-        for s_input in result_details:
-            append_result_subtotal(self, s_input, self.result_details,
+        for data in result_details:
+            append_result_subtotal(self, data, self.result_details,
                 subtotal_cls=ResultDetail)
 
     def enter_choice(self, data, choice_cls):
@@ -444,7 +471,7 @@ class Contest(BallotItem):
 
         index_object(self.choices_by_id, choice)
 
-    def enter_choices(self, choices, choice_cls):
+    def enter_choices(self, choices):
         """
         Scan an input data list of contest choice entries to create.
 
@@ -453,7 +480,7 @@ class Contest(BallotItem):
             Candidate or Choice).
         """
         for data in choices:
-            c = self.enter_choice(data, choice_cls=choice_cls)
+            c = self.enter_choice(data, choice_cls=self.choice_cls)
 
 
 class OfficeContest(Contest):
@@ -518,12 +545,13 @@ class SubtotalType:
 
     auto_attrs = [
         ('_id', parse_id, 'id'),
+        ('heading', parse_text),
     ]
 
     @classmethod
     def from_data(cls, data:dict):
         obj = cls()
-        copy_from_data(obj, data)
+        load_values(obj, data)
 
         return obj
 
@@ -546,7 +574,7 @@ class ResultDetail:
     @classmethod
     def from_data(cls, data:dict):
         obj = cls()
-        copy_from_data(obj, data)
+        load_values(obj, data)
 
         return obj
 
