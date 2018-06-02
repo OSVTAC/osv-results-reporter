@@ -3,7 +3,7 @@ Translated Results Pages
 <p>
   Build time: {{ build_time }}
 <ul>
-{% for lang in ('en', 'es', 'tl', 'zh') %}
+{% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
     {% set src = "election-{}.html".format(lang) %}

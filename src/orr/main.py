@@ -291,9 +291,14 @@ def load_model(dir_path, build_time):
     path = dir_path / 'election.json'
     data = utils.read_json(path)
 
+    languages = data.pop('languages')
     election = Election.from_data(data)
 
-    context = dict(election=election, build_time=build_time)
+    context = dict(
+        build_time=build_time,
+        election=election,
+        languages=languages,
+    )
 
     return context
 

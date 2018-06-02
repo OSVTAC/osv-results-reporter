@@ -486,5 +486,11 @@
         "tl": "Lungsod at County ng San Francisco",
         "zh": "舊金山市"
     },
-    "election_date": "2018-06-05"
+    "election_date": "2018-06-05",
+    "languages": [
+        "en",
+        "es",
+        "tl",
+        "zh"
+    ]
 }
