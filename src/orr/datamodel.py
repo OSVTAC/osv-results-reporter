@@ -68,25 +68,23 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
-def append_id_index(idlist, index:dict, obj):
+def index_object(mapping, obj):
     """
-    This routine contains common code for appending an object to an
-    ordered list, with an index dictionary to reference the object
-    by id.
+    Add an object in our data model to a lookup dict that references
+    objects by id, and also add an index / sequence number.
 
     Args:
-        idlist: a list this object will be appended
-        index:  a dict to lookup by obj.id
-        obj:    object to be added
-        errmsg: object specific error message (optional)
+      mapping: a dict to lookup by obj.id
+      obj: object to be added
     """
     if not obj.id:
         raise RuntimeError(f'object does not have an id: {obj!r}')
-    if obj.id in index:
-        raise RuntimeError(errmsg)
-    obj.index = len(idlist)   # Assign a sequence
-    idlist.append(obj)
-    index[obj.id] = obj
+    if obj.id in mapping:
+        raise RuntimeError(f'duplicate object id: {obj!r}')
+
+    # TODO: don't set obj.index here e.g. since choices and results are combined?
+    obj.index = len(mapping)  # Assign a sequence number (0-based).
+    mapping[obj.id] = obj
 
 
 def append_result_subtotal(contest, obj, data:dict, listattr:list):
@@ -320,12 +318,17 @@ class Contest(BallotItem):
 
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
-        self.choices = []           # ordered list of all contest choices
+        self.choices_by_id = OrderedDict()  # index of choices+result_stats by id
         self.result_stats = []      # Pseudo choice for result summary attrs
-        self.choices_by_id = {}     # index of choices+result_stats by id
         self.subtotal_types = []    # summary subtotals available
         self.result_details = []    # result detail definitions
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
+
+    # Also expose the dict values as an ordered list, for convenience.
+    @property
+    def choices(self):
+        # Here we use that choices_by_id is an OrderedDict.
+        yield from self.choices_by_id.values()
 
     def enter_result_stats(self, result_stats):
         """
@@ -334,7 +337,8 @@ class Contest(BallotItem):
         for c_input in result_stats:
             c = ResultStat()
             c.from_data(c_input)
-            append_id_index(self.result_stats, self.choices_by_id, c)
+            index_object(self.choices_by_id, c)
+            self.result_stats.append(c)
 
     def enter_subtotal_types(self, subtotal_types):
         """
@@ -362,7 +366,8 @@ class Contest(BallotItem):
         choice = choice_cls()
         choice.from_data(data)
         choice.contest = self     # Add back reference
-        append_id_index(self.choices, self.choices_by_id, choice)
+
+        index_object(self.choices_by_id, choice)
 
     def enter_choices(self, choices, choice_cls):
         """
