@@ -589,7 +589,11 @@ class Election:
     def contests_with_headers(self):
         """
         Yield all contests as pairs (headers, contest), where--
-          headers: a list of pairs (level, header).
+          headers: the new headers that need to be displayed, as a list
+            of pairs (level, header) (or the empty list if there are no
+            new headers):
+              level: the "level" of the header, as an integer (1-based) index.
+              header: a Header object.
           contest: a Contest object.
         """
         parent_header = None
