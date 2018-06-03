@@ -44,6 +44,7 @@ import orr.datamodel as datamodel
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
+from orr.utils import DEFAULT_JSON_DUMPS_ARGS
 
 
 _log = logging.getLogger(__name__)
@@ -401,10 +402,18 @@ def run(config_path=None, input_paths=None, template_dir=None,
     render_template_dir(template_dir, output_dir=output_dir, env=env,
         context=context, test_mode=test_mode)
 
-    _log.info(f'writing the output directory to stdout: {output_dir}')
-    print(output_dir)
+    output_data = dict(
+        build_time=build_time.isoformat(),
+        output_dir=str(output_dir),
+    )
 
-    return output_dir
+    # TODO: allow changing the stdout output format (e.g. YAML or text)?
+    output = json.dumps(output_data, **DEFAULT_JSON_DUMPS_ARGS)
+
+    # TODO: allow suppressing stdout?
+    print(output)
+
+    return output_data
 
 
 def main():
