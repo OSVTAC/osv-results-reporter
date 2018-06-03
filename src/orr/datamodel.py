@@ -436,12 +436,41 @@ class Contest(BallotItem):
                and recall/retention contests
     """
 
+    def enter_choice(self, data, choice_cls, choices_by_id):
+        """
+        Common processing to enter a candidate or measure choice
+
+        Args:
+          choice_cls: the class to use to instantiate the choice.
+        """
+        choice = load_object(choice_cls, data)
+        choice.contest = self     # Add back reference
+
+        index_object(choices_by_id, choice)
+
+    def enter_choices(self, choices):
+        """
+        Scan an input data list of contest choice entries to create.
+
+        Args:
+          choice_cls: the class to use to instantiate the choice (e.g.
+            Candidate or Choice).
+        """
+        choices_by_id = OrderedDict()
+
+        for data in choices:
+            c = self.enter_choice(data, choice_cls=self.choice_cls,
+                            choices_by_id=choices_by_id)
+
+        return choices_by_id
+
     auto_attrs = [
         ('_id', parse_id, 'id'),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
         # TODO: this should be parsed out.
         ('choice_names', parse_text),
+        ('choices', enter_choices, 'choices_by_id'),
         ('header_id', parse_text),
         ('instructions_text', parse_text),
         ('is_partisan', parse_text),
@@ -458,9 +487,6 @@ class Contest(BallotItem):
         item = load_values(cls, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
 
         # TODO: move the below into auto_attrs.
-        choices_data = data.pop('choices')
-        item.enter_choices(choices_data)
-
         result_stats = data.pop('result_stats')
         item.enter_result_stats(result_stats)
 
@@ -471,7 +497,6 @@ class Contest(BallotItem):
 
     def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
         BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
-        self.choices_by_id = OrderedDict()  # index of choices+result_stats by id
         self.result_stats = []      # Pseudo choice for result summary attrs
         self.subtotal_types = []    # summary subtotals available
         self.result_details = []    # result detail definitions
@@ -507,29 +532,6 @@ class Contest(BallotItem):
         for data in result_details:
             append_result_subtotal(self, data, self.result_details,
                 subtotal_cls=ResultDetail)
-
-    def enter_choice(self, data, choice_cls):
-        """
-        Common processing to enter a candidate or measure choice
-
-        Args:
-          choice_cls: the class to use to instantiate the choice.
-        """
-        choice = load_object(choice_cls, data)
-        choice.contest = self     # Add back reference
-
-        index_object(self.choices_by_id, choice)
-
-    def enter_choices(self, choices):
-        """
-        Scan an input data list of contest choice entries to create.
-
-        Args:
-          choice_cls: the class to use to instantiate the choice (e.g.
-            Candidate or Choice).
-        """
-        for data in choices:
-            c = self.enter_choice(data, choice_cls=self.choice_cls)
 
 
 class OfficeContest(Contest):
