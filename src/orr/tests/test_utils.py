@@ -23,6 +23,8 @@ Test the orr.utils module.
 """
 
 from datetime import date, datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 import orr.utils as utils
@@ -83,3 +85,12 @@ class UtilsModuleTest(TestCase):
             with self.subTest(lang=lang):
                 actual = utils.format_date(day, lang=lang, format_='medium')
                 self.assertEqual(actual, expected)
+
+    def test_hash_file(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / 'temp.txt'
+            path.write_text('abcdef')
+            expected = 'bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721'
+
+            actual = utils.hash_file(path)
+            self.assertEqual(actual, expected)

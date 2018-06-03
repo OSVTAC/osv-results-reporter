@@ -23,9 +23,14 @@ Simple helper functions.
 """
 
 from datetime import datetime
+import hashlib
 import json
 
 import babel.dates
+
+
+# The buffer size to use when hashing files.
+HASH_BYTES = 2 ** 12  # 4K
 
 
 def read_json(path):
@@ -65,3 +70,23 @@ def format_date(date, lang, format_=None):
     if format_ is None:
         format_ = 'long'
     return babel.dates.format_date(date, format=format_, locale=lang)
+
+
+# TODO: support other hash algorithms.
+def hash_file(path):
+    """
+    Hash the contents of a file, using SHA-256.
+
+    Returns the result as a hexadecimal string.
+    """
+    hasher = hashlib.sha256()
+    with open(path, mode='rb') as f:
+        while True:
+            data = f.read(HASH_BYTES)
+            if not data:
+                break
+            hasher.update(data)
+
+    sha = hasher.hexdigest()
+
+    return sha
