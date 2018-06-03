@@ -133,6 +133,25 @@ def output_file_uri(env, rel_path):
     return uri
 
 
+# TODO: support other hash algorithms.
+@environmentfilter
+def secure_hash(env, rel_path):
+    """
+    Return a secure hash of the contents of the file, using SHA-256.
+
+    Returns the hash as a hexadecimal string.
+
+    Args:
+      env: a Jinja2 Environment object.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object. This can be any path-like object.
+    """
+    path = get_output_path(env, rel_path)
+    sha = utils.hash_file(path)
+
+    return sha
+
+
 def _format_date(context, date, format_=None):
     lang = context['options'].lang
     try:

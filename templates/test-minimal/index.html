@@ -8,14 +8,14 @@
 <p>
   Build time: {{ build_time }}
 <p>
-  Languages:
+  Languages (SHA-256 of file contents shown in parentheses):
 <ul>
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
     {% set src = "election-{}.html".format(lang) %}
-    <li><a href="{{ src }}">{{ src }}</a></li>
     {% do subtemplate('election.html', src) %}
+    <li><a href="{{ src }}">{{ src }}</a> (<code>{{ src|secure_hash }}</code>)</li>
   {% endwith %}
 
 {% endfor %}
