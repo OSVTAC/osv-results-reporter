@@ -30,6 +30,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2.utils import Namespace
 
 import orr.templating as templating
+from orr.templating import ENGLISH_LANG
 
 
 def create_jinja_env(output_dir, template_dirs=None):
@@ -48,6 +49,7 @@ def create_jinja_env(output_dir, template_dirs=None):
         # Enable the expression-statement extension:
         # http://jinja.pocoo.org/docs/2.10/templates/#expression-statement
         extensions=['jinja2.ext.do'],
+        # Remove excess whitespace with lstrip_blocks and trim_blocks.
         lstrip_blocks=True,
         trim_blocks=True,
     )
@@ -60,6 +62,8 @@ def create_jinja_env(output_dir, template_dirs=None):
     options = Namespace()
     # Jinja requires you to set using index rather than attribute notation.
     options['output_dir'] = Path(output_dir)
+    # Initialize with a default of English.
+    options['lang'] = ENGLISH_LANG
 
     env.globals.update(options=options,
         create_pdf=templating.create_pdf,
