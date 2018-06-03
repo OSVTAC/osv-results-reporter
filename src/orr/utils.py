@@ -32,6 +32,9 @@ import babel.dates
 # The buffer size to use when hashing files.
 HASH_BYTES = 2 ** 12  # 4K
 
+# Our options for pretty-printing JSON for increased human readability.
+DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
+
 
 def read_json(path):
     with open(path) as f:

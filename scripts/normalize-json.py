@@ -30,6 +30,7 @@ import json
 import sys
 
 import orr.utils as utils
+from orr.utils import DEFAULT_JSON_DUMPS_ARGS
 
 
 def main():
@@ -40,7 +41,7 @@ def main():
 
     data = utils.read_json(path)
 
-    serialized = json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False)
+    serialized = json.dumps(data, **DEFAULT_JSON_DUMPS_ARGS)
 
     print(serialized)
 
