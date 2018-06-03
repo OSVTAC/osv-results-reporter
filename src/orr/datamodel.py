@@ -68,7 +68,7 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
-def load_values(cls, data, unprocessed_keys=None):
+def load_attrs(cls, data, unprocessed_keys=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
@@ -114,7 +114,7 @@ def load_object(cls, data):
     if hasattr(cls, 'from_data'):
         obj = cls.from_data(data)
     else:
-        obj = load_values(cls, data)
+        obj = load_attrs(cls, data)
 
     return obj
 
@@ -484,7 +484,7 @@ class Contest(BallotItem):
 
     @classmethod
     def from_data(cls, data:dict):
-        item = load_values(cls, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
+        item = load_attrs(cls, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
 
         # TODO: move the below into auto_attrs.
         result_stats = data.pop('result_stats')
