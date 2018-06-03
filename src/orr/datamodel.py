@@ -271,7 +271,7 @@ def ballot_item_from_data(data, ballot_items_by_id):
     Return a BallotItem object.
     """
     try:
-        type_name = data['type']
+        type_name = data.pop('type')
     except KeyError:
         raise RuntimeError(f"key 'type' missing from data: {data}")
 
@@ -409,19 +409,22 @@ class BallotItem:
         return get_path_difference(my_header_path, header_path)
 
 
-class Header(BallotItem):
+class Header:
+
+    type_name = 'header'
 
     auto_attrs = [
         ('_id', parse_id, 'id'),
         ('ballot_title', parse_i18n),
         ('classification', parse_text),
         ('header_id', parse_text),
-        ('type', parse_text),
     ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        self.ballot_title = None
         self.ballot_items = []
+        self.id = None
+        self.parent_header = None
 
     def __repr__(self):
         title = i18n_repr(self.ballot_title)
