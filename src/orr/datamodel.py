@@ -68,6 +68,56 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
+# TODO: add validation.
+def parse_id(obj, value):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    _log.debug(f'parsing id: {value}')
+    return value
+
+
+# TODO: add validation?
+def parse_text(obj, value):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    _log.debug(f'parsing text: {value}')
+    return value
+
+
+def parse_date(obj, value):
+    """
+    Remove and parse a date from the given data.
+
+    Args:
+      value: a date string, e.g. of the form "2016-11-08".
+    """
+    _log.debug(f'processing parse_date: {value}')
+
+    date = datetime.strptime(value, '%Y-%m-%d').date()
+
+    return date
+
+
+# TODO: add validation.
+def parse_i18n(obj, value):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    _log.debug(f'processing parse_i18n: {value}')
+    return value
+
+
+def i18n_repr(i18n_text):
+    if 'en' in i18n_text:
+        title = i18n_text['en']
+    else:
+        title = str(i18n_text)
+
+    return title[:40]
+
+
 def load_attrs(cls, data, unprocessed_keys=None, cls_info=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
@@ -160,74 +210,6 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
     listattr.append(obj)
 
 
-def get_ballot_item_class(type_name):
-    # Dict mapping ballot item type name to class.
-    # TODO: make this module-level.
-    BALLOT_ITEM_CLASSES = {
-        'header': Header,
-        'office': OfficeContest,
-        'measure': MeasureContest,
-        'ynoffice': YNOfficeContest,
-    }
-
-    try:
-        cls = BALLOT_ITEM_CLASSES[type_name]
-    except KeyError:
-        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
-
-    return cls
-
-
-# TODO: add validation.
-def parse_id(obj, value):
-    """
-    Remove and parse an i18n string from the given data.
-    """
-    _log.debug(f'parsing id: {value}')
-    return value
-
-
-# TODO: add validation?
-def parse_text(obj, value):
-    """
-    Remove and parse an i18n string from the given data.
-    """
-    _log.debug(f'parsing text: {value}')
-    return value
-
-
-def parse_date(obj, value):
-    """
-    Remove and parse a date from the given data.
-
-    Args:
-      value: a date string, e.g. of the form "2016-11-08".
-    """
-    _log.debug(f'processing parse_date: {value}')
-
-    date = datetime.strptime(value, '%Y-%m-%d').date()
-
-    return date
-
-
-# TODO: add validation.
-def parse_i18n(obj, value):
-    """
-    Remove and parse an i18n string from the given data.
-    """
-    _log.debug(f'processing parse_i18n: {value}')
-    return value
-
-
-def i18n_repr(i18n_text):
-    if 'en' in i18n_text:
-        title = i18n_text['en']
-    else:
-        title = str(i18n_text)
-
-    return title[:40]
-
-
 CANDIDATE_CLASS_INFO = ('candidate', [
     ('ballot_designation', parse_i18n),
     ('candidate_party', parse_i18n),
@@ -235,6 +217,34 @@ CANDIDATE_CLASS_INFO = ('candidate', [
 
 
 CHOICE_CLASS_INFO = ('measure_choice', [])
+
+
+def get_ballot_item_class(type_name):
+    """
+    Returns: (cls, cls_info).
+
+    """
+    # Dict mapping ballot item type name to class.
+    # TODO: make this module-level.
+    BALLOT_ITEM_CLASSES = {
+        'header': (Header, None),
+        'office': (Contest, CANDIDATE_CLASS_INFO),
+        'measure': (Contest, CHOICE_CLASS_INFO),
+        'ynoffice': (Contest, CHOICE_CLASS_INFO),
+    }
+
+    try:
+        cls, info = BALLOT_ITEM_CLASSES[type_name]
+    except KeyError:
+        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
+
+    cls_info = [type_name]
+    if info is not None:
+        cls_info.append(info)
+
+    cls_info = tuple(cls_info)
+
+    return cls, cls_info
 
 
 class Choice:
@@ -278,9 +288,7 @@ def ballot_item_from_data(data, ballot_items_by_id):
     except KeyError:
         raise RuntimeError(f"key 'type' missing from data: {data}")
 
-    cls = get_ballot_item_class(type_name)
-    cls_info = (type_name, )
-
+    cls, cls_info = get_ballot_item_class(type_name)
     item = load_object(cls, data, cls_info=cls_info)
 
     if item.header_id:
@@ -448,17 +456,39 @@ class Header:
         item.parent_header = self  # back reference
 
 
+# TODO: merge BallotItem with Contest.
 class Contest(BallotItem):
 
     """
     The contest is a superclass of all contest types: offices, measures,
     and retention/recall. All contests have the following common attributes:
       id: must be unique across all contests or headers
+      type_name: a string indicating the Contest type (see below for
+        descriptions).
       short_title: Short name for a contest usable in reports independent of
                    headers
       ballot_title: text appearing on ballots representing the contest
       choices: List of choices: candidates or Yes/No etc. on measures
                and recall/retention contests
+
+    A Contest with type_name "office" represents an elected office where
+    choices are a set of candidates.
+
+    A Contest with type_name "measure" represents a ballot measure question posed to voters.
+    Most measures have a Yes/No question though the text that can appear on
+    ballots for the response may be different, e.g. "Bonds Yes". For a
+    yes/no question, the measure will pass or fail, depending on the approval
+    required. Normally, the first choice is yes. Some measures might be
+    multiple choice, e.g. preferred name of a proposed city, and might
+    have more than 2 choices. Ranked Choice Voting could be used with a
+    multiple choice measure.
+
+    (In orr we don't need to distinguish from a measure:)
+
+    A Contest with type_name "ynoffice" is a hybrid of MeasureContest and OfficeContest,
+    used for approval voting (retention contest) or for a recall question.
+    The attributes defining an elected office are included, and information
+    on the incumbent/candidate can be defined.
     """
 
     def enter_choice(self, data, choices_by_id, cls_info):
@@ -484,7 +514,7 @@ class Contest(BallotItem):
         choices_by_id = OrderedDict()
 
         for data in choices:
-            c = self.enter_choice(data, choices_by_id=choices_by_id, cls_info=self.choice_info)
+            self.enter_choice(data, choices_by_id=choices_by_id, cls_info=self.choice_info)
 
         return choices_by_id
 
@@ -520,8 +550,12 @@ class Contest(BallotItem):
 
         return item
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, type_name, choice_info=None):
+        assert type_name is not None
+        assert choice_info is not None
+        super().__init__(type_name)
+        self.choice_info = choice_info
+
         self.result_stats = []      # Pseudo choice for result summary attrs
         self.subtotal_types = []    # summary subtotals available
         self.result_details = []    # result detail definitions
@@ -557,39 +591,6 @@ class Contest(BallotItem):
         for data in result_details:
             append_result_subtotal(self, data, self.result_details,
                 subtotal_cls=ResultDetail)
-
-
-class OfficeContest(Contest):
-    """
-    The OfficeContest represents an elected office where choices are
-    a set of candidates.
-    """
-    choice_info = CANDIDATE_CLASS_INFO
-
-
-class MeasureContest(Contest):
-    """
-    The MeasureContest represents a ballot measure question posed to voters.
-    Most measures have a Yes/No question though the text that can appear on
-    ballots for the response may be different, e.g. "Bonds Yes". For a
-    yes/no question, the measure will pass or fail, depending on the approval
-    required. Normally, the first choice is yes. Some measures might be
-    multiple choice, e.g. preferred name of a proposed city, and might
-    have more than 2 choices. Ranked Choice Voting could be used with a
-    multiple choice measure.
-    """
-    choice_info = CHOICE_CLASS_INFO
-
-
-# In orr we don't need to distinguish from a measure.
-class YNOfficeContest(MeasureContest):
-    """
-    A YNOfficeContest is a hybrid of MeasureContest and OfficeContest,
-    used for approval voting (retention contest) or for a recall question.
-    The attributes defining an elected office are included, and information
-    on the incumbent/candidate can be defined.
-    """
-    pass
 
 
 class SubtotalType:
