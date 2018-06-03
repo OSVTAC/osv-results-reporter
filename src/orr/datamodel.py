@@ -300,82 +300,6 @@ class Candidate:
         return f'<Candidate id={self.id!r} title={title[:70]!r}...>'
 
 
-def ballot_item_from_data(data, ballot_items_by_id):
-    """
-    Return a Contest or Header object.
-    """
-    try:
-        type_name = data.pop('type')
-    except KeyError:
-        raise RuntimeError(f"key 'type' missing from data: {data}")
-
-    cls, cls_info = get_ballot_item_class(type_name)
-    item = load_object(cls, data, cls_info=cls_info)
-
-    if item.header_id:
-        # Add this ballot item to the header's ballot item list.
-        header = ballot_items_by_id.get(item.header_id, None)
-        if not header:
-            raise RuntimeError(f'Unknown header id {item.header_id!r}')
-        header.add_child_item(item)
-
-    return item
-
-
-class Election:
-
-    """
-    The election is the root object for all content defined for an
-    election operated by an Election Administration (EA), e.g. a
-    county.
-
-    An Election object without a date can be used to hold a definition
-    of all current elected offices, represented as a contest and incumbents
-    represented as candidate objects.
-    """
-
-    def process_ballot_items(self, value):
-        """
-        Scan the list of source data representing ballot items.
-
-        Args:
-          value: a list of dicts corresponding to the ballot items.
-        """
-        ballot_items_by_id = OrderedDict()
-        for data in value:
-            ballot_item = ballot_item_from_data(data, ballot_items_by_id)
-            ballot_items_by_id[ballot_item.id] = ballot_item
-
-        return ballot_items_by_id
-
-    auto_attrs = [
-        ('ballot_title', parse_i18n),
-        ('election_area', parse_i18n),
-        ('date', parse_date, 'election_date'),
-        ('ballot_items_by_id', process_ballot_items, 'ballot_items'),
-        ('languages', parse_as_is),
-        ('translations', parse_as_is),
-    ]
-
-    def __init__(self):
-        pass
-
-    def __repr__(self):
-        return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
-
-    # Also expose the dict values as an ordered list, for convenience.
-    @property
-    def ballot_items(self):
-        # Here we use that ballot_items_by_id is an OrderedDict.
-        yield from self.ballot_items_by_id.values()
-
-    @property
-    def contests(self):
-        for item in self.ballot_items:
-            if isinstance(item, Contest):
-                yield item
-
-
 def get_path_difference(new_seq, old_seq):
     """
     Return the sequence items that are **new** compared with the old.
@@ -588,3 +512,79 @@ class ResultDetail:
        self.area_heading = area_heading
        self.subtotal_heading =subtotal_heading
        self.is_vbm = is_vbm
+
+
+def ballot_item_from_data(data, ballot_items_by_id):
+    """
+    Return a Contest or Header object.
+    """
+    try:
+        type_name = data.pop('type')
+    except KeyError:
+        raise RuntimeError(f"key 'type' missing from data: {data}")
+
+    cls, cls_info = get_ballot_item_class(type_name)
+    item = load_object(cls, data, cls_info=cls_info)
+
+    if item.header_id:
+        # Add this ballot item to the header's ballot item list.
+        header = ballot_items_by_id.get(item.header_id, None)
+        if not header:
+            raise RuntimeError(f'Unknown header id {item.header_id!r}')
+        header.add_child_item(item)
+
+    return item
+
+
+class Election:
+
+    """
+    The election is the root object for all content defined for an
+    election operated by an Election Administration (EA), e.g. a
+    county.
+
+    An Election object without a date can be used to hold a definition
+    of all current elected offices, represented as a contest and incumbents
+    represented as candidate objects.
+    """
+
+    def process_ballot_items(self, value):
+        """
+        Scan the list of source data representing ballot items.
+
+        Args:
+          value: a list of dicts corresponding to the ballot items.
+        """
+        ballot_items_by_id = OrderedDict()
+        for data in value:
+            ballot_item = ballot_item_from_data(data, ballot_items_by_id)
+            ballot_items_by_id[ballot_item.id] = ballot_item
+
+        return ballot_items_by_id
+
+    auto_attrs = [
+        ('ballot_title', parse_i18n),
+        ('election_area', parse_i18n),
+        ('date', parse_date, 'election_date'),
+        ('ballot_items_by_id', process_ballot_items, 'ballot_items'),
+        ('languages', parse_as_is),
+        ('translations', parse_as_is),
+    ]
+
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
+
+    # Also expose the dict values as an ordered list, for convenience.
+    @property
+    def ballot_items(self):
+        # Here we use that ballot_items_by_id is an OrderedDict.
+        yield from self.ballot_items_by_id.values()
+
+    @property
+    def contests(self):
+        for item in self.ballot_items:
+            if isinstance(item, Contest):
+                yield item
