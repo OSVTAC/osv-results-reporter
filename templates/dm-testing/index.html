@@ -16,9 +16,11 @@ div.contests {width:500px}
 </style>
 </head>
 <body>
-  <h1>{{election_area}} {{ballot_title}} {{ election.date|format_date }}</h1>
+  <h1>{{ election.election_area|translate }}
+    - {{ election.ballot_title|translate }}
+    - {{ election.date|format_date }}</h1>
   <div class='contests'>
-    {% for bi in ballot_items %}
+    {% for bi in election.ballot_items %}
       {% if bi.type == 'header' %}
         <div class='header'>{{bi.ballot_title}}
         {% if bi.ballot_subtitle %}
