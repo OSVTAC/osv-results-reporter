@@ -16,40 +16,41 @@ div.contests {width:500px}
 </style>
 </head>
 <body>
-<h1>{{election_area}} {{ballot_title}} {{ election_date|format_date }}</h1>
-<div class='contests'>
-{% for bi in ballot_items %}
-{% if bi.type == 'header' %}
-<div class='header'>{{bi.ballot_title}}
-{% if bi.ballot_subtitle %}
-<p class='subtitle'>{{bi.ballot_subtitle}}</p>
-{% endif %}
-</div>
-{% else %} {# If not a header, then it's a contest #}
-<div class='contest'><h2>{{bi.ballot_title}}</h2>
-{% if bi.ballot_subtitle %}
-<p class='subtitle'>{{bi.ballot_subtitle}}</p>
-{% endif %}
-<p class="vote4">{{bi.vote_for_msg}}</p>
-<table><thead><tr><th class='pctrep'>{% if bi.total_precincts %}{{bi.precincts_reporting}}/{{bi.total_precincts}} Precincts Reporting {{bi.precincts_reporting_percent}}%{% endif %}</th><th>Percentage</th>
-{%- for s in bi.subtotal_types -%}
-<th>{{s.heading}}</th>
-{%- endfor -%}
-</tr></thead>
-{% for c in bi.choices -%}
-<tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'>{{c.votes_percent}}%</td>
-{%- for v in c.vote_subtotals -%}
-<td class='votes'>{{v}}</td>
-{%- endfor -%}</tr>
-{% endfor -%}
-{% for c in bi.result_stats -%}
-<tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'></td>
-{%- for v in c.vote_subtotals -%}
-<td class='votes'>{{v}}</td>
-{%- endfor -%}</tr>
-{% endfor -%}
-</table></div>
-{%- endfor -%}
-</div>
+  <h1>{{election_area}} {{ballot_title}} {{ election_date|format_date }}</h1>
+  <div class='contests'>
+    {% for bi in ballot_items %}
+      {% if bi.type == 'header' %}
+        <div class='header'>{{bi.ballot_title}}
+        {% if bi.ballot_subtitle %}
+        <p class='subtitle'>{{bi.ballot_subtitle}}</p>
+        {% endif %}
+        </div>
+      {% else %} {# If not a header, then it's a contest #}
+        <div class='contest'><h2>{{bi.ballot_title}}</h2>
+        {% if bi.ballot_subtitle %}
+        <p class='subtitle'>{{bi.ballot_subtitle}}</p>
+        {% endif %}
+        <p class="vote4">{{bi.vote_for_msg}}</p>
+        <table><thead><tr><th class='pctrep'>{% if bi.total_precincts %}{{bi.precincts_reporting}}/{{bi.total_precincts}} Precincts Reporting {{bi.precincts_reporting_percent}}%{% endif %}</th><th>Percentage</th>
+        {%- for s in bi.subtotal_types -%}
+        <th>{{s.heading}}</th>
+        {%- endfor -%}
+        </tr></thead>
+        {% for c in bi.choices -%}
+          <tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'>{{c.votes_percent}}%</td>
+          {%- for v in c.vote_subtotals -%}
+            <td class='votes'>{{v}}</td>
+          {%- endfor -%}</tr>
+        {% endfor -%}
+        {% for c in bi.result_stats -%}
+          <tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'></td>
+          {%- for v in c.vote_subtotals -%}
+            <td class='votes'>{{v}}</td>
+          {%- endfor -%}
+        {%- endfor -%}</tr>
+      {% endif -%}
+      </table></div>
+    {%- endfor -%}
+  </div>
 </body>
 </html>
