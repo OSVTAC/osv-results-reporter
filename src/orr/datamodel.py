@@ -82,7 +82,10 @@ def load_attrs(cls, data, unprocessed_keys=None, cls_info=None):
     if unprocessed_keys is None:
         unprocessed_keys = []
 
-    obj = cls(*cls_info)
+    try:
+        obj = cls(*cls_info)
+    except Exception:
+        raise RuntimeError(f'error with cls {cls!r}: {cls_info!r}')
 
     for info in obj.auto_attrs:
         name, load_value, *remaining = info
@@ -114,7 +117,7 @@ def load_attrs(cls, data, unprocessed_keys=None, cls_info=None):
 
 def load_object(cls, data, cls_info=None):
     if hasattr(cls, 'from_data'):
-        obj = cls.from_data(data)
+        obj = cls.from_data(data, cls_info=cls_info)
     else:
         obj = load_attrs(cls, data, cls_info=cls_info)
 
@@ -276,8 +279,9 @@ def ballot_item_from_data(data, ballot_items_by_id):
         raise RuntimeError(f"key 'type' missing from data: {data}")
 
     cls = get_ballot_item_class(type_name)
+    cls_info = (type_name, )
 
-    item = load_object(cls, data)
+    item = load_object(cls, data, cls_info=cls_info)
 
     if item.header_id:
         # Add this ballot item to the header's ballot item list.
@@ -376,14 +380,15 @@ class BallotItem:
         ('_id', parse_id, 'id'),
     ]
 
-    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
+    def __init__(self, type_name=None, id_=None):
+        assert type_name is not None
+
         self.id = id_
-        self.ballot_subtitle = ballot_subtitle
-        self.ballot_title = ballot_title
         self.parent_header = None
+        self.type_name = type_name
 
     def __repr__(self):
-        return f'<BallotItem id={self.id!r}>'
+        return f'<BallotItem {self.type_name!r} id={self.id!r}>'
 
     def _iter_headers(self):
         item = self
@@ -420,15 +425,17 @@ class Header:
         ('header_id', parse_text),
     ]
 
-    def __init__(self):
+    def __init__(self, type_name=None):
         self.ballot_title = None
         self.ballot_items = []
         self.id = None
         self.parent_header = None
 
+        self.type_name = type_name
+
     def __repr__(self):
         title = i18n_repr(self.ballot_title)
-        return f'<Header id={self.id!r} title={title[:70]!r}...>'
+        return f'<Header {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
 
     def add_child_item(self, item):
         """
@@ -500,8 +507,9 @@ class Contest(BallotItem):
     ]
 
     @classmethod
-    def from_data(cls, data:dict):
-        item = load_attrs(cls, data, unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
+    def from_data(cls, data:dict, cls_info=None):
+        item = load_attrs(cls, data, cls_info=cls_info,
+                    unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
 
         # TODO: move the below into auto_attrs.
         result_stats = data.pop('result_stats')
@@ -512,8 +520,8 @@ class Contest(BallotItem):
 
         return item
 
-    def __init__(self, id_=None, ballot_title=None, ballot_subtitle=""):
-        BallotItem.__init__(self, id_, ballot_title, ballot_subtitle)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.result_stats = []      # Pseudo choice for result summary attrs
         self.subtotal_types = []    # summary subtotals available
         self.result_details = []    # result detail definitions

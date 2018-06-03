@@ -103,7 +103,7 @@ class ChoiceTest(TestCase):
 class BallotItemTest(TestCase):
 
     def test_make_header_path(self):
-        item1, item2, item3 = (BallotItem(id_=i) for i in range(3))
+        item1, item2, item3 = (BallotItem(id_=i, type_name='item') for i in range(3))
         item2.parent_header = item1
         item3.parent_header = item2
 
@@ -112,7 +112,7 @@ class BallotItemTest(TestCase):
         self.assertEqual(actual, expected)
 
     def test_get_new_headers(self):
-        item1, item2, item3, item4, item5 = (BallotItem(id_=i) for i in range(1, 6))
+        item1, item2, item3, item4, item5 = (BallotItem(id_=i, type_name='item') for i in range(1, 6))
         item2.parent_header = item1
         item3.parent_header = item2
 
