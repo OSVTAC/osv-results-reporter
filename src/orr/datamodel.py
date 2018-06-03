@@ -118,7 +118,7 @@ def i18n_repr(i18n_text):
     return title[:40]
 
 
-def load_attrs(cls, data, cls_info=None):
+def load_object(cls, data, cls_info=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
@@ -152,15 +152,6 @@ def load_attrs(cls, data, cls_info=None):
 
     if data:
         raise RuntimeError(f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
-
-    return obj
-
-
-def load_object(cls, data, cls_info=None):
-    if hasattr(cls, 'from_data'):
-        obj = cls.from_data(data, cls_info=cls_info)
-    else:
-        obj = load_attrs(cls, data, cls_info=cls_info)
 
     return obj
 
