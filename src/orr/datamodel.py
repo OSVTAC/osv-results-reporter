@@ -68,21 +68,20 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
+def parse_as_is(obj, value):
+    """
+    Return the given value as is, without any validation, etc.
+    """
+    _log.debug(f'parsing as is: {value}')
+    return value
+
+
 # TODO: add validation.
 def parse_id(obj, value):
     """
     Remove and parse an i18n string from the given data.
     """
     _log.debug(f'parsing id: {value}')
-    return value
-
-
-# TODO: add validation?
-def parse_as_is(obj, value):
-    """
-    Remove and parse an i18n string from the given data.
-    """
-    _log.debug(f'parsing text: {value}')
     return value
 
 
@@ -585,6 +584,4 @@ class Election:
 
     @property
     def contests(self):
-        for item in self.ballot_items:
-            if isinstance(item, Contest):
-                yield item
+        yield from (item for item in self.ballot_items if type(item) == Contest)
