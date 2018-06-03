@@ -31,7 +31,12 @@
         - {{ contest.ballot_subtitle|translate }}
       {% endif %}
     </p>
-
+    <table>
+      <thead><tr><th>&nbsp;</th></tr></thead>
+      {% for choice in contest.choices %}
+        <tr><td>{{ choice.ballot_title|translate }}</td></tr>
+      {% endfor %}
+    </table>
     {% endfor %}
   {% endwith %}
 

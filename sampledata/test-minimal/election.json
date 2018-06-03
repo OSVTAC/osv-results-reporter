@@ -84,39 +84,39 @@
             "result_stats": [
                 {
                     "_id": "'SVTot'",
-                    "ballot_title": "'Ballots Counted'"
+                    "ballot_title": "ballots_counted"
                 },
                 {
                     "_id": "'SVCst'",
-                    "ballot_title": "'Ballots Cast'"
+                    "ballot_title": "ballots_cast"
                 },
                 {
                     "_id": "'SVReg'",
-                    "ballot_title": "'Registered Voters'"
+                    "ballot_title": "registered_voters"
                 },
                 {
                     "_id": "'SVTrn'",
-                    "ballot_title": "'Voter Turnout'"
+                    "ballot_title": "voter_turnout"
                 },
                 {
                     "_id": "'SVRej'",
-                    "ballot_title": "'Ballots Rejected'"
+                    "ballot_title": "ballots_rejected"
                 },
                 {
                     "_id": "'SVUnc'",
-                    "ballot_title": "'Ballots Uncounted'"
+                    "ballot_title": "ballots_uncounted"
                 },
                 {
                     "_id": "'SVWri'",
-                    "ballot_title": "'Writein Votes'"
+                    "ballot_title": "writein_votes"
                 },
                 {
                     "_id": "'SVUnd'",
-                    "ballot_title": "'Undervotes'"
+                    "ballot_title": "undervotes"
                 },
                 {
                     "_id": "'SVOvr'",
-                    "ballot_title": "'Overvotes'"
+                    "ballot_title": "overvotes"
                 }
             ],
             "subtotal_types": [
@@ -291,43 +291,43 @@
             "result_stats": [
                 {
                     "_id": "'SVTot'",
-                    "ballot_title": "'Ballots Counted'"
+                    "ballot_title": "ballots_counted"
                 },
                 {
                     "_id": "'SVCst'",
-                    "ballot_title": "'Ballots Cast'"
+                    "ballot_title": "ballots_cast"
                 },
                 {
                     "_id": "'SVReg'",
-                    "ballot_title": "'Registered Voters'"
+                    "ballot_title": "registered_voters"
                 },
                 {
                     "_id": "'SVTrn'",
-                    "ballot_title": "'Voter Turnout'"
+                    "ballot_title": "voter_turnout"
                 },
                 {
                     "_id": "'SVRej'",
-                    "ballot_title": "'Ballots Rejected'"
+                    "ballot_title": "ballots_rejected"
                 },
                 {
                     "_id": "'SVUnc'",
-                    "ballot_title": "'Ballots Uncounted'"
+                    "ballot_title": "ballots_uncounted"
                 },
                 {
                     "_id": "'SVWri'",
-                    "ballot_title": "'Writein Votes'"
+                    "ballot_title": "writein_votes"
                 },
                 {
                     "_id": "'SVUnd'",
-                    "ballot_title": "'Undervotes'"
+                    "ballot_title": "undervotes"
                 },
                 {
                     "_id": "'SVOvr'",
-                    "ballot_title": "'Overvotes'"
+                    "ballot_title": "overvotes"
                 },
                 {
                     "_id": "'SVExh'",
-                    "ballot_title": "'Exhausted Ballots'"
+                    "ballot_title": "exhausted_ballots"
                 }
             ],
             "subtotal_types": [
@@ -419,35 +419,35 @@
             "result_stats": [
                 {
                     "_id": "'SVTot'",
-                    "ballot_title": "'Ballots Counted'"
+                    "ballot_title": "ballots_counted"
                 },
                 {
                     "_id": "'SVCst'",
-                    "ballot_title": "'Ballots Cast'"
+                    "ballot_title": "ballots_cast"
                 },
                 {
                     "_id": "'SVReg'",
-                    "ballot_title": "'Registered Voters'"
+                    "ballot_title": "registered_voters"
                 },
                 {
                     "_id": "'SVTrn'",
-                    "ballot_title": "'Voter Turnout'"
+                    "ballot_title": "voter_turnout"
                 },
                 {
                     "_id": "'SVRej'",
-                    "ballot_title": "'Ballots Rejected'"
+                    "ballot_title": "ballots_rejected"
                 },
                 {
                     "_id": "'SVUnc'",
-                    "ballot_title": "'Ballots Uncounted'"
+                    "ballot_title": "ballots_uncounted"
                 },
                 {
                     "_id": "'SVUnd'",
-                    "ballot_title": "'Undervotes'"
+                    "ballot_title": "undervotes"
                 },
                 {
                     "_id": "'SVOvr'",
-                    "ballot_title": "'Overvotes'"
+                    "ballot_title": "overvotes"
                 }
             ],
             "subtotal_types": [
@@ -493,5 +493,37 @@
         "es",
         "tl",
         "zh"
-    ]
+    ],
+    "translations": {
+        "ballots_cast": {
+            "en": "Ballots Cast"
+        },
+        "ballots_counted": {
+            "en": "Ballots Counted"
+        },
+        "ballots_rejected": {
+            "en": "Ballots Rejected"
+        },
+        "ballots_uncounted": {
+            "en": "Ballots Uncounted"
+        },
+        "exhausted_ballots": {
+            "en": "Exhausted Ballots"
+        },
+        "overvotes": {
+            "en": "Overvotes"
+        },
+        "registered_voters": {
+            "en": "Registered Voters"
+        },
+        "undervotes": {
+            "en": "Undervotes"
+        },
+        "voter_turnout": {
+            "en": "Voter Turnout"
+        },
+        "writein_votes": {
+            "en": "Writein Votes"
+        }
+    }
 }

@@ -175,6 +175,17 @@ def format_date_medium(context, day):
     return _format_date(context, day, format_='medium')
 
 
+def choose_translation(translations, lang):
+    try:
+        text = translations[lang]
+    except KeyError:
+        # Then default to English.
+        _log.warning(f'missing {lang!r} translation: {translations}')
+        text = translations[ENGLISH_LANG]
+
+    return text
+
+
 @contextfilter
 def translate(context, value):
     """
@@ -184,17 +195,15 @@ def translate(context, value):
     lang = options.lang
 
     if type(value) == dict:
-        try:
-            text = value[lang]
-        except KeyError:
-            # Then default to English.
-            _log.warning(f'missing {lang!r} translation: {value}')
-            text = value[ENGLISH_LANG]
+        text = choose_translation(value, lang)
     else:
         # Then assume the value is the key for a translation.
-        all_trans = context['translations']
-        translations = all_trans[label]
-        text = translations[lang]
+        try:
+            all_trans = context['translations']
+        except KeyError:
+            raise RuntimeError(f'"translations" missing while translating: {value}')
+        translations = all_trans[value]
+        text = choose_translation(translations, lang)
 
     return text
 

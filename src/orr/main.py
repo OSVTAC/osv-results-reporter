@@ -292,13 +292,13 @@ def load_model(dir_path, build_time):
     path = dir_path / 'election.json'
     data = utils.read_json(path)
 
-    languages = data.pop('languages')
     election = datamodel.load_object(Election, data)
 
     context = dict(
         build_time=build_time,
         election=election,
-        languages=languages,
+        languages=election.languages,
+        translations=election.translations,
     )
 
     return context

@@ -78,7 +78,7 @@ def parse_id(obj, value):
 
 
 # TODO: add validation?
-def parse_text(obj, value):
+def parse_as_is(obj, value):
     """
     Remove and parse an i18n string from the given data.
     """
@@ -228,8 +228,8 @@ class Header:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
-        ('classification', parse_text),
-        ('header_id', parse_text),
+        ('classification', parse_as_is),
+        ('header_id', parse_as_is),
     ]
 
     def __init__(self, type_name=None):
@@ -353,13 +353,15 @@ class Election:
         ('election_area', parse_i18n),
         ('date', parse_date, 'election_date'),
         ('ballot_items_by_id', process_ballot_items, 'ballot_items'),
+        ('languages', parse_as_is),
+        ('translations', parse_as_is),
     ]
 
     def __init__(self):
         pass
 
     def __repr__(self):
-        return f'<Election ballot_title={self.ballot_title!r} election_date={self.election_date!r}>'
+        return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
 
     # Also expose the dict values as an ordered list, for convenience.
     @property
@@ -479,19 +481,19 @@ class Contest:
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
         # TODO: this should be parsed out.
-        ('choice_names', parse_text),
+        ('choice_names', parse_as_is),
         ('choices_by_id', enter_choices, 'choices'),
-        ('header_id', parse_text),
-        ('instructions_text', parse_text),
-        ('is_partisan', parse_text),
-        ('number_elected', parse_text),
-        ('question_text', parse_text),
+        ('header_id', parse_as_is),
+        ('instructions_text', parse_as_is),
+        ('is_partisan', parse_as_is),
+        ('number_elected', parse_as_is),
+        ('question_text', parse_as_is),
         ('result_stats', enter_result_stats),
         ('subtotal_types', enter_subtotal_types),
-        ('type', parse_text),
-        ('vote_for_msg', parse_text),
-        ('vote_type_id', parse_text),
-        ('writeins_allowed', parse_text),
+        ('type', parse_as_is),
+        ('vote_for_msg', parse_as_is),
+        ('vote_type_id', parse_as_is),
+        ('writeins_allowed', parse_as_is),
     ]
 
     def __init__(self, type_name, choice_cls=None, id_=None):
@@ -561,7 +563,7 @@ class SubtotalType:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
-        ('heading', parse_text),
+        ('heading', parse_as_is),
     ]
 
     def __init__(self, id_=None, heading=None):
