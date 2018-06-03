@@ -68,7 +68,7 @@ SUBTOTAL_TYPES = OrderedDict([
     ])
 
 
-def load_attrs(cls, data, unprocessed_keys=None):
+def load_attrs(cls, data, unprocessed_keys=None, cls_info=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
@@ -77,12 +77,14 @@ def load_attrs(cls, data, unprocessed_keys=None):
       unprocessed_keys: keys that are allowed to exist in `data` after
         processing.
     """
+    if cls_info is None:
+        cls_info = []
     if unprocessed_keys is None:
         unprocessed_keys = []
 
-    obj = cls()
+    obj = cls(*cls_info)
 
-    for info in cls.auto_attrs:
+    for info in obj.auto_attrs:
         name, load_value, *remaining = info
 
         if remaining:
@@ -110,11 +112,11 @@ def load_attrs(cls, data, unprocessed_keys=None):
     return obj
 
 
-def load_object(cls, data):
+def load_object(cls, data, cls_info=None):
     if hasattr(cls, 'from_data'):
         obj = cls.from_data(data)
     else:
-        obj = load_attrs(cls, data)
+        obj = load_attrs(cls, data, cls_info=cls_info)
 
     return obj
 
@@ -223,6 +225,15 @@ def i18n_repr(i18n_text):
     return title[:40]
 
 
+CANDIDATE_CLASS_INFO = ('candidate', [
+    ('ballot_designation', parse_i18n),
+    ('candidate_party', parse_i18n),
+])
+
+
+CHOICE_CLASS_INFO = ('measure_choice', [])
+
+
 class Choice:
 
     """
@@ -230,35 +241,29 @@ class Choice:
     office, or Yes/No for a ballot measure, retention or recall office.
     Multiple choice for a measure is a selection other than yes/no for
     a pass/fail contest, e.g. preferred name of a proposed city incorporation.
+
+    Besides votes for a candidate or measure choice, a set of vote/ballot
+    totals are computed for a set of summary attributes that represent
+    rejected votes and totals. The RESULT_STATS contain an id
+    (that is distinct from a candidate/choice id) and "ballot_title"
+    that can be used as a label in a report analogous to a candidate/choice name.
     """
 
-    auto_attrs = [
+    initial_attrs = [
         ('_id', parse_id, 'id'),
         ('ballot_title', parse_i18n),
     ]
 
-    def __init__(self, id_=None, type_name=None, ballot_title=None):
-        self.id = id_
-        self.ballot_title = ballot_title
+    def __init__(self, type_name=None, extra_attrs=None):
+        if extra_attrs is None:
+            extra_attrs = []
+
+        self.auto_attrs = self.initial_attrs + extra_attrs
         self.type_name = type_name
 
     def __repr__(self):
         title = i18n_repr(self.ballot_title)
         return f'<Choice {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
-
-
-class Candidate(Choice):
-
-    """
-    A candidate can have additional attributes
-    """
-
-    auto_attrs = [
-        ('_id', parse_id, 'id'),
-        ('ballot_designation', parse_i18n),
-        ('ballot_title', parse_i18n),
-        ('candidate_party', parse_i18n),
-    ]
 
 
 def ballot_item_from_data(data, ballot_items_by_id):
@@ -446,14 +451,14 @@ class Contest(BallotItem):
                and recall/retention contests
     """
 
-    def enter_choice(self, data, choice_cls, choices_by_id):
+    def enter_choice(self, data, choices_by_id, cls_info):
         """
         Common processing to enter a candidate or measure choice
 
         Args:
           choice_cls: the class to use to instantiate the choice.
         """
-        choice = load_object(choice_cls, data)
+        choice = load_object(Choice, data, cls_info=cls_info)
         choice.contest = self     # Add back reference
 
         index_object(choices_by_id, choice)
@@ -469,8 +474,7 @@ class Contest(BallotItem):
         choices_by_id = OrderedDict()
 
         for data in choices:
-            c = self.enter_choice(data, choice_cls=self.choice_cls,
-                            choices_by_id=choices_by_id)
+            c = self.enter_choice(data, choices_by_id=choices_by_id, cls_info=self.choice_info)
 
         return choices_by_id
 
@@ -523,7 +527,7 @@ class Contest(BallotItem):
         Scan summary result attributes for a contest
         """
         for data in result_stats:
-            stat = load_object(ResultStat, data)
+            stat = load_object(Choice, data, cls_info=('result_stat',))
             index_object(self.choices_by_id, stat)
             self.result_stats.append(stat)
 
@@ -549,8 +553,7 @@ class OfficeContest(Contest):
     The OfficeContest represents an elected office where choices are
     a set of candidates.
     """
-
-    choice_cls = Candidate
+    choice_info = CANDIDATE_CLASS_INFO
 
 
 class MeasureContest(Contest):
@@ -564,8 +567,7 @@ class MeasureContest(Contest):
     have more than 2 choices. Ranked Choice Voting could be used with a
     multiple choice measure.
     """
-
-    choice_cls = Candidate
+    choice_info = CHOICE_CLASS_INFO
 
 
 # In orr we don't need to distinguish from a measure.
@@ -577,20 +579,6 @@ class YNOfficeContest(MeasureContest):
     on the incumbent/candidate can be defined.
     """
     pass
-
-
-class ResultStat(Choice):
-
-    """
-    Besides votes for a candidate or measure choice, a set of vote/ballot
-    totals are computed for a set of summary attributes that represent
-    rejected votes and totals. The RESULT_STATS contain an id
-    (that is distinct from a candidate/choice id) and "ballot_title"
-    that can be used as a label in a report analogous to a candidate/choice name.
-    """
-
-    def __init__(self, id_=None, ballot_title=None):
-        Choice.__init__(self, id_, ballot_title)
 
 
 class SubtotalType:

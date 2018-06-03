@@ -92,7 +92,9 @@ class ChoiceTest(TestCase):
             'en': 'Mr. Smith' + 100 * 'a',
             'es': 'Sr. Smith',
         }
-        choice = Choice(id_=100, type_name='candidate', ballot_title=title)
+        choice = Choice(type_name='candidate')
+        choice.id = 100
+        choice.ballot_title = title
         expected = "<Choice 'candidate' id=100 title='Mr. Smithaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
         actual = repr(choice)
         self.assertEqual(actual, expected)
