@@ -585,3 +585,22 @@ class Election:
     @property
     def contests(self):
         yield from (item for item in self.ballot_items if type(item) == Contest)
+
+    def contests_with_headers(self):
+        """
+        Yield all contests as pairs (headers, contest), where--
+          headers: a list of pairs (level, header).
+          contest: a Contest object.
+        """
+        parent_header = None
+        header_path = []
+        for contest in self.contests:
+            if contest.parent_header == parent_header:
+                # Then there are no new headers.
+                headers = []
+            else:
+                # Otherwise, yield the new headers to display.
+                headers = contest.get_new_headers(header_path)
+                header_path = contest.make_header_path()
+
+            yield headers, contest
