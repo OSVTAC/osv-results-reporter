@@ -229,6 +229,42 @@ def get_ballot_item_class(type_name):
     return cls, cls_info
 
 
+class Header:
+
+    type_name = 'header'
+
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+        ('ballot_title', parse_i18n),
+        ('classification', parse_text),
+        ('header_id', parse_text),
+    ]
+
+    def __init__(self, type_name=None):
+        self.ballot_title = None
+        self.ballot_items = []
+        self.id = None
+        self.parent_header = None
+
+        self.type_name = type_name
+
+    def __repr__(self):
+        title = i18n_repr(self.ballot_title)
+        return f'<Header {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
+
+    def add_child_item(self, item):
+        """
+        Link a child ballot item with its parent.
+
+        Args:
+          item: a Contest or Header object.
+        """
+        assert type(item) in (Contest, Header)
+
+        self.ballot_items.append(item)
+        item.parent_header = self  # back reference
+
+
 class Choice:
 
     """
@@ -263,7 +299,7 @@ class Choice:
 
 def ballot_item_from_data(data, ballot_items_by_id):
     """
-    Return a BallotItem object.
+    Return a Contest or Header object.
     """
     try:
         type_name = data.pop('type')
@@ -352,103 +388,20 @@ def get_path_difference(new_seq, old_seq):
     return list(pair for pair in enumerate(new_seq[index:], start=index+1))
 
 
-class BallotItem:
+class Contest:
 
     """
-    The BallotItem are items that appear on ballots-- either headers or
-    contests. Each ballot item can be a subitem of a parent header.
+    Contest is a class that encompasses all contest types: offices, measures,
+    and retention/recall. All contests have the following common attributes:
 
     Attributes:
       id: must be unique across all contests or headers
+      type_name: a string indicating the Contest type (see below for
+        descriptions).
       ballot_title: text appearing on ballots representing the header/contest
       ballot_subtitle: second level title for this item
       header_id: id of parent header object containing this item or 0 for root
       parent_header: the parent header of the item, as a Header object.
-    """
-
-    auto_attrs = [
-        ('_id', parse_id, 'id'),
-    ]
-
-    def __init__(self, type_name=None, id_=None):
-        assert type_name is not None
-
-        self.id = id_
-        self.parent_header = None
-        self.type_name = type_name
-
-    def __repr__(self):
-        return f'<BallotItem {self.type_name!r} id={self.id!r}>'
-
-    def _iter_headers(self):
-        item = self
-        while item.parent_header:
-            yield item.parent_header
-
-            item = item.parent_header
-
-    def make_header_path(self):
-        """
-        Return the list of successive parent headers, starting from the root.
-        """
-        return list(reversed(list(self._iter_headers())))
-
-    def get_new_headers(self, header_path):
-        """
-        Return the headers that are **new** compared with header_path.
-
-        Returns: a list of pairs (i, header), where i is the (1-based)
-          integer level of the header.
-        """
-        my_header_path = self.make_header_path()
-        return get_path_difference(my_header_path, header_path)
-
-
-class Header:
-
-    type_name = 'header'
-
-    auto_attrs = [
-        ('_id', parse_id, 'id'),
-        ('ballot_title', parse_i18n),
-        ('classification', parse_text),
-        ('header_id', parse_text),
-    ]
-
-    def __init__(self, type_name=None):
-        self.ballot_title = None
-        self.ballot_items = []
-        self.id = None
-        self.parent_header = None
-
-        self.type_name = type_name
-
-    def __repr__(self):
-        title = i18n_repr(self.ballot_title)
-        return f'<Header {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
-
-    def add_child_item(self, item):
-        """
-        Link a child ballot item with its parent.
-
-        Args:
-          item: a BallotItem object.
-        """
-        self.ballot_items.append(item)
-        item.parent_header = self  # back reference
-
-
-# TODO: merge BallotItem with Contest.
-class Contest(BallotItem):
-
-    """
-    The contest is a superclass of all contest types: offices, measures,
-    and retention/recall. All contests have the following common attributes:
-      id: must be unique across all contests or headers
-      type_name: a string indicating the Contest type (see below for
-        descriptions).
-      short_title: Short name for a contest usable in reports independent of
-                   headers
       ballot_title: text appearing on ballots representing the contest
       choices: List of choices: candidates or Yes/No etc. on measures
                and recall/retention contests
@@ -537,16 +490,21 @@ class Contest(BallotItem):
         ('writeins_allowed', parse_text),
     ]
 
-    def __init__(self, type_name, choice_info=None):
+    def __init__(self, type_name, choice_info=None, id_=None):
         assert type_name is not None
-        assert choice_info is not None
-        super().__init__(type_name)
+
+        self.id = id_
+        self.type_name = type_name
         self.choice_info = choice_info
 
+        self.parent_header = None
+        self.result_details = []    # result detail definitions
         self.result_stats = []      # Pseudo choice for result summary attrs
         self.subtotal_types = []    # summary subtotals available
-        self.result_details = []    # result detail definitions
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
+
+    def __repr__(self):
+        return f'<Contest {self.type_name!r} id={self.id!r}>'
 
     # Also expose the dict values as an ordered list, for convenience.
     @property
@@ -561,6 +519,29 @@ class Contest(BallotItem):
         for data in result_details:
             append_result_subtotal(self, data, self.result_details,
                 subtotal_cls=ResultDetail)
+
+    def _iter_headers(self):
+        item = self
+        while item.parent_header:
+            yield item.parent_header
+
+            item = item.parent_header
+
+    def make_header_path(self):
+        """
+        Return the list of successive parent headers, starting from the root.
+        """
+        return list(reversed(list(self._iter_headers())))
+
+    def get_new_headers(self, header_path):
+        """
+        Return the headers that are **new** compared with header_path.
+
+        Returns: a list of pairs (i, header), where i is the (1-based)
+          integer level of the header.
+        """
+        my_header_path = self.make_header_path()
+        return get_path_difference(my_header_path, header_path)
 
 
 class SubtotalType:
