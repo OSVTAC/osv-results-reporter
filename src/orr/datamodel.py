@@ -214,6 +214,15 @@ def parse_i18n(obj, value):
     return value
 
 
+def i18n_repr(i18n_text):
+    if 'en' in i18n_text:
+        title = i18n_text['en']
+    else:
+        title = str(i18n_text)
+
+    return title[:40]
+
+
 class Choice:
 
     """
@@ -228,9 +237,14 @@ class Choice:
         ('ballot_title', parse_i18n),
     ]
 
-    def __init__(self, id_=None, ballot_title=None):
+    def __init__(self, id_=None, type_name=None, ballot_title=None):
         self.id = id_
         self.ballot_title = ballot_title
+        self.type_name = type_name
+
+    def __repr__(self):
+        title = i18n_repr(self.ballot_title)
+        return f'<Choice {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
 
 
 class Candidate(Choice):
@@ -405,11 +419,7 @@ class Header(BallotItem):
         self.ballot_items = []
 
     def __repr__(self):
-        if 'en' in self.ballot_title:
-            title = self.ballot_title['en']
-        else:
-            title = str(self.ballot_title)
-
+        title = i18n_repr(self.ballot_title)
         return f'<Header id={self.id!r} title={title[:70]!r}...>'
 
     def add_child_item(self, item):

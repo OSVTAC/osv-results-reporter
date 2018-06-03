@@ -26,7 +26,7 @@ import datetime
 from unittest import TestCase
 
 import orr.datamodel as datamodel
-from orr.datamodel import BallotItem
+from orr.datamodel import BallotItem, Choice
 
 
 class DataModelModuleTest(TestCase):
@@ -82,6 +82,19 @@ class DataModelModuleTest(TestCase):
             (4, objs[3]),
         ]
         actual = datamodel.get_path_difference(new_seq, old_seq)
+        self.assertEqual(actual, expected)
+
+
+class ChoiceTest(TestCase):
+
+    def test_repr(self):
+        title = {
+            'en': 'Mr. Smith' + 100 * 'a',
+            'es': 'Sr. Smith',
+        }
+        choice = Choice(id_=100, type_name='candidate', ballot_title=title)
+        expected = "<Choice 'candidate' id=100 title='Mr. Smithaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
+        actual = repr(choice)
         self.assertEqual(actual, expected)
 
 
