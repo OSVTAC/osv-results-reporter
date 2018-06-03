@@ -1,7 +1,7 @@
 <html>
 <head>
-  <title>TEST-MINIMAL</title>
   <meta charset="utf-8">
+  <title>TEST-MINIMAL</title>
 </head>
 <body>
 <h1>Minimal Test</h1>
@@ -15,7 +15,8 @@
     {% set options.lang = lang %}
     {% set src = "election-{}.html".format(lang) %}
     {% do subtemplate('election.html', src) %}
-    <li><a href="{{ src }}">{{ src }}</a> (<code>{{ src|secure_hash }}</code>)</li>
+    <li><a href="{{ src }}">{{ src }}</a>
+      (<code>{{ src|secure_hash }}</code>)</li>
   {% endwith %}
 
 {% endfor %}
