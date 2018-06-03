@@ -599,12 +599,10 @@ class Election:
         parent_header = None
         header_path = []
         for contest in self.contests:
-            if contest.parent_header == parent_header:
-                # Then there are no new headers.
-                headers = []
-            else:
-                # Otherwise, yield the new headers to display.
-                headers = contest.get_new_headers(header_path)
+            headers = []
+            if contest.parent_header != parent_header:
+                # Then there are new headers to display.
+                headers.extend(contest.get_new_headers(header_path))
                 header_path = contest.make_header_path()
 
             yield headers, contest
