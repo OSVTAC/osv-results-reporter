@@ -135,16 +135,16 @@ def load_object(cls, data, cls_info=None):
         raise RuntimeError(f'error with cls {cls!r}: {cls_info!r}')
 
     for info in obj.auto_attrs:
-        name, load_value, *remaining = info
+        attr_name, load_value, *remaining = info
 
         if remaining:
             assert len(remaining) == 1
-            attr_name = remaining[0]
+            data_key = remaining[0]
         else:
-            attr_name = name
+            data_key = attr_name
 
-        _log.debug(f'processing auto_attr: ({name}, {load_value}, {attr_name})')
-        value = data.pop(name, None)
+        _log.debug(f'processing auto_attr: ({attr_name}, {data_key}, {load_value})')
+        value = data.pop(data_key, None)
         if value is not None:
             value = load_value(obj, value)
 
@@ -226,7 +226,7 @@ class Header:
     type_name = 'header'
 
     auto_attrs = [
-        ('_id', parse_id, 'id'),
+        ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
         ('classification', parse_text),
         ('header_id', parse_text),
@@ -273,7 +273,7 @@ class Choice:
     """
 
     auto_attrs = [
-        ('_id', parse_id, 'id'),
+        ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
     ]
 
@@ -289,7 +289,7 @@ class Candidate:
     """
 
     auto_attrs = [
-        ('_id', parse_id, 'id'),
+        ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
         ('candidate_party', parse_i18n),
@@ -351,8 +351,8 @@ class Election:
     auto_attrs = [
         ('ballot_title', parse_i18n),
         ('election_area', parse_i18n),
-        ('election_date', parse_date, 'date'),
-        ('ballot_items', process_ballot_items, 'ballot_items_by_id'),
+        ('date', parse_date, 'election_date'),
+        ('ballot_items_by_id', process_ballot_items, 'ballot_items'),
     ]
 
     def __init__(self):
@@ -475,12 +475,12 @@ class Contest:
                 subtotal_cls=SubtotalType)
 
     auto_attrs = [
-        ('_id', parse_id, 'id'),
+        ('id', parse_id, '_id'),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
         # TODO: this should be parsed out.
         ('choice_names', parse_text),
-        ('choices', enter_choices, 'choices_by_id'),
+        ('choices_by_id', enter_choices, 'choices'),
         ('header_id', parse_text),
         ('instructions_text', parse_text),
         ('is_partisan', parse_text),
@@ -560,7 +560,7 @@ class SubtotalType:
     """
 
     auto_attrs = [
-        ('_id', parse_id, 'id'),
+        ('id', parse_id, '_id'),
         ('heading', parse_text),
     ]
 
@@ -577,7 +577,7 @@ class ResultDetail:
     """
 
     auto_attrs = [
-        ('_id', parse_id, 'id'),
+        ('id', parse_id, '_id'),
     ]
 
     def __init__(self, id_=None, area_heading=None, subtotal_heading=None,
