@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang='en'>
-<head><title>{{election_area}} {{ballot_title}} {{ election_date|format_date }}</title>
+<head><title>{{election_area}} {{ballot_title}} {{ election.date|format_date }}</title>
 <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">-->
 <style type="text/css">
 <!--
@@ -16,7 +16,7 @@ div.contests {width:500px}
 </style>
 </head>
 <body>
-  <h1>{{election_area}} {{ballot_title}} {{ election_date|format_date }}</h1>
+  <h1>{{election_area}} {{ballot_title}} {{ election.date|format_date }}</h1>
   <div class='contests'>
     {% for bi in ballot_items %}
       {% if bi.type == 'header' %}

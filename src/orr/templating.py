@@ -147,7 +147,10 @@ def output_file_uri(env, rel_path):
 
 def _format_date(context, date, format_=None):
     lang = context['options'].lang
-    return utils.format_date(date, lang=lang, format_=format_)
+    try:
+        return utils.format_date(date, lang=lang, format_=format_)
+    except Exception:
+        raise RuntimeError(f'error formatting date: {date!r}')
 
 
 @contextfilter
