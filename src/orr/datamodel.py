@@ -124,10 +124,13 @@ def load_object(cls, data, cls_info=None):
     attribute, from the given deserialized json data.
     """
     if cls_info is None:
-        cls_info = []
+        cls_info = {}
 
     try:
-        obj = cls(*cls_info)
+        # This is where we use composition over inheritance.
+        # We inject additional attributes and behavior into the class
+        # constructor.
+        obj = cls(**cls_info)
     except Exception:
         raise RuntimeError(f'error with cls {cls!r}: {cls_info!r}')
 
@@ -192,15 +195,6 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
     listattr.append(obj)
 
 
-CANDIDATE_CLASS_INFO = ('candidate', [
-    ('ballot_designation', parse_i18n),
-    ('candidate_party', parse_i18n),
-])
-
-
-CHOICE_CLASS_INFO = ('measure_choice', [])
-
-
 def get_ballot_item_class(type_name):
     """
     Returns: (cls, cls_info).
@@ -210,21 +204,19 @@ def get_ballot_item_class(type_name):
     # TODO: make this module-level.
     BALLOT_ITEM_CLASSES = {
         'header': (Header, None),
-        'office': (Contest, CANDIDATE_CLASS_INFO),
-        'measure': (Contest, CHOICE_CLASS_INFO),
-        'ynoffice': (Contest, CHOICE_CLASS_INFO),
+        'office': (Contest, Candidate),
+        'measure': (Contest, Choice),
+        'ynoffice': (Contest, Choice),
     }
 
     try:
-        cls, info = BALLOT_ITEM_CLASSES[type_name]
+        cls, choice_cls = BALLOT_ITEM_CLASSES[type_name]
     except KeyError:
         raise RuntimeError(f'invalid ballot item type: {type_name!r}')
 
-    cls_info = [type_name]
-    if info is not None:
-        cls_info.append(info)
-
-    cls_info = tuple(cls_info)
+    cls_info = dict(type_name=type_name)
+    if choice_cls is not None:
+        cls_info.update(choice_cls=choice_cls)
 
     return cls, cls_info
 
@@ -268,8 +260,8 @@ class Header:
 class Choice:
 
     """
-    Choice represents a selection on a ballot-- a candidate for an elected
-    office, or Yes/No for a ballot measure, retention or recall office.
+    Represents a non-candidate selection on a ballot, e.g. Yes/No for
+    a ballot measure, retention or recall office.
     Multiple choice for a measure is a selection other than yes/no for
     a pass/fail contest, e.g. preferred name of a proposed city incorporation.
 
@@ -280,21 +272,32 @@ class Choice:
     that can be used as a label in a report analogous to a candidate/choice name.
     """
 
-    initial_attrs = [
+    auto_attrs = [
         ('_id', parse_id, 'id'),
         ('ballot_title', parse_i18n),
     ]
 
-    def __init__(self, type_name=None, extra_attrs=None):
-        if extra_attrs is None:
-            extra_attrs = []
+    def __repr__(self):
+        title = i18n_repr(self.ballot_title)
+        return f'<Choice id={self.id!r} title={title[:70]!r}...>'
 
-        self.auto_attrs = self.initial_attrs + extra_attrs
-        self.type_name = type_name
+
+class Candidate:
+
+    """
+    Represents a candidate selection on a ballot-.
+    """
+
+    auto_attrs = [
+        ('_id', parse_id, 'id'),
+        ('ballot_title', parse_i18n),
+        ('ballot_designation', parse_i18n),
+        ('candidate_party', parse_i18n),
+    ]
 
     def __repr__(self):
         title = i18n_repr(self.ballot_title)
-        return f'<Choice {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
+        return f'<Candidate id={self.id!r} title={title[:70]!r}...>'
 
 
 def ballot_item_from_data(data, ballot_items_by_id):
@@ -426,14 +429,15 @@ class Contest:
     on the incumbent/candidate can be defined.
     """
 
-    def enter_choice(self, data, choices_by_id, cls_info):
+    def enter_choice(self, data, choices_by_id):
         """
         Common processing to enter a candidate or measure choice
 
         Args:
           choice_cls: the class to use to instantiate the choice.
         """
-        choice = load_object(Choice, data, cls_info=cls_info)
+        choice_cls = self.choice_cls
+        choice = load_object(choice_cls, data)
         choice.contest = self     # Add back reference
 
         index_object(choices_by_id, choice)
@@ -449,7 +453,7 @@ class Contest:
         choices_by_id = OrderedDict()
 
         for data in choices:
-            self.enter_choice(data, choices_by_id=choices_by_id, cls_info=self.choice_info)
+            self.enter_choice(data, choices_by_id=choices_by_id)
 
         return choices_by_id
 
@@ -458,7 +462,7 @@ class Contest:
         Scan summary result attributes for a contest
         """
         for data in result_stats:
-            stat = load_object(Choice, data, cls_info=('result_stat',))
+            stat = load_object(Choice, data)
             index_object(self.choices_by_id, stat)
             self.result_stats.append(stat)
 
@@ -490,12 +494,12 @@ class Contest:
         ('writeins_allowed', parse_text),
     ]
 
-    def __init__(self, type_name, choice_info=None, id_=None):
+    def __init__(self, type_name, choice_cls=None, id_=None):
         assert type_name is not None
 
         self.id = id_
         self.type_name = type_name
-        self.choice_info = choice_info
+        self.choice_cls = choice_cls
 
         self.parent_header = None
         self.result_details = []    # result detail definitions

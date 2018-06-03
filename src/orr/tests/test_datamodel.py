@@ -89,13 +89,13 @@ class ChoiceTest(TestCase):
 
     def test_repr(self):
         title = {
-            'en': 'Mr. Smith' + 100 * 'a',
-            'es': 'Sr. Smith',
+            'en': 'English text ' + 100 * 'a',
+            'es': 'Spanish',
         }
-        choice = Choice(type_name='candidate')
+        choice = Choice()
         choice.id = 100
         choice.ballot_title = title
-        expected = "<Choice 'candidate' id=100 title='Mr. Smithaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
+        expected = "<Choice id=100 title='English text aaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
         actual = repr(choice)
         self.assertEqual(actual, expected)
 
