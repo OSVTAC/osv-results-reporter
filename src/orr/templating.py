@@ -99,13 +99,6 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
 
     template = env.get_template(template_name)
 
-    # PDF output renders using html, create a .pdf.html file
-    if output_path.suffix == '.pdf':
-        pdf_path = output_path
-        output_path += '.html'
-    else:
-        pdf_path = ''
-
     output_dir = output_path.parent
     if not output_dir.exists():
         output_dir.mkdir()
@@ -118,11 +111,6 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     rendered = utils.strip_trailing_whitespace(rendered)
     output_path.write_text(rendered)
     _log.info(f'Created {output_path} from template {template_name}')
-
-    if pdf_path:
-        # Convert the html file to pdf_path
-        #[TODO]
-        return
 
 
 @environmentfilter
