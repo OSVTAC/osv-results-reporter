@@ -33,7 +33,7 @@ $ orr -h
 For an HTML example:
 
 ```
-$ orr -v --input sampledata/results-sv.json \
+$ orr -v --input sampledata/sv-testing/election.json \
       --template templates/sv-testing --output-dir html
 ```
 
