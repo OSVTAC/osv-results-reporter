@@ -118,19 +118,13 @@ def i18n_repr(i18n_text):
     return title[:40]
 
 
-def load_attrs(cls, data, unprocessed_keys=None, cls_info=None):
+def load_attrs(cls, data, cls_info=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
-
-    Args:
-      unprocessed_keys: keys that are allowed to exist in `data` after
-        processing.
     """
     if cls_info is None:
         cls_info = []
-    if unprocessed_keys is None:
-        unprocessed_keys = []
 
     try:
         obj = cls(*cls_info)
@@ -156,11 +150,8 @@ def load_attrs(cls, data, unprocessed_keys=None, cls_info=None):
         except Exception:
             raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
 
-    for key in data.keys():
-        if key in unprocessed_keys:
-            continue
-
-        raise RuntimeError(f'unrecognized key for obj {obj!r}: {key!r}')
+    if data:
+        raise RuntimeError(f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
 
     return obj
 
@@ -518,6 +509,23 @@ class Contest(BallotItem):
 
         return choices_by_id
 
+    def enter_result_stats(self, result_stats):
+        """
+        Scan summary result attributes for a contest
+        """
+        for data in result_stats:
+            stat = load_object(Choice, data, cls_info=('result_stat',))
+            index_object(self.choices_by_id, stat)
+            self.result_stats.append(stat)
+
+    def enter_subtotal_types(self, subtotal_types):
+        """
+        Scan summary subtotals available for this contest
+        """
+        for data in subtotal_types:
+            append_result_subtotal(self, data, self.subtotal_types,
+                subtotal_cls=SubtotalType)
+
     auto_attrs = [
         ('_id', parse_id, 'id'),
         ('ballot_subtitle', parse_i18n),
@@ -530,25 +538,13 @@ class Contest(BallotItem):
         ('is_partisan', parse_text),
         ('number_elected', parse_text),
         ('question_text', parse_text),
+        ('result_stats', enter_result_stats),
+        ('subtotal_types', enter_subtotal_types),
         ('type', parse_text),
         ('vote_for_msg', parse_text),
         ('vote_type_id', parse_text),
         ('writeins_allowed', parse_text),
     ]
-
-    @classmethod
-    def from_data(cls, data:dict, cls_info=None):
-        item = load_attrs(cls, data, cls_info=cls_info,
-                    unprocessed_keys=['choices', 'result_stats', 'subtotal_types'])
-
-        # TODO: move the below into auto_attrs.
-        result_stats = data.pop('result_stats')
-        item.enter_result_stats(result_stats)
-
-        subtotal_types = data.pop('subtotal_types')
-        item.enter_subtotal_types(subtotal_types)
-
-        return item
 
     def __init__(self, type_name, choice_info=None):
         assert type_name is not None
@@ -566,23 +562,6 @@ class Contest(BallotItem):
     def choices(self):
         # Here we use that choices_by_id is an OrderedDict.
         yield from self.choices_by_id.values()
-
-    def enter_result_stats(self, result_stats):
-        """
-        Scan summary result attributes for a contest
-        """
-        for data in result_stats:
-            stat = load_object(Choice, data, cls_info=('result_stat',))
-            index_object(self.choices_by_id, stat)
-            self.result_stats.append(stat)
-
-    def enter_subtotal_types(self, subtotal_types):
-        """
-        Scan summary subtotals available for this contest
-        """
-        for data in subtotal_types:
-            append_result_subtotal(self, data, self.subtotal_types,
-                subtotal_cls=SubtotalType)
 
     def enter_result_details(self, result_details):
         """
