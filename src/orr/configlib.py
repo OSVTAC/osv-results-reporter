@@ -48,6 +48,8 @@ def create_jinja_env(output_dir, template_dirs=None):
         # Enable the expression-statement extension:
         # http://jinja.pocoo.org/docs/2.10/templates/#expression-statement
         extensions=['jinja2.ext.do'],
+        lstrip_blocks=True,
+        trim_blocks=True,
     )
 
     # Using a Namespace object lets us change the context inside a
