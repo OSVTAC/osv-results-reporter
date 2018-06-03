@@ -33,7 +33,8 @@ $ orr -h
 For an HTML example:
 
 ```
-$ orr -v --input sampledata/results-sv.json --output-dir html
+$ orr -v --input sampledata/results-sv.json \
+      --template templates/sv-testing --output-dir html
 ```
 
 Then open `_build/html/index.html` in a browser.
