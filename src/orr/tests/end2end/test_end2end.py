@@ -29,8 +29,10 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 import orr.main as main
+from orr.utils import SHA256SUMS_FILENAME
 
 
+# TODO: check recursively.
 def get_file_names(dir_path):
     """
     Return the names of the files in the given directory.
@@ -61,6 +63,11 @@ class EndToEndTest(TestCase):
         # First check the file names.
         actual_names, expected_names = (get_file_names(dir_path) for dir_path in dirs)
         self.assertEqual(actual_names, expected_names)
+
+        if SHA256SUMS_FILENAME in actual_names:
+            # Then check it last so we can see better diffs.
+            actual_names.remove(SHA256SUMS_FILENAME)
+            actual_names.append(SHA256SUMS_FILENAME)
 
         for file_name in actual_names:
             actual_path, expected_path = (dir_path / file_name for dir_path in dirs)
