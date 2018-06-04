@@ -138,21 +138,34 @@ def get_sha256sum_args():
 
 
 # TODO: test this.
+def get_files_recursive(dir_path):
+    """
+    Return all the files (but not directories) recursively in a directory,
+    and return them as **paths relative to the directory being recursed
+    over**.
+    """
+    # Change the current working directory to the directory we are recursing
+    # over so the resulting paths will be relative to that.
+    with changing_cwd(dir_path):
+        cwd = Path('.')
+        paths = sorted(path for path in cwd.glob('**/*') if not path.is_dir())
+
+    return paths
+
+
+# TODO: test this.
 # TODO: also expose a function to check a SHA256SUMS file.
 def directory_sha256sum(dir_path):
     dir_path = Path(dir_path)
 
-    # Change the current working directory to the directory we will recurse
-    # over so that the paths in SHA256SUMS will be relative to that.
-    # TODO: expose this logic to get the paths as a function, and test.
-    with changing_cwd(dir_path):
-        cwd = Path('.')
-        # sha256sum breaks if passed a directory path, so filter those out.
-        paths = sorted(path for path in cwd.glob('**/*') if not path.is_dir())
+    # Get the paths relative to the directory we are recursing over.
+    # Also, `sha256sum` breaks if passed a directory path, so we need to
+    # be filtering those out, which get_files_recursive() does do.
+    rel_paths = get_files_recursive(dir_path)
 
     initial_args = get_sha256sum_args()
     args = initial_args.copy()
-    args.extend(str(p) for p in paths)
+    args.extend(str(p) for p in rel_paths)
 
     _log.info(f"computing SHA256SUMS using: {' '.join(initial_args)} ...")
     proc = subprocess.run(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING,
