@@ -324,6 +324,8 @@ def get_path_difference(new_seq, old_seq):
     """
     Return the sequence items that are **new** compared with the old.
     """
+    # Work backwards starting from the end, finding the point at which
+    # the two paths first diverge.
     index = min(len(new_seq), len(old_seq)) - 1
     while index >= 0:
         new_item, old_item = (path[index] for path in (new_seq, old_seq))
@@ -334,6 +336,8 @@ def get_path_difference(new_seq, old_seq):
     else:
         index = 0
 
+    # Return all the items in the new path, starting from where the
+    # path first diverged.
     return list(pair for pair in enumerate(new_seq[index:], start=index+1))
 
 
