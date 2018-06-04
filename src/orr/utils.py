@@ -164,7 +164,7 @@ def directory_sha256sum(dir_path):
 
     initial_args = get_sha256sum_args()
     args = initial_args.copy()
-    args.extend(str(p) for p in rel_paths)
+    args.extend(str(rel_path) for rel_path in rel_paths)
 
     _log.info(f"computing SHA256SUMS using: {' '.join(initial_args)} ...")
     proc = subprocess.run(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING,
