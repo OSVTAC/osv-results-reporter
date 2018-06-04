@@ -33,27 +33,9 @@ To run in the Docker container:
 """
 
 import logging
-from pathlib import Path
-import shlex
-import subprocess
 import sys
 
-
-_log = logging.getLogger(__name__)
-
-
-def get_command_args():
-    platform = sys.platform
-
-    if platform == 'darwin':
-        # On Mac OS X, sha256sum isn't available.
-        # Also, we need to specify 256 manually here because `shasum`
-        # defaults to SHA-1.
-        args = ['shasum', '--algorithm', '256', '-b']
-    else:
-        args = ['sha256sum', '-b']
-
-    return args
+import orr.utils as utils
 
 
 def main():
@@ -64,16 +46,9 @@ def main():
     except IndexError:
         raise RuntimeError('path not provided')
 
-    dir_path = Path(dir_path)
-    # sha256sum breaks if passed a directory path, so filter those out.
-    paths = sorted(path for path in dir_path.glob('**/*') if not path.is_dir())
+    text = utils.directory_sha256sum(dir_path)
 
-    initial_args = get_command_args()
-    args = initial_args.copy()
-    args.extend(str(p) for p in paths)
-
-    _log.info(f"writing SHA256SUMS to stdout using: {' '.join(initial_args)} ...")
-    subprocess.run(args, encoding='utf-8', check=True)
+    print(text)
 
 
 if __name__ == '__main__':

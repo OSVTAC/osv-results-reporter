@@ -25,9 +25,18 @@ Simple helper functions.
 from datetime import datetime
 import hashlib
 import json
+import logging
+from pathlib import Path
+import subprocess
+import sys
 
 import babel.dates
 
+
+_log = logging.getLogger(__name__)
+
+
+UTF8_ENCODING = 'utf-8'
 
 # The buffer size to use when hashing files.
 HASH_BYTES = 2 ** 12  # 4K
@@ -93,3 +102,38 @@ def hash_file(path):
     sha = hasher.hexdigest()
 
     return sha
+
+
+def get_sha256sum_args():
+    """
+    Return the initial platform-specific arguments to generate SHA256SUMS.
+    """
+    platform = sys.platform
+
+    if platform == 'darwin':
+        # On Mac OS X, sha256sum isn't available.
+        # Also, we need to specify 256 manually here because `shasum`
+        # defaults to SHA-1.
+        args = ['shasum', '--algorithm', '256', '-b']
+    else:
+        args = ['sha256sum', '-b']
+
+    return args
+
+
+# TODO: test this.
+# TODO: also expose a function to check a SHA256SUMS file.
+def directory_sha256sum(dir_path):
+    dir_path = Path(dir_path)
+    # sha256sum breaks if passed a directory path, so filter those out.
+    paths = sorted(path for path in dir_path.glob('**/*') if not path.is_dir())
+
+    initial_args = get_sha256sum_args()
+    args = initial_args.copy()
+    args.extend(str(p) for p in paths)
+
+    _log.info(f"computing SHA256SUMS using: {' '.join(initial_args)} ...")
+    proc = subprocess.run(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING, check=True)
+    text = proc.stdout
+
+    return text
