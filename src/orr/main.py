@@ -44,7 +44,7 @@ import orr.datamodel as datamodel
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
-from orr.utils import DEFAULT_JSON_DUMPS_ARGS
+from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME
 
 
 _log = logging.getLogger(__name__)
@@ -330,6 +330,12 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
             context=context, test_mode=test_mode)
 
 
+def make_sha256sums_file(dir_path):
+    contents = utils.directory_sha256sum(dir_path)
+    sha256sums_path = dir_path / SHA256SUMS_FILENAME
+    sha256sums_path.write_text(contents)
+
+
 def run(config_path=None, input_paths=None, template_dir=None,
     extra_template_dirs=None, output_parent=None, output_dir_name=None,
     fresh_output=False, test_mode=False, use_data_model=False,
@@ -401,6 +407,8 @@ def run(config_path=None, input_paths=None, template_dir=None,
 
     render_template_dir(template_dir, output_dir=output_dir, env=env,
         context=context, test_mode=test_mode)
+
+    make_sha256sums_file(output_dir)
 
     output_data = dict(
         build_time=build_time.isoformat(),

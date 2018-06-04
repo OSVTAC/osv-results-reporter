@@ -22,10 +22,12 @@
 Simple helper functions.
 """
 
+from contextlib import contextmanager
 from datetime import datetime
 import hashlib
 import json
 import logging
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -43,6 +45,20 @@ HASH_BYTES = 2 ** 12  # 4K
 
 # Our options for pretty-printing JSON for increased human readability.
 DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
+
+SHA256SUMS_FILENAME = 'SHA256SUMS'
+
+
+@contextmanager
+def changing_cwd(dir_path):
+    initial_cwd = os.getcwd()
+    new_cwd = Path(dir_path)
+    try:
+        os.chdir(new_cwd)
+        yield
+    finally:
+        # Change back.
+        os.chdir(initial_cwd)
 
 
 def read_json(path):
@@ -125,15 +141,22 @@ def get_sha256sum_args():
 # TODO: also expose a function to check a SHA256SUMS file.
 def directory_sha256sum(dir_path):
     dir_path = Path(dir_path)
-    # sha256sum breaks if passed a directory path, so filter those out.
-    paths = sorted(path for path in dir_path.glob('**/*') if not path.is_dir())
+
+    # Change the current working directory to the directory we will recurse
+    # over so that the paths in SHA256SUMS will be relative to that.
+    # TODO: expose this logic to get the paths as a function, and test.
+    with changing_cwd(dir_path):
+        cwd = Path('.')
+        # sha256sum breaks if passed a directory path, so filter those out.
+        paths = sorted(path for path in cwd.glob('**/*') if not path.is_dir())
 
     initial_args = get_sha256sum_args()
     args = initial_args.copy()
     args.extend(str(p) for p in paths)
 
     _log.info(f"computing SHA256SUMS using: {' '.join(initial_args)} ...")
-    proc = subprocess.run(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING, check=True)
+    proc = subprocess.run(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING,
+                          check=True, cwd=dir_path)
     text = proc.stdout
 
     return text
