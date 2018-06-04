@@ -17,6 +17,7 @@ COPY src/requirements.txt src/
 RUN pip install -r src/requirements.txt
 
 COPY sampledata/ sampledata/
+COPY scripts/ scripts/
 COPY src/ src/
 COPY templates/ templates/
 
