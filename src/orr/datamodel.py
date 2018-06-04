@@ -563,10 +563,12 @@ class Election:
 
     def process_headers(self, value):
         """
-        Scan the list of source data representing ballot items.
+        Process the source data representing the header items.
+
+        Returns an OrderedDict mapping header id to Header object.
 
         Args:
-          value: a list of dicts corresponding to the ballot items.
+          value: a list of dicts corresponding to the Header objects.
         """
         headers_by_id = OrderedDict()
         for data in value:
@@ -578,10 +580,12 @@ class Election:
 
     def process_contests(self, value):
         """
-        Scan the list of source data representing ballot items.
+        Process the source data representing the contest items.
+
+        Returns an OrderedDict mapping contest id to Contest object.
 
         Args:
-          value: a list of dicts corresponding to the ballot items.
+          value: a list of dicts corresponding to the Contest objects.
         """
         headers_by_id = self.headers_by_id
         contests_by_id = OrderedDict()
