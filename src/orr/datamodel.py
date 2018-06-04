@@ -273,6 +273,46 @@ class Candidate:
         return f'<Candidate id={self.id!r} title={title[:70]!r}...>'
 
 
+class SubtotalType:
+
+    """
+    When reporting summary data, the votes reported may include a total
+    as well as a set of contest or election configurable subtotals. For
+    detailed data with precinct and district breakdowns, each area subtotal
+    may have separated subtotal types, e.g. election day precinct voting,
+    and vote-by-mail. An object is defined to hold a reference id as well
+    as a label.
+    """
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('heading', parse_as_is),
+    ]
+
+    def __init__(self, id_=None, heading=None):
+       self.id = id
+       self.heading = heading
+
+
+class ResultDetail:
+
+    """
+    When reporting detailed results data, a set of separate total/subtotal
+    exists for a set of ResultDetail
+    """
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+    ]
+
+    def __init__(self, id_=None, area_heading=None, subtotal_heading=None,
+                 is_vbm=False):
+       self.id = id
+       self.area_heading = area_heading
+       self.subtotal_heading =subtotal_heading
+       self.is_vbm = is_vbm
+
+
 def get_path_difference(new_seq, old_seq):
     """
     Return the sequence items that are **new** compared with the old.
@@ -290,6 +330,14 @@ def get_path_difference(new_seq, old_seq):
     return list(pair for pair in enumerate(new_seq[index:], start=index+1))
 
 
+# Dict mapping contest data "_type" name to choice class.
+BALLOT_ITEM_CLASSES = {
+    'office': Candidate,
+    'measure': Choice,
+    'ynoffice': Choice,
+}
+
+
 class Contest:
 
     """
@@ -300,6 +348,9 @@ class Contest:
       id: must be unique across all contests or headers
       type_name: a string indicating the Contest type (see below for
         descriptions).
+      choice_cls: the class to use for the contest's choices (can be
+        Choice or Candidate).
+
       ballot_title: text appearing on ballots representing the header/contest
       ballot_subtitle: second level title for this item
       header_id: id of parent header object containing this item or 0 for root
@@ -327,6 +378,27 @@ class Contest:
     The attributes defining an elected office are included, and information
     on the incumbent/candidate can be defined.
     """
+
+    @classmethod
+    def from_data(cls, data):
+        """
+        Create and return a Header object from data.
+        """
+        try:
+            type_name = data.pop('_type')
+        except KeyError:
+            raise RuntimeError(f"key '_type' missing from data: {data}")
+
+        try:
+            choice_cls = BALLOT_ITEM_CLASSES[type_name]
+        except KeyError:
+            raise RuntimeError(f'invalid ballot item type: {type_name!r}')
+
+        cls_info = dict(type_name=type_name, choice_cls=choice_cls)
+
+        contest = load_object(Contest, data, cls_info=cls_info)
+
+        return contest
 
     def enter_choice(self, data, choices_by_id):
         """
@@ -447,46 +519,6 @@ class Contest:
         return get_path_difference(my_header_path, header_path)
 
 
-class SubtotalType:
-
-    """
-    When reporting summary data, the votes reported may include a total
-    as well as a set of contest or election configurable subtotals. For
-    detailed data with precinct and district breakdowns, each area subtotal
-    may have separated subtotal types, e.g. election day precinct voting,
-    and vote-by-mail. An object is defined to hold a reference id as well
-    as a label.
-    """
-
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('heading', parse_as_is),
-    ]
-
-    def __init__(self, id_=None, heading=None):
-       self.id = id
-       self.heading = heading
-
-
-class ResultDetail:
-
-    """
-    When reporting detailed results data, a set of separate total/subtotal
-    exists for a set of ResultDetail
-    """
-
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-    ]
-
-    def __init__(self, id_=None, area_heading=None, subtotal_heading=None,
-                 is_vbm=False):
-       self.id = id
-       self.area_heading = area_heading
-       self.subtotal_heading =subtotal_heading
-       self.is_vbm = is_vbm
-
-
 def process_header_id(item, headers_by_id):
     """
     Add the two-way association between a ballot item (header or contest)
@@ -507,44 +539,6 @@ def process_header_id(item, headers_by_id):
         raise RuntimeError(msg)
 
     header.add_child_item(item)
-
-
-# Dict mapping contest type_name to choice class.
-BALLOT_ITEM_CLASSES = {
-    'office': Candidate,
-    'measure': Choice,
-    'ynoffice': Choice,
-}
-
-
-def get_contest_choice_class(type_name):
-    """
-    Returns: (cls, cls_info).
-
-    """
-    try:
-        choice_cls = BALLOT_ITEM_CLASSES[type_name]
-    except KeyError:
-        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
-
-    return choice_cls
-
-
-def contest_from_data(data, contests_by_id, headers_by_id):
-    """
-    Create and return a Header object from data.
-    """
-    try:
-        type_name = data.pop('_type')
-    except KeyError:
-        raise RuntimeError(f"key '_type' missing from data: {data}")
-
-    choice_cls = get_contest_choice_class(type_name)
-    cls_info = dict(type_name=type_name, choice_cls=choice_cls)
-
-    contest = load_object(Contest, data, cls_info=cls_info)
-
-    return contest
 
 
 class Election:
@@ -585,7 +579,7 @@ class Election:
         contests_by_id = OrderedDict()
 
         for data in value:
-            contest = contest_from_data(data, contests_by_id, headers_by_id=headers_by_id)
+            contest = Contest.from_data(data)
             process_header_id(contest, headers_by_id)
             contests_by_id[contest.id] = contest
 
@@ -609,13 +603,13 @@ class Election:
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
 
-    # Also expose the dict values as an ordered list, for convenience.
+    # Also expose the dict values as an (ordered) list, for convenience.
     @property
     def headers(self):
         # Here we use that headers_by_id is an OrderedDict.
         yield from self.headers_by_id.values()
 
-    # Also expose the dict values as an ordered list, for convenience.
+    # Also expose the dict values as an (ordered) list, for convenience.
     @property
     def contests(self):
         # Here we use that contests_by_id is an OrderedDict.
