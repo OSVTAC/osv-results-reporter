@@ -65,6 +65,7 @@ def main():
         raise RuntimeError('path not provided')
 
     dir_path = Path(dir_path)
+    # sha256sum breaks if passed a directory path, so filter those out.
     paths = sorted(path for path in dir_path.glob('**/*') if not path.is_dir())
 
     initial_args = get_command_args()
