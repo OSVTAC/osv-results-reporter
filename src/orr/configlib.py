@@ -31,6 +31,7 @@ from jinja2.utils import Namespace
 
 import orr.templating as templating
 from orr.templating import ENGLISH_LANG
+from orr.utils import SHA256SUMS_FILENAME
 
 
 def create_jinja_env(output_dir, template_dirs=None):
@@ -69,7 +70,8 @@ def create_jinja_env(output_dir, template_dirs=None):
         create_pdf=templating.create_pdf,
         create_tsv_files=templating.create_tsv_files,
         create_xlsx=templating.create_xlsx,
-        subtemplate=templating.subtemplate
+        subtemplate=templating.subtemplate,
+        SHASUMS_PATH=SHA256SUMS_FILENAME,
     )
 
     filters = dict(
@@ -77,7 +79,7 @@ def create_jinja_env(output_dir, template_dirs=None):
         format_date=templating.format_date,
         format_date_medium=templating.format_date_medium,
         secure_hash=templating.secure_hash,
-        translate=templating.translate
+        translate=templating.translate,
     )
     tests = {}
 
