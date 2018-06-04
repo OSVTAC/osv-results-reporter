@@ -26,6 +26,11 @@
         - {{ contest.ballot_subtitle|translate }}
       {% endif %}
     </p>
+    {% if contest.vote_for_msg %}
+      <p>
+        {{ contest.vote_for_msg|translate }}
+      </p>
+    {% endif %}
     <table>
       <thead><tr><th>&nbsp;</th></tr></thead>
       {% for choice in contest.choices %}
