@@ -173,6 +173,8 @@ def index_object(mapping, obj):
         raise RuntimeError(f'duplicate object id: {obj!r}')
 
     # TODO: don't set obj.index here e.g. since choices and results are combined?
+    # TODO: assign index numbers at the end, when creating the convenience
+    #  list for an object type?
     obj.index = len(mapping)  # Assign a sequence number (0-based).
     mapping[obj.id] = obj
 
@@ -570,7 +572,7 @@ class Election:
         for data in value:
             header = load_object(Header, data)
             process_header_id(header, headers_by_id)
-            headers_by_id[header.id] = header
+            index_object(headers_by_id, header)
 
         return headers_by_id
 
@@ -587,7 +589,7 @@ class Election:
         for data in value:
             contest = Contest.from_data(data)
             process_header_id(contest, headers_by_id)
-            contests_by_id[contest.id] = contest
+            index_object(contests_by_id, contest)
 
         return contests_by_id
 
