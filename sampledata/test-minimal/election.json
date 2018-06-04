@@ -1,31 +1,14 @@
 {
-    "ballot_items": [
-        {
-            "_id": "HDR02",
-            "ballot_title": {
-                "en": "VOTER-NOMINATED OFFICES",
-                "es": "CARGOS NOMINADOS POR LOS ELECTORES",
-                "tl": "MGA KATUNGKULANG NOMINADO NG BOTANTE",
-                "zh": "選民提名職位"
-            },
-            "classification": "Office Group",
-            "header_id": "",
-            "type": "header"
-        },
-        {
-            "_id": "HDR05",
-            "ballot_title": {
-                "en": "STATE",
-                "es": "ESTADO",
-                "tl": "ESTADO",
-                "zh": "州"
-            },
-            "classification": "Office Category",
-            "header_id": "HDR02",
-            "type": "header"
-        },
+    "ballot_title": {
+        "en": "Consolidated Statewide Direct Primary Election",
+        "es": "Elecciones Estatales Primarias Directas Consolidadas",
+        "tl": "Pinagsamang Pambuong-Estado na Tuwirang Primaryang Eleksyon",
+        "zh": "全州聯合直接初選"
+    },
+    "contests": [
         {
             "_id": "403",
+            "_type": "office",
             "ballot_subtitle": {
                 "en": "DISTRICT 17",
                 "es": "DISTRITO 17",
@@ -133,7 +116,6 @@
                     "heading": "Vote by Mail"
                 }
             ],
-            "type": "office",
             "vote_for_msg": {
                 "en": "Vote for One",
                 "es": "Vote por uno",
@@ -143,31 +125,8 @@
             "writeins_allowed": 1
         },
         {
-            "_id": "HDR06",
-            "ballot_title": {
-                "en": "NONPARTISAN OFFICES",
-                "es": "CARGOS NO PARTIDARIOS",
-                "tl": "MGA KATUNGKULANG HINDI MAKAPARTIDO",
-                "zh": "無黨派職位"
-            },
-            "classification": "Office Group",
-            "header_id": "",
-            "type": "header"
-        },
-        {
-            "_id": "HDR10",
-            "ballot_title": {
-                "en": "CITY AND COUNTY",
-                "es": "CIUDAD Y CONDADO",
-                "tl": "LUNGSOD AT COUNTY",
-                "zh": "市縣"
-            },
-            "classification": "District Name",
-            "header_id": "HDR06",
-            "type": "header"
-        },
-        {
             "_id": "598",
+            "_type": "office",
             "ballot_title": {
                 "en": "MAYOR",
                 "es": "ALCALDE",
@@ -344,7 +303,6 @@
                     "heading": "Vote by Mail"
                 }
             ],
-            "type": "office",
             "vote_for_msg": {
                 "en": "Vote your first, second, and third choices",
                 "es": "Vote por su primera, segunda y tercera preferencias",
@@ -355,31 +313,8 @@
             "writeins_allowed": 1
         },
         {
-            "_id": "HDR11",
-            "ballot_title": {
-                "en": "MEASURES SUBMITTED TO THE VOTERS",
-                "es": "INICIATIVAS DE LEY PRESENTADAS A LOS ELECTORES",
-                "tl": "MGA PANUKALANG ISINUMITE SA MGA BOTANTE",
-                "zh": "提交選民投票的提案"
-            },
-            "classification": "Measure Group",
-            "header_id": "",
-            "type": "header"
-        },
-        {
-            "_id": "HDR13",
-            "ballot_title": {
-                "en": "REGIONAL MEASURE",
-                "es": "INICIATIVA DE LEY REGIONAL",
-                "tl": "PANREHIYONG PANUKALA",
-                "zh": "區域提案"
-            },
-            "classification": "Measure Category",
-            "header_id": "HDR11",
-            "type": "header"
-        },
-        {
             "_id": "617",
+            "_type": "measure",
             "ballot_title": {
                 "en": "3"
             },
@@ -471,16 +406,9 @@
                     "_id": "XA",
                     "heading": "Other Counties"
                 }
-            ],
-            "type": "measure"
+            ]
         }
     ],
-    "ballot_title": {
-        "en": "Consolidated Statewide Direct Primary Election",
-        "es": "Elecciones Estatales Primarias Directas Consolidadas",
-        "tl": "Pinagsamang Pambuong-Estado na Tuwirang Primaryang Eleksyon",
-        "zh": "全州聯合直接初選"
-    },
     "election_area": {
         "en": "City and County of San Francisco",
         "es": "Ciudad y Condado de San Francisco",
@@ -488,6 +416,74 @@
         "zh": "舊金山市"
     },
     "election_date": "2018-06-05",
+    "headers": [
+        {
+            "_id": "HDR02",
+            "ballot_title": {
+                "en": "VOTER-NOMINATED OFFICES",
+                "es": "CARGOS NOMINADOS POR LOS ELECTORES",
+                "tl": "MGA KATUNGKULANG NOMINADO NG BOTANTE",
+                "zh": "選民提名職位"
+            },
+            "classification": "Office Group",
+            "header_id": ""
+        },
+        {
+            "_id": "HDR05",
+            "ballot_title": {
+                "en": "STATE",
+                "es": "ESTADO",
+                "tl": "ESTADO",
+                "zh": "州"
+            },
+            "classification": "Office Category",
+            "header_id": "HDR02"
+        },
+        {
+            "_id": "HDR06",
+            "ballot_title": {
+                "en": "NONPARTISAN OFFICES",
+                "es": "CARGOS NO PARTIDARIOS",
+                "tl": "MGA KATUNGKULANG HINDI MAKAPARTIDO",
+                "zh": "無黨派職位"
+            },
+            "classification": "Office Group",
+            "header_id": ""
+        },
+        {
+            "_id": "HDR10",
+            "ballot_title": {
+                "en": "CITY AND COUNTY",
+                "es": "CIUDAD Y CONDADO",
+                "tl": "LUNGSOD AT COUNTY",
+                "zh": "市縣"
+            },
+            "classification": "District Name",
+            "header_id": "HDR06"
+        },
+        {
+            "_id": "HDR11",
+            "ballot_title": {
+                "en": "MEASURES SUBMITTED TO THE VOTERS",
+                "es": "INICIATIVAS DE LEY PRESENTADAS A LOS ELECTORES",
+                "tl": "MGA PANUKALANG ISINUMITE SA MGA BOTANTE",
+                "zh": "提交選民投票的提案"
+            },
+            "classification": "Measure Group",
+            "header_id": ""
+        },
+        {
+            "_id": "HDR13",
+            "ballot_title": {
+                "en": "REGIONAL MEASURE",
+                "es": "INICIATIVA DE LEY REGIONAL",
+                "tl": "PANREHIYONG PANUKALA",
+                "zh": "區域提案"
+            },
+            "classification": "Measure Category",
+            "header_id": "HDR11"
+        }
+    ],
     "languages": [
         "en",
         "es",

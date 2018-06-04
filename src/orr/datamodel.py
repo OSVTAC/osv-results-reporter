@@ -194,32 +194,6 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
     listattr.append(obj)
 
 
-def get_ballot_item_class(type_name):
-    """
-    Returns: (cls, cls_info).
-
-    """
-    # Dict mapping ballot item type name to class.
-    # TODO: make this module-level.
-    BALLOT_ITEM_CLASSES = {
-        'header': (Header, None),
-        'office': (Contest, Candidate),
-        'measure': (Contest, Choice),
-        'ynoffice': (Contest, Choice),
-    }
-
-    try:
-        cls, choice_cls = BALLOT_ITEM_CLASSES[type_name]
-    except KeyError:
-        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
-
-    cls_info = dict(type_name=type_name)
-    if choice_cls is not None:
-        cls_info.update(choice_cls=choice_cls)
-
-    return cls, cls_info
-
-
 class Header:
 
     type_name = 'header'
@@ -513,26 +487,60 @@ class ResultDetail:
        self.is_vbm = is_vbm
 
 
-def ballot_item_from_data(data, ballot_items_by_id):
+def process_header_id(item, headers_by_id):
     """
-    Return a Contest or Header object.
+    Args:
+      item: a Header or Contest object.
+    """
+    if not item.header_id:
+        # Then there is nothing to do.
+        return
+
+    # Add this ballot item to the header's ballot item list.
+    try:
+        header = headers_by_id[item.header_id]
+    except KeyError:
+        raise RuntimeError(f'Unknown header id {item.header_id!r}')
+
+    header.add_child_item(item)
+
+
+# Dict mapping contest type_name to choice class.
+BALLOT_ITEM_CLASSES = {
+    'office': Candidate,
+    'measure': Choice,
+    'ynoffice': Choice,
+}
+
+
+def get_contest_choice_class(type_name):
+    """
+    Returns: (cls, cls_info).
+
     """
     try:
-        type_name = data.pop('type')
+        choice_cls = BALLOT_ITEM_CLASSES[type_name]
     except KeyError:
-        raise RuntimeError(f"key 'type' missing from data: {data}")
+        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
 
-    cls, cls_info = get_ballot_item_class(type_name)
-    item = load_object(cls, data, cls_info=cls_info)
+    return choice_cls
 
-    if item.header_id:
-        # Add this ballot item to the header's ballot item list.
-        header = ballot_items_by_id.get(item.header_id, None)
-        if not header:
-            raise RuntimeError(f'Unknown header id {item.header_id!r}')
-        header.add_child_item(item)
 
-    return item
+def contest_from_data(data, contests_by_id, headers_by_id):
+    """
+    Create and return a Header object from data.
+    """
+    try:
+        type_name = data.pop('_type')
+    except KeyError:
+        raise RuntimeError(f"key '_type' missing from data: {data}")
+
+    choice_cls = get_contest_choice_class(type_name)
+    cls_info = dict(type_name=type_name, choice_cls=choice_cls)
+
+    contest = load_object(Contest, data, cls_info=cls_info)
+
+    return contest
 
 
 class Election:
@@ -547,27 +555,48 @@ class Election:
     represented as candidate objects.
     """
 
-    def process_ballot_items(self, value):
+    def process_headers(self, value):
         """
         Scan the list of source data representing ballot items.
 
         Args:
           value: a list of dicts corresponding to the ballot items.
         """
-        ballot_items_by_id = OrderedDict()
+        headers_by_id = OrderedDict()
         for data in value:
-            ballot_item = ballot_item_from_data(data, ballot_items_by_id)
-            ballot_items_by_id[ballot_item.id] = ballot_item
+            header = load_object(Header, data)
+            process_header_id(header, headers_by_id)
+            headers_by_id[header.id] = header
 
-        return ballot_items_by_id
+        return headers_by_id
+
+    def process_contests(self, value):
+        """
+        Scan the list of source data representing ballot items.
+
+        Args:
+          value: a list of dicts corresponding to the ballot items.
+        """
+        headers_by_id = self.headers_by_id
+        contests_by_id = OrderedDict()
+
+        for data in value:
+            contest = contest_from_data(data, contests_by_id, headers_by_id=headers_by_id)
+            process_header_id(contest, headers_by_id)
+            contests_by_id[contest.id] = contest
+
+        return contests_by_id
 
     auto_attrs = [
         ('ballot_title', parse_i18n),
         ('election_area', parse_i18n),
         ('date', parse_date, 'election_date'),
-        ('ballot_items_by_id', process_ballot_items, 'ballot_items'),
         ('languages', parse_as_is),
         ('translations', parse_as_is),
+        # Process headers before contests since the contest data references
+        # the headers but not vice versa.
+        ('headers_by_id', process_headers, 'headers'),
+        ('contests_by_id', process_contests, 'contests'),
     ]
 
     def __init__(self):
@@ -578,13 +607,15 @@ class Election:
 
     # Also expose the dict values as an ordered list, for convenience.
     @property
-    def ballot_items(self):
-        # Here we use that ballot_items_by_id is an OrderedDict.
-        yield from self.ballot_items_by_id.values()
+    def headers(self):
+        # Here we use that headers_by_id is an OrderedDict.
+        yield from self.headers_by_id.values()
 
+    # Also expose the dict values as an ordered list, for convenience.
     @property
     def contests(self):
-        yield from (item for item in self.ballot_items if type(item) == Contest)
+        # Here we use that contests_by_id is an OrderedDict.
+        yield from self.contests_by_id.values()
 
     def contests_with_headers(self):
         """
