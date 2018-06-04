@@ -52,9 +52,8 @@ SHA256SUMS_FILENAME = 'SHA256SUMS'
 @contextmanager
 def changing_cwd(dir_path):
     initial_cwd = os.getcwd()
-    new_cwd = Path(dir_path)
     try:
-        os.chdir(new_cwd)
+        os.chdir(dir_path)
         yield
     finally:
         # Change back.
@@ -120,6 +119,22 @@ def hash_file(path):
     return sha
 
 
+# TODO: test this.
+def get_files_recursive(dir_path):
+    """
+    Return the paths to all files (but not directories) in a directory
+    by searching recursively, and return them as paths relative to the
+    directory being searched over.
+    """
+    # Change the current working directory to the directory we are recursing
+    # over so the resulting paths will be relative to that.
+    with changing_cwd(dir_path):
+        cwd = Path('.')
+        paths = sorted(path for path in cwd.glob('**/*') if not path.is_dir())
+
+    return paths
+
+
 def get_sha256sum_args():
     """
     Return the initial platform-specific arguments to generate SHA256SUMS.
@@ -135,22 +150,6 @@ def get_sha256sum_args():
         args = ['sha256sum', '-b']
 
     return args
-
-
-# TODO: test this.
-def get_files_recursive(dir_path):
-    """
-    Return all the files (but not directories) recursively in a directory,
-    and return them as **paths relative to the directory being recursed
-    over**.
-    """
-    # Change the current working directory to the directory we are recursing
-    # over so the resulting paths will be relative to that.
-    with changing_cwd(dir_path):
-        cwd = Path('.')
-        paths = sorted(path for path in cwd.glob('**/*') if not path.is_dir())
-
-    return paths
 
 
 # TODO: test this.
