@@ -196,8 +196,14 @@ def append_result_subtotal(contest, data:dict, listattr:list, subtotal_cls):
 
 class Header:
 
-    type_name = 'header'
-
+    """
+    Attributes:
+      ballot_items: the child items, which are either Contest objects,
+        or other Header objects.
+      header_id: id of the parent header object containing this item
+        (or a falsey value for root).
+      parent_header: the parent header of the item, as a Header object.
+    """
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
@@ -205,17 +211,16 @@ class Header:
         ('header_id', parse_as_is),
     ]
 
-    def __init__(self, type_name=None):
+    def __init__(self):
         self.ballot_title = None
         self.ballot_items = []
+        self.header_id = None
         self.id = None
         self.parent_header = None
 
-        self.type_name = type_name
-
     def __repr__(self):
         title = i18n_repr(self.ballot_title)
-        return f'<Header {self.type_name!r} id={self.id!r} title={title[:70]!r}...>'
+        return f'<Header id={self.id!r} title={title[:70]!r}...>'
 
     def add_child_item(self, item):
         """
@@ -351,13 +356,13 @@ class Contest:
       choice_cls: the class to use for the contest's choices (can be
         Choice or Candidate).
 
-      ballot_title: text appearing on ballots representing the header/contest
+      ballot_title: text appearing on the ballot representing the contest.
       ballot_subtitle: second level title for this item
-      header_id: id of parent header object containing this item or 0 for root
-      parent_header: the parent header of the item, as a Header object.
-      ballot_title: text appearing on ballots representing the contest
       choices: List of choices: candidates or Yes/No etc. on measures
                and recall/retention contests
+      header_id: id of the parent header object containing this item
+        (or a falsey value for root).
+      parent_header: the parent header of the item, as a Header object.
 
     A Contest with type_name "office" represents an elected office where
     choices are a set of candidates.
@@ -472,6 +477,7 @@ class Contest:
         self.type_name = type_name
         self.choice_cls = choice_cls
 
+        self.header_id = None
         self.parent_header = None
         self.result_details = []    # result detail definitions
         self.result_stats = []      # Pseudo choice for result summary attrs
