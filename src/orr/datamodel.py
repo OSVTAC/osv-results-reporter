@@ -407,7 +407,7 @@ class Contest:
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
     def __repr__(self):
-        return f'<Contest {self.type_name!r} id={self.id!r}>'
+        return f'<Contest {self.type_name!r}: id={self.id!r}>'
 
     # Also expose the dict values as an ordered list, for convenience.
     @property
@@ -489,6 +489,9 @@ class ResultDetail:
 
 def process_header_id(item, headers_by_id):
     """
+    Add the two-way association between a ballot item (header or contest)
+    and its header, if it has a header.
+
     Args:
       item: a Header or Contest object.
     """
@@ -500,7 +503,8 @@ def process_header_id(item, headers_by_id):
     try:
         header = headers_by_id[item.header_id]
     except KeyError:
-        raise RuntimeError(f'Unknown header id {item.header_id!r}')
+        msg = f'Header id {item.header_id!r} not found for item: {item!r}'
+        raise RuntimeError(msg)
 
     header.add_child_item(item)
 
@@ -589,8 +593,8 @@ class Election:
 
     auto_attrs = [
         ('ballot_title', parse_i18n),
-        ('election_area', parse_i18n),
         ('date', parse_date, 'election_date'),
+        ('election_area', parse_i18n),
         ('languages', parse_as_is),
         ('translations', parse_as_is),
         # Process headers before contests since the contest data references
