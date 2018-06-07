@@ -31,7 +31,7 @@ from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Environment)
 
 import orr.utils as utils
-import orr.writers.pdfwriting as pdfwriting
+import orr.writers.pdfwriting.pdfwriter as pdfwriter
 import orr.writers.tsvwriting as tsvwriting
 from orr.writers.xlsxwriting import XLSXBook
 
@@ -335,7 +335,7 @@ def create_pdf(env, rel_path, contests, title=None):
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
     """
-    do_create = functools.partial(pdfwriting.make_pdf, title=title)
+    do_create = functools.partial(pdfwriter.make_pdf, title=title)
 
     rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
                         type_name='PDF', ext='.pdf', env=env)

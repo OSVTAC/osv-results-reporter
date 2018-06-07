@@ -33,7 +33,7 @@ import orr.testing.xlstesting as xlstesting
 class ModuleTest(TestCase):
 
     """
-    Test the functions in orr.writers.pdfwriting.
+    Test the functions in orr.writers.xlsxwriting.
     """
 
     def test_add_worksheet(self):

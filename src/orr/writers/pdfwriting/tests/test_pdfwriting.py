@@ -19,7 +19,7 @@
 #
 
 """
-Test the orr.writers.pdfwriting module.
+Test the orr.writers.pdfwriting.pdfwriter module.
 """
 
 from pathlib import Path
@@ -27,13 +27,13 @@ from unittest import TestCase
 
 from reportlab.pdfgen.canvas import Canvas
 
-import orr.writers.pdfwriting as pdfwriting
+import orr.writers.pdfwriting.pdfwriter as pdfwriter
 
 
 class PdfWritingModuleTest(TestCase):
 
     """
-    Test the functions in orr.writers.pdfwriting.
+    Test the functions in orr.writers.pdfwriting.pdfwriter.
     """
 
     def test_wrap_text(self):
@@ -44,5 +44,5 @@ class PdfWritingModuleTest(TestCase):
         for text, expected in cases:
             with self.subTest(text=text):
                 canvas = Canvas('sample.pdf')
-                actual = pdfwriting.wrap_text(canvas, text)
+                actual = pdfwriter.wrap_text(canvas, text)
                 self.assertEqual(actual, expected)
