@@ -1,0 +1,8 @@
+# This file contains the locales to generate inside our Docker image.
+
+# Install a locale that uses a period as the thousands separator,
+# for testing purposes.
+de_DE.UTF-8 UTF-8
+
+# Also install our default locale.
+en_US.UTF-8 UTF-8
