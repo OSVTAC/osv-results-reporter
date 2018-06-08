@@ -1,5 +1,8 @@
 FROM python:3.6-slim
 
+RUN apt-get clean && apt-get update \
+    && apt-get install -y locales
+
 # Put all of our files in an application-specific directory.
 WORKDIR app
 
@@ -24,6 +27,17 @@ COPY templates/ templates/
 # Installing via pip lets us invoke the program using the console-script
 # entry-point "orr" defined in setup.py.
 RUN pip install ./src
+
+# Install locales.
+# TODO: move this earlier in the Dockerfile.
+RUN cp src/locale.gen /etc/locale.gen \
+    # Make the following error go away:
+    # > locale alias file `/usr/share/locale/locale.alias' not found:
+    #    No such file or directory
+    && ln -s /etc/locale.alias /usr/share/locale/locale.alias \
+    && locale-gen \
+    # Display all installed locales to simplify troubleshooting.
+    && locale -a
 
 # Pass --output-fresh-parent as a check to ensure that the parent
 # of the output directory is empty when running using Docker.

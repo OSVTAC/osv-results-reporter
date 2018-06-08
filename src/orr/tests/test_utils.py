@@ -24,6 +24,7 @@ Test the orr.utils module.
 
 from datetime import date, datetime
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
@@ -35,6 +36,24 @@ class UtilsModuleTest(TestCase):
     """
     Test the functions in orr.utils.
     """
+
+    def test_format_number(self):
+        cases = [
+            ((1000, None), '1000'),
+            ((1000, 'en_US.UTF-8'), '1,000'),
+        ]
+        if sys.platform != 'darwin':
+            # Also test a locale where the thousands separator is a period.
+            # (This does not work on Mac OS X for some reason.)
+            case = ((1000, 'de_DE.UTF-8'), '1.000')
+            cases.append(case)
+
+        for (num, loc), expected in cases:
+            with self.subTest(num=num, loc=loc):
+                with utils.changing_locale(loc):
+                    actual = utils.format_number(num)
+
+                self.assertEqual(actual, expected)
 
     def test_strip_trailing_whitespace(self):
         cases = [

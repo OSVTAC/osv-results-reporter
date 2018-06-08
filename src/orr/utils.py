@@ -26,6 +26,7 @@ from contextlib import contextmanager
 from datetime import datetime
 import hashlib
 import json
+import locale
 import logging
 import os
 from pathlib import Path
@@ -51,6 +52,9 @@ SHA256SUMS_FILENAME = 'SHA256SUMS'
 
 @contextmanager
 def changing_cwd(dir_path):
+    """
+    Temporarily change the current working directory.
+    """
     initial_cwd = os.getcwd()
     try:
         os.chdir(dir_path)
@@ -58,6 +62,33 @@ def changing_cwd(dir_path):
     finally:
         # Change back.
         os.chdir(initial_cwd)
+
+
+@contextmanager
+def changing_locale(loc):
+    """
+    Temporarily change locale.LC_ALL.
+    """
+    try:
+        try:
+            locale.setlocale(locale.LC_ALL, loc)
+        except Exception:
+            raise RuntimeError(f'error while setting locale to: {loc}')
+        yield
+    finally:
+        # Change back.
+        locale.resetlocale()
+
+
+def format_number(num):
+    """
+    Format a number for display using the current locale, e.g.
+
+    >>> format_number(9999)
+    '9,999'
+    """
+    # The "n" option adds a locale-aware thousands separator.
+    return f'{num:n}'
 
 
 def read_json(path):
