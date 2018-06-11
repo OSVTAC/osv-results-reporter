@@ -40,6 +40,7 @@ _log = logging.getLogger(__name__)
 
 
 UTF8_ENCODING = 'utf-8'
+US_LOCALE = 'en_US.UTF-8'
 
 # The buffer size to use when hashing files.
 HASH_BYTES = 2 ** 12  # 4K
@@ -80,6 +81,7 @@ def changing_locale(loc):
         locale.resetlocale()
 
 
+# TODO: rename to format_integer()?
 def format_number(num):
     """
     Format a number for display using the current locale, e.g.

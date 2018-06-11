@@ -29,6 +29,7 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 import orr.utils as utils
+from orr.utils import US_LOCALE
 
 
 class UtilsModuleTest(TestCase):
@@ -40,7 +41,7 @@ class UtilsModuleTest(TestCase):
     def test_format_number(self):
         cases = [
             ((1000, None), '1000'),
-            ((1000, 'en_US.UTF-8'), '1,000'),
+            ((1000, US_LOCALE), '1,000'),
         ]
         if sys.platform != 'darwin':
             # Also test a locale where the thousands separator is a period.

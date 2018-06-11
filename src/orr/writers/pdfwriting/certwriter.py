@@ -29,6 +29,8 @@ import reportlab.lib.colors as colors
 from reportlab.platypus import (Flowable, PageBreak, Paragraph, SimpleDocTemplate,
     Table, TableStyle)
 
+import orr.utils as utils
+
 
 _log = logging.getLogger(__name__)
 
@@ -77,6 +79,7 @@ def make_line_below_style(coord, thickness, count=None):
     end_coord = (coord[0] - 1 + count, coord[1])
 
     return ('LINEBELOW', coord, coord, thickness, DEFAULT_COLOR)
+
 
 def make_line_after_style(coord, thickness, count=None):
     if count is None:
@@ -156,6 +159,7 @@ def make_vertical_line_styles(rounds, last_choice_row):
     return styles
 
 
+# TODO: simplify this implementation using generators.
 def make_table_styles(choice_totals, summary_totals):
     rounds = get_number_rounds(summary_totals)
     last_choice_row = len(choice_totals) + 2 - 1
@@ -198,8 +202,31 @@ def make_table_styles(choice_totals, summary_totals):
     return styles
 
 
+def format_choice_totals(choice_totals):
+    new_rows = []
+    for row in choice_totals:
+        iterator = iter(row)
+        new_row = [next(iterator)]
+        while True:
+            try:
+                total = next(iterator)
+            except StopIteration:
+                break
+
+            total = utils.format_number(total)
+            new_row.append(total)
+            percent = next(iterator)
+            new_row.append(percent)
+
+        new_rows.append(new_row)
+
+    return new_rows
+
+
 # TODO: finish implementing this.
 def make_table(choice_totals, summary_totals, last_round):
+    choice_totals = format_choice_totals(choice_totals)
+
     data = make_table_data(choice_totals, summary_totals, last_round=last_round)
 
     table = Table(data)
@@ -210,7 +237,13 @@ def make_table(choice_totals, summary_totals, last_round):
     return table
 
 
+# TODO: remove this when no longer needed.
 if __name__ == '__main__':
+    import locale
+
+    from orr.utils import US_LOCALE
+
+    locale.setlocale(locale.LC_ALL, US_LOCALE)
     logging.basicConfig(level=logging.INFO)
 
     try:
