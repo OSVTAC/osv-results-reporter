@@ -93,6 +93,16 @@ def format_number(num):
     return f'{num:n}'
 
 
+def format_percent(percent):
+    """
+    Format a percentage for display.
+
+    >>> format_percent(12.4)
+    '12.40%'
+    """
+    return f'{percent:.2f}%'
+
+
 def read_json(path):
     with open(path) as f:
         data = json.load(f)

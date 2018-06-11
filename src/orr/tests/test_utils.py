@@ -56,6 +56,18 @@ class UtilsModuleTest(TestCase):
 
                 self.assertEqual(actual, expected)
 
+    def test_format_percent(self):
+        cases = [
+            (0, '0.00%'),
+            (10, '10.00%'),
+            (5.7777, '5.78%'),
+        ]
+
+        for percent, expected in cases:
+            with self.subTest(percent=percent):
+                actual = utils.format_percent(percent)
+                self.assertEqual(actual, expected)
+
     def test_strip_trailing_whitespace(self):
         cases = [
             # Test the last line ending in a trailing newline.

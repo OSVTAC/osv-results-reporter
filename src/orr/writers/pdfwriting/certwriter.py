@@ -215,7 +215,9 @@ def format_choice_totals(choice_totals):
 
             total = utils.format_number(total)
             new_row.append(total)
+
             percent = next(iterator)
+            percent = utils.format_percent(percent)
             new_row.append(percent)
 
         new_rows.append(new_row)
