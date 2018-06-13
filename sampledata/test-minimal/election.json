@@ -64,64 +64,14 @@
             "header_id": "HDR05",
             "is_partisan": "Y",
             "number_elected": 1,
-            "result_stats": [
-                {
-                    "_id": "'SVTot'",
-                    "ballot_title": "ballots_counted"
-                },
-                {
-                    "_id": "'SVCst'",
-                    "ballot_title": "ballots_cast"
-                },
-                {
-                    "_id": "'SVReg'",
-                    "ballot_title": "registered_voters"
-                },
-                {
-                    "_id": "'SVTrn'",
-                    "ballot_title": "voter_turnout"
-                },
-                {
-                    "_id": "'SVRej'",
-                    "ballot_title": "ballots_rejected"
-                },
-                {
-                    "_id": "'SVUnc'",
-                    "ballot_title": "ballots_uncounted"
-                },
-                {
-                    "_id": "'SVWri'",
-                    "ballot_title": "writein_votes"
-                },
-                {
-                    "_id": "'SVUnd'",
-                    "ballot_title": "undervotes"
-                },
-                {
-                    "_id": "'SVOvr'",
-                    "ballot_title": "overvotes"
-                }
-            ],
-            "subtotal_types": [
-                {
-                    "_id": "TO",
-                    "heading": "Total"
-                },
-                {
-                    "_id": "ED",
-                    "heading": "Election Day"
-                },
-                {
-                    "_id": "MV",
-                    "heading": "Vote by Mail"
-                }
-            ],
             "vote_for_msg": {
                 "en": "Vote for One",
                 "es": "Vote por uno",
                 "tl": "Bumoto ng Isa",
                 "zh": "選一名"
             },
+            "voting_class": "EM",
+            "voting_district": "ASSM17",
             "writeins_allowed": 1
         },
         {
@@ -247,69 +197,14 @@
                 "zh": "您最多可以投選三個選擇。如果投選的候選人少於三名候選人，多餘欄目可留為空白。"
             },
             "number_elected": 1,
-            "result_stats": [
-                {
-                    "_id": "'SVTot'",
-                    "ballot_title": "ballots_counted"
-                },
-                {
-                    "_id": "'SVCst'",
-                    "ballot_title": "ballots_cast"
-                },
-                {
-                    "_id": "'SVReg'",
-                    "ballot_title": "registered_voters"
-                },
-                {
-                    "_id": "'SVTrn'",
-                    "ballot_title": "voter_turnout"
-                },
-                {
-                    "_id": "'SVRej'",
-                    "ballot_title": "ballots_rejected"
-                },
-                {
-                    "_id": "'SVUnc'",
-                    "ballot_title": "ballots_uncounted"
-                },
-                {
-                    "_id": "'SVWri'",
-                    "ballot_title": "writein_votes"
-                },
-                {
-                    "_id": "'SVUnd'",
-                    "ballot_title": "undervotes"
-                },
-                {
-                    "_id": "'SVOvr'",
-                    "ballot_title": "overvotes"
-                },
-                {
-                    "_id": "'SVExh'",
-                    "ballot_title": "exhausted_ballots"
-                }
-            ],
-            "subtotal_types": [
-                {
-                    "_id": "TO",
-                    "heading": "Total"
-                },
-                {
-                    "_id": "ED",
-                    "heading": "Election Day"
-                },
-                {
-                    "_id": "MV",
-                    "heading": "Vote by Mail"
-                }
-            ],
             "vote_for_msg": {
                 "en": "Vote your first, second, and third choices",
                 "es": "Vote por su primera, segunda y tercera preferencias",
                 "tl": "Iboto ang inyong una, pangalawa, at pangatlong pinili",
                 "zh": "投選您的第一、第二和第三選擇"
             },
-            "vote_type_id": "rcv",
+            "voting_class": "EMR",
+            "voting_district": "0",
             "writeins_allowed": 1
         },
         {
@@ -351,62 +246,36 @@
                 "tl": "PLANO SA PAGPAPAHUPA NG TRAPIKO SA BAY AREA. Dapat bang pahintulutan ng mga botante ang isang planong bawasan ang trapiko ng auto at trak, bawasan ang siksikan sa BART, ayusin ang daloy sa mga pagsisiksikan sa freeway, at pabutihin ang serbisyo ng bus, ferry, BART at commuter rail alinsunod sa nakasaad sa plano sa librito ng botante na ito, sa pamamagitan ng $1 na dagdag sa toll simula 2019, $1 na dagdag sa 2022, at $1 na dagdag sa 2025, sa lahat ng tulay ng toll sa Bay Area maliban sa Golden Gate Bridge, na may independiyenteng pagbabantay sa lahat ng pondo?",
                 "zh": "灣區交通舒緩計劃。選民是否應授權一項計劃以減少汽車及卡車車流、舒緩灣區捷運人潮、疏通高速公路瓶頸，並改善公車、渡輪、灣區捷運和通勤鐵路運輸服務，按照選民手冊中所詳細說明之計劃，針對於除了金門大橋外，所有灣區收取通行費之橋樑，生效於2019年增加1美元通行費，2022年增加1美元並於2025年增加1美元，並對所有資金採取獨立監督？"
             },
-            "result_stats": [
-                {
-                    "_id": "'SVTot'",
-                    "ballot_title": "ballots_counted"
-                },
-                {
-                    "_id": "'SVCst'",
-                    "ballot_title": "ballots_cast"
-                },
-                {
-                    "_id": "'SVReg'",
-                    "ballot_title": "registered_voters"
-                },
-                {
-                    "_id": "'SVTrn'",
-                    "ballot_title": "voter_turnout"
-                },
-                {
-                    "_id": "'SVRej'",
-                    "ballot_title": "ballots_rejected"
-                },
-                {
-                    "_id": "'SVUnc'",
-                    "ballot_title": "ballots_uncounted"
-                },
-                {
-                    "_id": "'SVUnd'",
-                    "ballot_title": "undervotes"
-                },
-                {
-                    "_id": "'SVOvr'",
-                    "ballot_title": "overvotes"
-                }
-            ],
-            "subtotal_types": [
-                {
-                    "_id": "TO",
-                    "heading": "Total"
-                },
-                {
-                    "_id": "ED",
-                    "heading": "Election Day"
-                },
-                {
-                    "_id": "MV",
-                    "heading": "Vote by Mail"
-                },
-                {
-                    "_id": "IA",
-                    "heading": "In-County Total"
-                },
-                {
-                    "_id": "XA",
-                    "heading": "Other Counties"
-                }
-            ]
+            "voting_class": "EMR",
+            "voting_district": "0"
+        }
+    ],
+    "districts": [
+        {
+            "_id": "0",
+            "name": "City and County of San Francisco",
+            "short_name": "San Francisco County",
+            "classification": "County",
+            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO"
+        },
+        {
+            "_id": "ASSM17",
+            "name": "California State Assembly District 17",
+            "short_name": "Assembly District 17",
+            "classification": "County Legislative District",
+            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO"
+        },
+        {
+            "_id": "SUPV1",
+            "name": "San Francisco County Supervisorial District  1",
+            "short_name": "Supervisorial District 1",
+            "classification": "County Legislative District"
+        },
+        {
+            "_id": "NEIG1",
+            "name": "Neighborhood of Bayview/Hunters Point",
+            "short_name": "Bayview/Hunters Point",
+            "classification": "Neighborhood"
         }
     ],
     "election_area": {
@@ -489,6 +358,113 @@
         "es",
         "tl",
         "zh"
+    ],
+    "precincts": [
+        {
+            "_id": "*",
+            "name": "All Precincts",
+            "short_name": "All Precincts"
+        },
+        {
+            "_id": "PCT1141",
+            "name": "Precinct 1141",
+            "short_name": "Precinct 1141"
+        },
+        {
+            "_id": "PCT7101",
+            "name": "Precinct 7101",
+            "short_name": "Precinct 7101",
+            "is_vbm": true
+        }
+   ],
+    "result_stat_types": [
+        {
+            "_id": "RSTot",
+            "heading": "Ballots Counted"
+        },
+        {
+            "_id": "RSCst",
+            "heading": "Ballots Cast"
+        },
+        {
+            "_id": "RSReg",
+            "heading": "Registered Voters"
+        },
+        {
+            "_id": "RSTrn",
+            "heading": "Voter Turnout",
+            "is_percent": true
+        },
+        {
+            "_id": "RSRej",
+            "heading": "Ballots Rejected"
+        },
+        {
+            "_id": "RSUnc",
+            "heading": "Ballots Uncounted"
+        },
+        {
+            "_id": "RSWri",
+            "heading": "Writein Votes"
+        },
+        {
+            "_id": "RSUnd",
+            "heading": "Undervotes"
+        },
+        {
+            "_id": "RSOvr",
+            "heading": "Overvotes"
+        },
+        {
+            "_id": "RSExh",
+            "heading": "Exhausted Ballots"
+        }
+    ],
+    "voting_classes": [
+        {
+            "_id": "EM",
+            "description": "Normal voting, subtotal by Election Day/VBM",
+            "is_rcv": false,
+            "voting_group_ids": "TO ED MV",
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
+        },
+        {
+            "_id": "EMR",
+            "description": "RCV voting, subtotal by Election Day/VBM",
+            "is_rcv": true,
+            "voting_group_ids": "TO ED MV",
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
+        }
+    ],
+    "voting_groups": [
+        {
+            "_id": "TO",
+            "heading": "Total"
+        },
+        {
+            "_id": "ED",
+            "heading": "Election Day"
+        },
+        {
+            "_id": "MV",
+            "heading": "Vote By Mail"
+        },
+        {
+            "_id": "EV",
+            "heading": "Early Voting"
+        },
+        {
+            "_id": "IA",
+            "heading": "In-County"
+        },
+        {
+            "_id": "XA",
+            "heading": "Other Counties"
+        },
+        {
+            "_id": "PV",
+            "heading": "Provisional Voting"
+        }
     ],
     "translations": {
         "ballots_cast": {
