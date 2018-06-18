@@ -357,9 +357,9 @@ class ResultStatType:
         self.id = None
         self.heading = None
 
-class VotingClass:
+class ResultStyle:
     """
-    Each contest references the id of a VotingClass that defines a
+    Each contest references the id of a ResultStyle that defines a
     set of attributes for the type of voting including what result stats
     will be available.
     """
@@ -781,7 +781,7 @@ class Contest:
             # Copy the number of result stat types in this contest
 
             # Init column counts and 2D array of values
-            self.result_stat_count = len(self.voting_class.result_stat_types)
+            self.result_stat_count = len(self.result_style.result_stat_types)
             self.choice_count = len(self.choices_by_id)
             self.reporting_group_count = len(self.reporting_groups)
             self.results = []
@@ -839,7 +839,7 @@ class Contest:
 
         # A list comprehension is not easy due to python limitations
         l = []
-        mapping = self.voting_class.result_stat_type_index_by_id
+        mapping = self.result_style.result_stat_type_index_by_id
         for k in stat_idlist.split():
             if k == '*':
                 l.extend(range(self.result_stat_count))
@@ -893,8 +893,8 @@ class Contest:
         ('is_partisan', parse_as_is),
         ('number_elected', parse_as_is),
         ('question_text', parse_as_is),
-        ('voting_class', process_id_in_election, 'voting_class',
-         'voting_class_by_id'),
+        ('result_style', process_id_in_election, 'result_style',
+         'result_style_by_id'),
         ('voting_district', process_id_in_election, 'voting_district',
          'areas_by_id'),
         ('type', parse_as_is),
@@ -1063,8 +1063,8 @@ class Election:
             'voting_groups', VotingGroup),
         ('result_stat_types_by_id', process_index_objects,
             'result_stat_types', ResultStatType),
-        ('voting_class_by_id', process_index_objects,
-            'voting_classes', VotingClass),
+        ('result_style_by_id', process_index_objects,
+            'result_styles', ResultStyle),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
