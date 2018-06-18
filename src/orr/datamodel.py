@@ -212,7 +212,7 @@ def load_object(cls, data, cls_info=None):
         raise RuntimeError(
             f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
 
-    if hasattr(cls,'finalize'):
+    if hasattr(cls, 'finalize'):
         # Perform class-specific init after data is loaded
         obj.finalize()
     return obj
@@ -893,10 +893,8 @@ class Contest:
         ('is_partisan', parse_as_is),
         ('number_elected', parse_as_is),
         ('question_text', parse_as_is),
-        ('result_style', process_id_in_election, 'result_style',
-         'result_style_by_id'),
-        ('voting_district', process_id_in_election, 'voting_district',
-         'areas_by_id'),
+        ('result_style', process_id_in_election, 'result_style', 'result_style_by_id'),
+        ('voting_district', process_id_in_election, 'voting_district', 'areas_by_id'),
         ('type', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
@@ -1006,9 +1004,9 @@ class Election:
         areas = []
         for data in value:
             area = load_object(cls, data)
-            setattr(area,'election',self)
+            setattr(area, 'election', self)
             areas.append(area)
-            mapped_object(self.areas_by_id,area)
+            mapped_object(self.areas_by_id, area)
 
         return areas
 
@@ -1056,15 +1054,12 @@ class Election:
         ('translations', parse_as_is),
         # Process precincts and districts before contests so
         # contests may reference and map the district ID
-        ('districts', process_areas,'districts',District),
-        ('precincts', process_areas,'precincts',Precinct),
+        ('districts', process_areas, 'districts', District),
+        ('precincts', process_areas, 'precincts', Precinct),
         # Enter the VotingGroup and ResultStatType enumerated definitions
-        ('voting_groups_by_id', process_index_objects,
-            'voting_groups', VotingGroup),
-        ('result_stat_types_by_id', process_index_objects,
-            'result_stat_types', ResultStatType),
-        ('result_style_by_id', process_index_objects,
-            'result_styles', ResultStyle),
+        ('voting_groups_by_id', process_index_objects, 'voting_groups', VotingGroup),
+        ('result_stat_types_by_id', process_index_objects, 'result_stat_types', ResultStatType),
+        ('result_style_by_id', process_index_objects, 'result_styles', ResultStyle),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),

@@ -75,12 +75,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--version',action='version',version='%(prog)s '+VERSION)
-    parser.add_argument('-v','--verbose',action='store_true',
+    parser.add_argument('--version', action='version', version='%(prog)s '+VERSION)
+    parser.add_argument('-v', '--verbose', action='store_true',
                         help='enable verbose info printout')
-    parser.add_argument('-t',dest='test',action='store_true',
+    parser.add_argument('-t', dest='test', action='store_true',
                         help='test mode, print files to expand')
-    parser.add_argument('--debug',action='store_true', help='enable debug printout')
+    parser.add_argument('--debug', action='store_true', help='enable debug printout')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
     parser.add_argument('--input-paths', metavar='PATH', nargs='+',
@@ -90,7 +90,7 @@ def parse_args():
                         help=('the datetime to use as the build time, '
                               'in the format "2018-06-01 20:48:12". '
                               'Defaults to the current datetime.'))
-    parser.add_argument('--use-data-model',action='store_true',
+    parser.add_argument('--use-data-model', action='store_true',
                         help='use datamodel.py (experimental / still in progress).')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
@@ -244,7 +244,7 @@ def load_json(data, filepath):
     _log.debug(f'load_json({filepath})')
     with open(filepath) as f:
         newdata = json.load(f)
-    if not isinstance(newdata,dict):
+    if not isinstance(newdata, dict):
         _log.error(f'Invalid data in json file {filepath}');
         return
     data.update(newdata)
@@ -262,7 +262,7 @@ def load_yaml(data, filepath):
     _log.debug(f'load_yaml({filepath})')
     with open(filepath) as f:
         newdata = yaml.safe_load(f)
-    if not isinstance(newdata,dict):
+    if not isinstance(newdata, dict):
         _log.error(f'Invalid data in yaml file {filepath}');
         return
     data.update(newdata)
