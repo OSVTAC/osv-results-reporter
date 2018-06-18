@@ -2,8 +2,6 @@
 
 ## Election results report generator (HTML/PDF/XLS)
 
-Initial checkin. Documentation TODO.
-
 See [`doc/orr.md`](doc/orr.md) for a description of the orr application
 and how it can be used to create collections of html/pdf/xml/xls
 files from election data.
