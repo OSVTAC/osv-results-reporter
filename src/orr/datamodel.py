@@ -290,6 +290,22 @@ def process_id_in_election(obj, idstr, mapname):
     return getattr(obj.election,mapname)[idstr]
 
 
+def make_index_map(values):
+    """
+    Return a dict mapping the value to its (0-based) index in the list.
+    """
+    return {value: index for index, value in enumerate(values)}
+
+
+def make_id_to_index_map(objlist):
+    """
+    A dict mapping an object id to list index is created for
+    a list of objects. The index converts the id to the index
+    in the list 0..len(objlist)-1
+    """
+    return make_index_map(obj.id for obj in objlist)
+
+
 def process_index_idlist(data, objects_by_id):
     """
     Parse a space-separated list of object IDS into objects.
@@ -305,7 +321,7 @@ def process_index_idlist(data, objects_by_id):
 
     """
     ids = data.split()
-    indexes_by_id = {object_id: index for index, object_id in enumerate(ids)}
+    indexes_by_id = make_index_map(ids)
     objects = [objects_by_id[object_id] for object_id in ids]
 
     return objects, indexes_by_id
@@ -370,20 +386,6 @@ def read_objects_to_dict(cls, seq, context=None):
 
     return obj_by_id
 
-
-def form_index_dict(objlist):
-    """
-    A dict mapping an object id to list index is created for
-    a list of objects. The index converts the id to the index
-    in the list 0..len(objlist)-1
-    """
-    mapping = {}
-    i = 0
-    for obj in objlist:
-        mapping[obj.id] = i
-        i += 1
-
-    return mapping
 
 def map_idlist(mapping, idlist):
     """
