@@ -320,10 +320,9 @@ def process_idlist(obj, liststr, mapname):
     return [mapping[i] for i in liststr.split()]
 
 
-# TODO: choose a better name.
-def mapped_object(mapping, obj):
+def add_object_by_id(mapping, obj):
     """
-    Enter the object in the "mapping" dict.
+    Add an object to a dict mapping object id to object.
 
     Args:
       mapping: a dict to lookup by obj.id
@@ -350,7 +349,7 @@ def index_object(mapping, obj):
     # TODO: assign index numbers at the end, when creating the convenience
     #  list for an object type?
     obj.index = len(mapping)  # Assign a sequence number (0-based)
-    mapped_object(mapping,obj)
+    add_object_by_id(mapping,obj)
 
 
 def read_objects_to_dict(cls, seq, context=None):
@@ -367,7 +366,7 @@ def read_objects_to_dict(cls, seq, context=None):
     obj_by_id = OrderedDict()
     for data in seq:
         item = load_object(cls, data, context=context)
-        mapped_object(obj_by_id, item)
+        add_object_by_id(obj_by_id, item)
 
     return obj_by_id
 
@@ -1107,7 +1106,7 @@ class Election:
             area = load_object(cls, data)
             setattr(area, 'election', self)
             areas.append(area)
-            mapped_object(self.areas_by_id, area)
+            add_object_by_id(self.areas_by_id, area)
 
         return areas
 
