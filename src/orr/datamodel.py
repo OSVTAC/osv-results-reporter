@@ -250,6 +250,8 @@ def process_idlist(obj, liststr, mapname):
     mapping = getattr(obj,mapname)
     return [mapping[i] for i in liststr.split()]
 
+
+# TODO: choose a better name.
 def mapped_object(mapping, obj):
     """
     Enter the object in the "mapping" dict.
@@ -264,6 +266,7 @@ def mapped_object(mapping, obj):
         raise RuntimeError(f'duplicate object id: {obj!r}')
 
     mapping[obj.id] = obj
+
 
 def index_object(mapping, obj):
     """
@@ -280,15 +283,18 @@ def index_object(mapping, obj):
     obj.index = len(mapping)  # Assign a sequence number (0-based)
     mapped_object(mapping,obj)
 
-def process_index_objects(obj, value, cls):
+
+def read_objects_to_dict(cls, seq):
     """
-    Enter a plain list of index_objects to be entered within an
-    ordered dict by id.
+    Read from JSON data a list of objects that don't require an "index"
+    attribute.
+
+    Returns a dict mapping id to object.
     """
     obj_by_id = OrderedDict()
-    for data in value:
+    for data in seq:
         item = load_object(cls, data)
-        index_object(obj_by_id, item)
+        mapped_object(obj_by_id, item)
 
     return obj_by_id
 
@@ -1017,6 +1023,15 @@ class Election:
 
         return areas
 
+    def process_result_stat_types(self, value):
+        return read_objects_to_dict(ResultStatType, value)
+
+    def process_result_styles(self, value):
+        return read_objects_to_dict(ResultStyle, value)
+
+    def process_voting_groups(self, value):
+        return read_objects_to_dict(VotingGroup, value)
+
     def process_headers(self, value):
         """
         Process the source data representing the header items.
@@ -1064,9 +1079,10 @@ class Election:
         ('districts', process_areas, 'districts', District),
         ('precincts', process_areas, 'precincts', Precinct),
         # Enter the VotingGroup and ResultStatType enumerated definitions
-        ('voting_groups_by_id', process_index_objects, 'voting_groups', VotingGroup),
-        ('result_stat_types_by_id', process_index_objects, 'result_stat_types', ResultStatType),
-        ('result_style_by_id', process_index_objects, 'result_styles', ResultStyle),
+        ('result_stat_types_by_id', process_result_stat_types, 'result_stat_types'),
+        ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
+        # Processing result_styles requires result_stat_types and voting_groups.
+        ('result_style_by_id', process_result_styles, 'result_styles'),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
