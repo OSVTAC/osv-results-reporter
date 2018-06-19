@@ -282,6 +282,19 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
+# TODO: move this to datamodel.py?
+def read_object_list(data, key, object_cls):
+    """
+    Read a key-value in the JSON data, where the value is a list of objects.
+
+    Returns a dict mapping object id to object.
+    """
+    object_data = data[key]
+    objects_by_id = datamodel.read_objects_to_dict(object_cls, object_data)
+
+    return objects_by_id
+
+
 def load_model(dir_path, build_time):
     """
     Populate our data model, and return the context to use for Jinja2.
@@ -302,10 +315,8 @@ def load_model(dir_path, build_time):
         ('result_stat_types_by_id', 'result_stat_types', ResultStatType),
         ('voting_groups_by_id', 'voting_groups', VotingGroup),
     ]
-    for context_key, data_key, cls in infos:
-        # TODO: make the below into a function.
-        object_data = data[data_key]
-        objects_by_id = datamodel.read_objects_to_dict(cls, object_data)
+    for context_key, data_key, object_cls in infos:
+        objects_by_id = read_object_list(data, data_key, object_cls)
         context[context_key] = objects_by_id
 
     # TODO: make more objects top-level.
