@@ -1171,7 +1171,8 @@ class Election:
         ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
         # Processing result_styles requires result_stat_types and voting_groups.
         AutoAttr('result_style_by_id', process_result_styles,
-            data_key='result_styles', context_keys=('result_stat_types_by_id', )),
+            data_key='result_styles',
+            context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
