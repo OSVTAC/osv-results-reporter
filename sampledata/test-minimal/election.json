@@ -394,36 +394,6 @@
                 "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
             }
         ],
-        "voting_groups": [
-            {
-                "_id": "TO",
-                "heading": "Total"
-            },
-            {
-                "_id": "ED",
-                "heading": "Election Day"
-            },
-            {
-                "_id": "MV",
-                "heading": "Vote By Mail"
-            },
-            {
-                "_id": "EV",
-                "heading": "Early Voting"
-            },
-            {
-                "_id": "IA",
-                "heading": "In-County"
-            },
-            {
-                "_id": "XA",
-                "heading": "Other Counties"
-            },
-            {
-                "_id": "PV",
-                "heading": "Provisional Voting"
-            }
-        ],
         "translations": {
             "ballots_cast": {
                 "en": "Ballots Cast"
@@ -498,6 +468,36 @@
         {
             "_id": "RSExh",
             "heading": "Exhausted Ballots"
+        }
+    ],
+    "voting_groups": [
+        {
+            "_id": "TO",
+            "heading": "Total"
+        },
+        {
+            "_id": "ED",
+            "heading": "Election Day"
+        },
+        {
+            "_id": "MV",
+            "heading": "Vote By Mail"
+        },
+        {
+            "_id": "EV",
+            "heading": "Early Voting"
+        },
+        {
+            "_id": "IA",
+            "heading": "In-County"
+        },
+        {
+            "_id": "XA",
+            "heading": "Other Counties"
+        },
+        {
+            "_id": "PV",
+            "heading": "Provisional Voting"
         }
     ]
 }

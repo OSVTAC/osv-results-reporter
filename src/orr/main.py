@@ -41,7 +41,7 @@ import yaml
 
 import orr.configlib as configlib
 import orr.datamodel as datamodel
-from orr.datamodel import ResultStatType
+from orr.datamodel import ResultStatType, VotingGroup
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
@@ -295,11 +295,18 @@ def load_model(dir_path, build_time):
     data = utils.read_json(path)
     context = {}
 
-    result_stat_types_data = data['result_stat_types']
-    result_stat_types_by_id = datamodel.read_objects_to_dict(ResultStatType, result_stat_types_data)
-    # Add result_stat_types_by_id to the context now since processing
-    # "election" depends on it.
-    context.update(result_stat_types_by_id=result_stat_types_by_id)
+    # Add "result_stat_types_by_id" and "voting_groups_by_id" to the context
+    # now since processing "election" depends on them.
+    # Each info below is a 3-tuple of: (context key, data key, object class).
+    infos = [
+        ('result_stat_types_by_id', 'result_stat_types', ResultStatType),
+        ('voting_groups_by_id', 'voting_groups', VotingGroup),
+    ]
+    for context_key, data_key, cls in infos:
+        # TODO: make the below into a function.
+        object_data = data[data_key]
+        objects_by_id = datamodel.read_objects_to_dict(cls, object_data)
+        context[context_key] = objects_by_id
 
     # TODO: make more objects top-level.
     election_data = data['election']

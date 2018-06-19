@@ -35,9 +35,6 @@ import logging
 
 _log = logging.getLogger(__name__)
 
-# Hack
-election_global = None
-
 
 # Besides the votes for candidates and measure choices counted, there
 # are a set of summary results with ballots not counted by category,
@@ -241,7 +238,8 @@ def load_object(cls, data, cls_info=None, context=None):
                 raise RuntimeError(msg)
 
             if info.unpack_context:
-                kwargs = context
+                # Only unpack the context keys that are needed / recognized.
+                kwargs = {key: context[key] for key in context_keys}
             else:
                 kwargs = dict(context=context)
 
@@ -291,15 +289,26 @@ def process_id_in_election(obj, idstr, mapname):
 
     return getattr(obj.election,mapname)[idstr]
 
-def process_index_idlist(obj, liststr, mapname, indexname):
+
+def process_index_idlist(data, objects_by_id):
     """
-    For a list represented as a space separated list of IDs, split
-    the string and return the values from the mapping dict.
+    Parse a space-separated list of object IDS into objects.
+
+    Args:
+      data: a space-separated list of IDS, as a string.
+      objects_by_id: the dict of all objects of a single type, mapping
+        object id to object.
+
+    Returns: (objects, indexes_by_id)
+      objects: the objects as a list.
+      indexes_by_id: a dict mapping (0-based) index to object.
+
     """
-    idlist = liststr.split()
-    mapping = getattr(election_global,mapname)
-    setattr(obj, indexname, dict(zip(idlist, range(len(idlist)))))
-    return [mapping[i] for i in idlist]
+    ids = data.split()
+    indexes_by_id = {object_id: index for index, object_id in enumerate(ids)}
+    objects = [objects_by_id[object_id] for object_id in ids]
+
+    return objects, indexes_by_id
 
 
 def process_idlist(obj, liststr, mapname):
@@ -436,26 +445,24 @@ class ResultStyle:
     """
 
     def process_result_stat_types(self, value, result_stat_types_by_id):
-        """
-        For a list represented as a space separated list of IDs, split
-        the string and return the values from the mapping dict.
-
-        Args:
-          result_stats: the dict of ResultStatType objects.
-        """
-        type_ids = value.split()
-        indexes_by_id = {type_id: index for index, type_id in enumerate(type_ids)}
+        result_stat_types, indexes_by_id = process_index_idlist(value, result_stat_types_by_id)
         self.result_stat_type_index_by_id = indexes_by_id
-        result_stat_types = [result_stat_types_by_id[type_id] for type_id in type_ids]
 
         return result_stat_types
+
+    def process_voting_groups(self, value, voting_groups_by_id):
+        voting_groups, indexes_by_id = process_index_idlist(value, voting_groups_by_id)
+        self.voting_group_index_by_id = indexes_by_id
+
+        return voting_groups
 
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('description', parse_i18n),
         ('is_rcv', parse_bool),
-        ('voting_groups', process_index_idlist, 'voting_group_ids',
-         'voting_groups_by_id', 'voting_group_index_by_id'),
+        AutoAttr('voting_groups', process_voting_groups,
+            data_key='voting_group_ids', context_keys=('voting_groups_by_id',),
+            unpack_context=True),
         AutoAttr('result_stat_types', process_result_stat_types,
             data_key='result_stat_type_ids', context_keys=('result_stat_types_by_id',),
             unpack_context=True),
@@ -1174,9 +1181,6 @@ class Election:
         self.areas_by_id = OrderedDict()
         self.result_detail_dir = "./resultdata"
         self.result_detail_format_filepath = "{}/results.{}.psv"
-        # !!! Hack
-        global election_global
-        election_global = self
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
