@@ -834,7 +834,7 @@ class Contest:
         reordered before and after choices.
         """
         # An empty
-        if not idlist:
+        if not stat_idlist:
             return range(self.result_stat_count)
 
         # A list comprehension is not easy due to python limitations
@@ -857,6 +857,8 @@ class Contest:
         Returns a list of ResultStatType, either all or the list
         matching the space separated IDs.
         """
+        return [ self.result_style.result_stat_types[i]
+                for i in self.result_stat_indexes_by_id(group_idlist) ]
 
 
     def summary_results(self, choice_stat_index, group_idlist=None):
@@ -871,7 +873,7 @@ class Contest:
         # TODO: check choice_stat_index
         return [ self.results[i][choice_stat_index]
                  for i in
-                 self.voting_group.voting_group_indexes_by_id(idlist) ]
+                 self.result_style.voting_group_indexes_by_id(idlist) ]
 
     def detail_results(self, reporting_index, choice_stat_idlist=None):
         """
@@ -919,8 +921,6 @@ class Contest:
     def __repr__(self):
         return f'<Contest {self.type_name!r}: id={self.id!r}>'
 
-
-
     # Also expose the dict values as an ordered list, for convenience.
     @property
     def choices(self):
@@ -932,6 +932,13 @@ class Contest:
         if self._reporting_groups == None:
             _reporting_groups = self.voting_district.reporting_groups
         return _reporting_groups
+
+    @property
+    def result_stat_count(self):
+        """
+        Helper function to get the number of result stats
+        """
+        return len(self.result_style.result_stat_types)
 
     def _iter_headers(self):
         item = self

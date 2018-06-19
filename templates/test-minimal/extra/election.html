@@ -36,6 +36,9 @@
       {% for choice in contest.choices %}
         <tr><td>{{ choice.ballot_title|translate }}</td></tr>
       {% endfor %}
+      {% for stat in contest.result_stats_by_id() %}
+        <tr><td>{{ stat.heading }}</td></tr>
+      {% endfor %}
     </table>
     {% endfor %}
   {% endwith %}
