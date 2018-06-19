@@ -41,6 +41,7 @@ import yaml
 
 import orr.configlib as configlib
 import orr.datamodel as datamodel
+from orr.datamodel import ResultStatType
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
@@ -292,12 +293,20 @@ def load_model(dir_path, build_time):
     """
     path = dir_path / 'election.json'
     data = utils.read_json(path)
-    # TODO: make other objects top-level in addition to "election".
+    context = {}
+
+    result_stat_types_data = data['result_stat_types']
+    result_stat_types_by_id = datamodel.read_objects_to_dict(ResultStatType, result_stat_types_data)
+    # Add result_stat_types_by_id to the context now since processing
+    # "election" depends on it.
+    context.update(result_stat_types_by_id=result_stat_types_by_id)
+
+    # TODO: make more objects top-level.
     election_data = data['election']
 
-    election = datamodel.load_object(Election, election_data)
+    election = datamodel.load_object(Election, election_data, context=context)
 
-    context = dict(
+    context.update(
         build_time=build_time,
         election=election,
         languages=election.languages,

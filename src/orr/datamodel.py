@@ -174,13 +174,48 @@ def i18n_repr(i18n_text):
     return title[:40]
 
 
-def load_object(cls, data, cls_info=None):
+class AutoAttr:
+
+    """
+    Defines an attribute to set when loading JSON data, and how to load it.
+    """
+
+    def __init__(self, attr_name, load_value, data_key=None, context_keys=None,
+        unpack_context=False):
+        """
+        Args:
+          attr_name: the name of the attribute.
+          load_value: the function to call when loading.  The function
+            should have the signature load_value(obj, value, ...).
+          data_key: the name of the key to access from the JSON to obtain
+            the data value to pass to load_value().  Defaults to attr_name.
+          context_keys: the name of the context keys that processing this
+            attribute depends on.  Defaults to not depending on the context.
+          unpack_context: whether to unpack the context argument into
+            kwargs when calling the load_value() function.
+        """
+        if data_key is None:
+            data_key = attr_name
+        if context_keys is None:
+            context_keys = []
+
+        self.attr_name = attr_name
+        self.context_keys = set(context_keys)
+        self.data_key = data_key
+        self.load_value = load_value
+        self.unpack_context = unpack_context
+
+
+# TODO: make context required?
+def load_object(cls, data, cls_info=None, context=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
     """
     if cls_info is None:
         cls_info = {}
+    if context is None:
+        context = {}
 
     try:
         # This is where we use composition over inheritance.
@@ -191,17 +226,41 @@ def load_object(cls, data, cls_info=None):
         raise RuntimeError(f'error with cls {cls!r}: {cls_info!r}')
 
     for info in obj.auto_attrs:
-        attr_name, load_value, *remaining = info
+        # TODO: simplify this logic.
+        if type(info) == AutoAttr:
+            attr_name = info.attr_name
+            context_keys = info.context_keys
+            data_key = info.data_key
+            load_value = info.load_value
+            remaining = []
 
-        if remaining:
-            data_key = remaining.pop(0)
+            # Check that the context has the needed specified keys
+            if context_keys and not context_keys <= set(context):
+                msg = (f'context does not have keys {sorted(context_keys)} '
+                       f'while calling {load_value}: {sorted(context)}')
+                raise RuntimeError(msg)
+
+            if info.unpack_context:
+                kwargs = context
+            else:
+                kwargs = dict(context=context)
+
         else:
-            data_key = attr_name
+            attr_name, load_value, *remaining = info
+            kwargs = {}
+
+            if remaining:
+                data_key = remaining.pop(0)
+            else:
+                data_key = attr_name
 
         _log.debug(f'processing auto_attr: ({attr_name}, {data_key}, {load_value})')
         value = data.pop(data_key, None)
         if value is not None:
-            value = load_value(obj, value, *remaining)
+            try:
+                value = load_value(obj, value, *remaining, **kwargs)
+            except Exception:
+                raise RuntimeError(f'while processing attr_name {attr_name!r} for: {obj!r}')
 
         try:
             setattr(obj, attr_name, value)
@@ -241,6 +300,7 @@ def process_index_idlist(obj, liststr, mapname, indexname):
     mapping = getattr(election_global,mapname)
     setattr(obj, indexname, dict(zip(idlist, range(len(idlist)))))
     return [mapping[i] for i in idlist]
+
 
 def process_idlist(obj, liststr, mapname):
     """
@@ -284,16 +344,20 @@ def index_object(mapping, obj):
     mapped_object(mapping,obj)
 
 
-def read_objects_to_dict(cls, seq):
+def read_objects_to_dict(cls, seq, context=None):
     """
     Read from JSON data a list of objects that don't require an "index"
     attribute.
 
     Returns a dict mapping id to object.
+
+    Args:
+      context: optional context dictionary that load_object() for the
+        class depends on.
     """
     obj_by_id = OrderedDict()
     for data in seq:
-        item = load_object(cls, data)
+        item = load_object(cls, data, context=context)
         mapped_object(obj_by_id, item)
 
     return obj_by_id
@@ -364,11 +428,27 @@ class ResultStatType:
         self.heading = None
 
 class ResultStyle:
+
     """
     Each contest references the id of a ResultStyle that defines a
     set of attributes for the type of voting including what result stats
     will be available.
     """
+
+    def process_result_stat_types(self, value, result_stat_types_by_id):
+        """
+        For a list represented as a space separated list of IDs, split
+        the string and return the values from the mapping dict.
+
+        Args:
+          result_stats: the dict of ResultStatType objects.
+        """
+        type_ids = value.split()
+        indexes_by_id = {type_id: index for index, type_id in enumerate(type_ids)}
+        self.result_stat_type_index_by_id = indexes_by_id
+        result_stat_types = [result_stat_types_by_id[type_id] for type_id in type_ids]
+
+        return result_stat_types
 
     auto_attrs = [
         ('id', parse_id, '_id'),
@@ -376,8 +456,9 @@ class ResultStyle:
         ('is_rcv', parse_bool),
         ('voting_groups', process_index_idlist, 'voting_group_ids',
          'voting_groups_by_id', 'voting_group_index_by_id'),
-        ('result_stat_types', process_index_idlist, 'result_stat_type_ids',
-         'result_stat_types_by_id', 'result_stat_type_index_by_id')
+        AutoAttr('result_stat_types', process_result_stat_types,
+            data_key='result_stat_type_ids', context_keys=('result_stat_types_by_id',),
+            unpack_context=True),
     ]
 
     def __init__(self):
@@ -1024,10 +1105,10 @@ class Election:
         return areas
 
     def process_result_stat_types(self, value):
-        return read_objects_to_dict(ResultStatType, value)
+        return read_objects_to_dict(ResultStatType, value, context=context)
 
-    def process_result_styles(self, value):
-        return read_objects_to_dict(ResultStyle, value)
+    def process_result_styles(self, value, context):
+        return read_objects_to_dict(ResultStyle, value, context=context)
 
     def process_voting_groups(self, value):
         return read_objects_to_dict(VotingGroup, value)
@@ -1078,11 +1159,11 @@ class Election:
         # contests may reference and map the district ID
         ('districts', process_areas, 'districts', District),
         ('precincts', process_areas, 'precincts', Precinct),
-        # Enter the VotingGroup and ResultStatType enumerated definitions
-        ('result_stat_types_by_id', process_result_stat_types, 'result_stat_types'),
+        # Enter the VotingGroup and enumerated definitions
         ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
         # Processing result_styles requires result_stat_types and voting_groups.
-        ('result_style_by_id', process_result_styles, 'result_styles'),
+        AutoAttr('result_style_by_id', process_result_styles,
+            data_key='result_styles', context_keys=('result_stat_types_by_id', )),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),

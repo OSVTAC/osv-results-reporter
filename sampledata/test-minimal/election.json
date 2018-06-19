@@ -378,49 +378,6 @@
                 "is_vbm": true
             }
         ],
-        "result_stat_types": [
-            {
-                "_id": "RSTot",
-                "heading": "Ballots Counted"
-            },
-            {
-                "_id": "RSCst",
-                "heading": "Ballots Cast"
-            },
-            {
-                "_id": "RSReg",
-                "heading": "Registered Voters"
-            },
-            {
-                "_id": "RSTrn",
-                "heading": "Voter Turnout",
-                "is_percent": true
-            },
-            {
-                "_id": "RSRej",
-                "heading": "Ballots Rejected"
-            },
-            {
-                "_id": "RSUnc",
-                "heading": "Ballots Uncounted"
-            },
-            {
-                "_id": "RSWri",
-                "heading": "Writein Votes"
-            },
-            {
-                "_id": "RSUnd",
-                "heading": "Undervotes"
-            },
-            {
-                "_id": "RSOvr",
-                "heading": "Overvotes"
-            },
-            {
-                "_id": "RSExh",
-                "heading": "Exhausted Ballots"
-            }
-        ],
         "result_styles": [
             {
                 "_id": "EMS",
@@ -499,5 +456,48 @@
                 "en": "Writein Votes"
             }
         }
-    }
+    },
+    "result_stat_types": [
+        {
+            "_id": "RSTot",
+            "heading": "Ballots Counted"
+        },
+        {
+            "_id": "RSCst",
+            "heading": "Ballots Cast"
+        },
+        {
+            "_id": "RSReg",
+            "heading": "Registered Voters"
+        },
+        {
+            "_id": "RSTrn",
+            "heading": "Voter Turnout",
+            "is_percent": true
+        },
+        {
+            "_id": "RSRej",
+            "heading": "Ballots Rejected"
+        },
+        {
+            "_id": "RSUnc",
+            "heading": "Ballots Uncounted"
+        },
+        {
+            "_id": "RSWri",
+            "heading": "Writein Votes"
+        },
+        {
+            "_id": "RSUnd",
+            "heading": "Undervotes"
+        },
+        {
+            "_id": "RSOvr",
+            "heading": "Overvotes"
+        },
+        {
+            "_id": "RSExh",
+            "heading": "Exhausted Ballots"
+        }
+    ]
 }
