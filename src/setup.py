@@ -56,7 +56,7 @@ setup(
     # TODO: DRY up with orr.main.VERSION.
     version='0.0.1',
     description='template-based election results report generator',
-    url='https://github.com/carl3/open-results-reporter',
+    url='https://github.com/OSVTAC/osv-results-reporter',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
