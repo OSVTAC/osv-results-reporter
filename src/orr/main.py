@@ -292,8 +292,10 @@ def load_model(dir_path, build_time):
     """
     path = dir_path / 'election.json'
     data = utils.read_json(path)
+    # TODO: make other objects top-level in addition to "election".
+    election_data = data['election']
 
-    election = datamodel.load_object(Election, data)
+    election = datamodel.load_object(Election, election_data)
 
     context = dict(
         build_time=build_time,

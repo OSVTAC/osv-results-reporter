@@ -1,501 +1,503 @@
 {
-    "ballot_title": {
-        "en": "Consolidated Statewide Direct Primary Election",
-        "es": "Elecciones Estatales Primarias Directas Consolidadas",
-        "tl": "Pinagsamang Pambuong-Estado na Tuwirang Primaryang Eleksyon",
-        "zh": "全州聯合直接初選"
-    },
-    "contests": [
-        {
-            "_id": "403",
-            "_type": "office",
-            "ballot_subtitle": {
-                "en": "DISTRICT 17",
-                "es": "DISTRITO 17",
-                "tl": "DISTRITO 17",
-                "zh": "第17選區"
-            },
-            "ballot_title": {
-                "en": "STATE ASSEMBLY MEMBER",
-                "es": "MIEMBRO DE LA ASAMBLEA DEL ESTADO",
-                "tl": "MIYEMBRO NG ASEMBLEYA NG ESTADO",
-                "zh": "加州眾議員"
-            },
-            "choices": [
-                {
-                    "_id": "4812",
-                    "ballot_designation": {
-                        "en": "Assemblymember",
-                        "es": "Miembro de la Asamblea",
-                        "tl": "Miyembro ng Asembleya",
-                        "zh": "加州眾議員"
-                    },
-                    "ballot_title": {
-                        "en": "DAVID CHIU",
-                        "zh": "邱信福"
-                    },
-                    "candidate_party": {
-                        "en": "Party Preference: Democratic",
-                        "es": "Preferencia por partido: Demócrata",
-                        "tl": "Kinakatigang Partido: Demokratiko",
-                        "zh": "政黨傾向：民主黨"
-                    }
+    "election": {
+        "ballot_title": {
+            "en": "Consolidated Statewide Direct Primary Election",
+            "es": "Elecciones Estatales Primarias Directas Consolidadas",
+            "tl": "Pinagsamang Pambuong-Estado na Tuwirang Primaryang Eleksyon",
+            "zh": "全州聯合直接初選"
+        },
+        "contests": [
+            {
+                "_id": "403",
+                "_type": "office",
+                "ballot_subtitle": {
+                    "en": "DISTRICT 17",
+                    "es": "DISTRITO 17",
+                    "tl": "DISTRITO 17",
+                    "zh": "第17選區"
                 },
-                {
-                    "_id": "4813",
-                    "ballot_designation": {
-                        "en": "Small Business Entrepreneur",
-                        "es": "Emprendedor de Pequeña Empresa",
-                        "tl": "Mangangalakal sa Maliit na Negosyo",
-                        "zh": "小企業創業者"
-                    },
-                    "ballot_title": {
-                        "en": "ALEJANDRO FERNANDEZ",
-                        "zh": "阿勒簡德羅 ‧ 費南德斯"
-                    },
-                    "candidate_party": {
-                        "en": "Party Preference: Democratic",
-                        "es": "Preferencia por partido: Demócrata",
-                        "tl": "Kinakatigang Partido: Demokratiko",
-                        "zh": "政黨傾向：民主黨"
-                    }
-                }
-            ],
-            "header_id": "HDR05",
-            "is_partisan": "Y",
-            "number_elected": 1,
-            "vote_for_msg": {
-                "en": "Vote for One",
-                "es": "Vote por uno",
-                "tl": "Bumoto ng Isa",
-                "zh": "選一名"
-            },
-            "result_style": "EMS",
-            "voting_district": "ASSM17",
-            "writeins_allowed": 1
-        },
-        {
-            "_id": "598",
-            "_type": "office",
-            "ballot_title": {
-                "en": "MAYOR",
-                "es": "ALCALDE",
-                "tl": "PUNONG-BAYAN",
-                "zh": "市長"
-            },
-            "choices": [
-                {
-                    "_id": "3790",
-                    "ballot_designation": {
-                        "en": "Nonprofit Executive",
-                        "es": "Ejecutiva de Organización sin Fines de Lucro",
-                        "tl": "Nonprofit na Ehekutibo",
-                        "zh": "非牟利機構主管"
-                    },
-                    "ballot_title": {
-                        "en": "AMY FARAH WEISS",
-                        "zh": "艾咪 ‧ 法拉 ‧ 維絲"
-                    }
+                "ballot_title": {
+                    "en": "STATE ASSEMBLY MEMBER",
+                    "es": "MIEMBRO DE LA ASAMBLEA DEL ESTADO",
+                    "tl": "MIYEMBRO NG ASEMBLEYA NG ESTADO",
+                    "zh": "加州眾議員"
                 },
-                {
-                    "_id": "3789",
-                    "ballot_designation": {
-                        "en": "Family Social Worker",
-                        "es": "Trabajadora Social Familiar",
-                        "tl": "Social Worker para sa mga Pamilya",
-                        "zh": "家庭社工"
+                "choices": [
+                    {
+                        "_id": "4812",
+                        "ballot_designation": {
+                            "en": "Assemblymember",
+                            "es": "Miembro de la Asamblea",
+                            "tl": "Miyembro ng Asembleya",
+                            "zh": "加州眾議員"
+                        },
+                        "ballot_title": {
+                            "en": "DAVID CHIU",
+                            "zh": "邱信福"
+                        },
+                        "candidate_party": {
+                            "en": "Party Preference: Democratic",
+                            "es": "Preferencia por partido: Demócrata",
+                            "tl": "Kinakatigang Partido: Demokratiko",
+                            "zh": "政黨傾向：民主黨"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "ELLEN LEE ZHOU",
-                        "zh": "李愛晨"
+                    {
+                        "_id": "4813",
+                        "ballot_designation": {
+                            "en": "Small Business Entrepreneur",
+                            "es": "Emprendedor de Pequeña Empresa",
+                            "tl": "Mangangalakal sa Maliit na Negosyo",
+                            "zh": "小企業創業者"
+                        },
+                        "ballot_title": {
+                            "en": "ALEJANDRO FERNANDEZ",
+                            "zh": "阿勒簡德羅 ‧ 費南德斯"
+                        },
+                        "candidate_party": {
+                            "en": "Party Preference: Democratic",
+                            "es": "Preferencia por partido: Demócrata",
+                            "tl": "Kinakatigang Partido: Demokratiko",
+                            "zh": "政黨傾向：民主黨"
+                        }
                     }
+                ],
+                "header_id": "HDR05",
+                "is_partisan": "Y",
+                "number_elected": 1,
+                "vote_for_msg": {
+                    "en": "Vote for One",
+                    "es": "Vote por uno",
+                    "tl": "Bumoto ng Isa",
+                    "zh": "選一名"
                 },
-                {
-                    "_id": "4969",
-                    "ballot_designation": {
-                        "en": "Holistic Health Practitioner",
-                        "es": "Profesional de Salud Holística",
-                        "tl": "Praktisyoner para sa Holistikong Kalusugan",
-                        "zh": "全面保健執業者"
+                "result_style": "EMS",
+                "voting_district": "ASSM17",
+                "writeins_allowed": 1
+            },
+            {
+                "_id": "598",
+                "_type": "office",
+                "ballot_title": {
+                    "en": "MAYOR",
+                    "es": "ALCALDE",
+                    "tl": "PUNONG-BAYAN",
+                    "zh": "市長"
+                },
+                "choices": [
+                    {
+                        "_id": "3790",
+                        "ballot_designation": {
+                            "en": "Nonprofit Executive",
+                            "es": "Ejecutiva de Organización sin Fines de Lucro",
+                            "tl": "Nonprofit na Ehekutibo",
+                            "zh": "非牟利機構主管"
+                        },
+                        "ballot_title": {
+                            "en": "AMY FARAH WEISS",
+                            "zh": "艾咪 ‧ 法拉 ‧ 維絲"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "MICHELLE BRAVO",
-                        "zh": "米歇爾  布拉沃"
-                    }
-                },
-                {
-                    "_id": "4970",
-                    "ballot_designation": {
-                        "en": "President, Board of Supervisors",
-                        "es": "Presidenta, Consejo de Supervisores",
-                        "tl": "Presidente, Lupon ng mga Superbisor",
-                        "zh": "市參議會主席"
+                    {
+                        "_id": "3789",
+                        "ballot_designation": {
+                            "en": "Family Social Worker",
+                            "es": "Trabajadora Social Familiar",
+                            "tl": "Social Worker para sa mga Pamilya",
+                            "zh": "家庭社工"
+                        },
+                        "ballot_title": {
+                            "en": "ELLEN LEE ZHOU",
+                            "zh": "李愛晨"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "LONDON BREED",
-                        "zh": "倫敦 ‧ 布理德"
-                    }
-                },
-                {
-                    "_id": "3786",
-                    "ballot_designation": {
-                        "en": "Small Businessperson",
-                        "es": "Pequeño Empresario",
-                        "tl": "May-ari ng Maliit na Negosyo",
-                        "zh": "小商業商人"
+                    {
+                        "_id": "4969",
+                        "ballot_designation": {
+                            "en": "Holistic Health Practitioner",
+                            "es": "Profesional de Salud Holística",
+                            "tl": "Praktisyoner para sa Holistikong Kalusugan",
+                            "zh": "全面保健執業者"
+                        },
+                        "ballot_title": {
+                            "en": "MICHELLE BRAVO",
+                            "zh": "米歇爾  布拉沃"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "MARK LENO",
-                        "zh": "馬克 ‧ 里諾"
-                    }
-                },
-                {
-                    "_id": "3788",
-                    "ballot_designation": {
-                        "en": "Supervisor",
-                        "es": "Supervisora",
-                        "tl": "Superbisor",
-                        "zh": "市參議員"
+                    {
+                        "_id": "4970",
+                        "ballot_designation": {
+                            "en": "President, Board of Supervisors",
+                            "es": "Presidenta, Consejo de Supervisores",
+                            "tl": "Presidente, Lupon ng mga Superbisor",
+                            "zh": "市參議會主席"
+                        },
+                        "ballot_title": {
+                            "en": "LONDON BREED",
+                            "zh": "倫敦 ‧ 布理德"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "JANE KIM",
-                        "zh": "金貞妍"
-                    }
-                },
-                {
-                    "_id": "3785",
-                    "ballot_designation": {
-                        "en": "Small Business Advisor",
-                        "es": "Asesor de Pequeñas Empresas",
-                        "tl": "Tagapayo para sa Maliliit na Negosyo",
-                        "zh": "小商業顧問"
+                    {
+                        "_id": "3786",
+                        "ballot_designation": {
+                            "en": "Small Businessperson",
+                            "es": "Pequeño Empresario",
+                            "tl": "May-ari ng Maliit na Negosyo",
+                            "zh": "小商業商人"
+                        },
+                        "ballot_title": {
+                            "en": "MARK LENO",
+                            "zh": "馬克 ‧ 里諾"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "RICHIE GREENBERG",
-                        "zh": "理奇 ‧ 葛林伯格"
-                    }
-                },
-                {
-                    "_id": "3787",
-                    "ballot_designation": {
-                        "en": "Civil Rights Attorney",
-                        "es": "Abogada de Derechos Civiles",
-                        "tl": "Abugado para sa mga Karapatang Sibil",
-                        "zh": "民權律師"
+                    {
+                        "_id": "3788",
+                        "ballot_designation": {
+                            "en": "Supervisor",
+                            "es": "Supervisora",
+                            "tl": "Superbisor",
+                            "zh": "市參議員"
+                        },
+                        "ballot_title": {
+                            "en": "JANE KIM",
+                            "zh": "金貞妍"
+                        }
                     },
-                    "ballot_title": {
-                        "en": "ANGELA ALIOTO",
-                        "zh": "安琪娜  阿里奧圖"
+                    {
+                        "_id": "3785",
+                        "ballot_designation": {
+                            "en": "Small Business Advisor",
+                            "es": "Asesor de Pequeñas Empresas",
+                            "tl": "Tagapayo para sa Maliliit na Negosyo",
+                            "zh": "小商業顧問"
+                        },
+                        "ballot_title": {
+                            "en": "RICHIE GREENBERG",
+                            "zh": "理奇 ‧ 葛林伯格"
+                        }
+                    },
+                    {
+                        "_id": "3787",
+                        "ballot_designation": {
+                            "en": "Civil Rights Attorney",
+                            "es": "Abogada de Derechos Civiles",
+                            "tl": "Abugado para sa mga Karapatang Sibil",
+                            "zh": "民權律師"
+                        },
+                        "ballot_title": {
+                            "en": "ANGELA ALIOTO",
+                            "zh": "安琪娜  阿里奧圖"
+                        }
                     }
-                }
-            ],
-            "header_id": "HDR10",
-            "instructions_text": {
-                "en": "You may rank up to three choices. To rank fewer than three candidates, leave any remaining choices blank.",
-                "es": "Puede seleccionar un máximo de tres opciones por orden de preferencia. Para seleccionar por orden de preferencia a menos de tres candidatos, deje en blanco las opciones restantes.",
-                "tl": "Maaari ninyong pagsunud-sunurin ang hanggang sa tatlong pinili. Para pagsunud-sunurin ang mas kaunti sa tatlong kandidato, iwanan na blangko ang anumang mga natitirang pagpipilian.",
-                "zh": "您最多可以投選三個選擇。如果投選的候選人少於三名候選人，多餘欄目可留為空白。"
-            },
-            "number_elected": 1,
-            "vote_for_msg": {
-                "en": "Vote your first, second, and third choices",
-                "es": "Vote por su primera, segunda y tercera preferencias",
-                "tl": "Iboto ang inyong una, pangalawa, at pangatlong pinili",
-                "zh": "投選您的第一、第二和第三選擇"
-            },
-            "result_style": "EMR",
-            "voting_district": "0",
-            "writeins_allowed": 1
-        },
-        {
-            "_id": "617",
-            "_type": "measure",
-            "ballot_title": {
-                "en": "3"
-            },
-            "choice_names": {
-                "en": "YES;NO",
-                "es": "SÍ;NO",
-                "tl": "OO;HINDI",
-                "zh": "贊成;反對"
-            },
-            "choices": [
-                {
-                    "_id": "3767",
-                    "ballot_title": {
-                        "en": "YES",
-                        "es": "SÍ",
-                        "tl": "OO",
-                        "zh": "贊成"
-                    }
+                ],
+                "header_id": "HDR10",
+                "instructions_text": {
+                    "en": "You may rank up to three choices. To rank fewer than three candidates, leave any remaining choices blank.",
+                    "es": "Puede seleccionar un máximo de tres opciones por orden de preferencia. Para seleccionar por orden de preferencia a menos de tres candidatos, deje en blanco las opciones restantes.",
+                    "tl": "Maaari ninyong pagsunud-sunurin ang hanggang sa tatlong pinili. Para pagsunud-sunurin ang mas kaunti sa tatlong kandidato, iwanan na blangko ang anumang mga natitirang pagpipilian.",
+                    "zh": "您最多可以投選三個選擇。如果投選的候選人少於三名候選人，多餘欄目可留為空白。"
                 },
-                {
-                    "_id": "3768",
-                    "ballot_title": {
-                        "en": "NO",
-                        "es": "NO",
-                        "tl": "HINDI",
-                        "zh": "反對"
+                "number_elected": 1,
+                "vote_for_msg": {
+                    "en": "Vote your first, second, and third choices",
+                    "es": "Vote por su primera, segunda y tercera preferencias",
+                    "tl": "Iboto ang inyong una, pangalawa, at pangatlong pinili",
+                    "zh": "投選您的第一、第二和第三選擇"
+                },
+                "result_style": "EMR",
+                "voting_district": "0",
+                "writeins_allowed": 1
+            },
+            {
+                "_id": "617",
+                "_type": "measure",
+                "ballot_title": {
+                    "en": "3"
+                },
+                "choice_names": {
+                    "en": "YES;NO",
+                    "es": "SÍ;NO",
+                    "tl": "OO;HINDI",
+                    "zh": "贊成;反對"
+                },
+                "choices": [
+                    {
+                        "_id": "3767",
+                        "ballot_title": {
+                            "en": "YES",
+                            "es": "SÍ",
+                            "tl": "OO",
+                            "zh": "贊成"
+                        }
+                    },
+                    {
+                        "_id": "3768",
+                        "ballot_title": {
+                            "en": "NO",
+                            "es": "NO",
+                            "tl": "HINDI",
+                            "zh": "反對"
+                        }
                     }
-                }
-            ],
-            "header_id": "HDR13",
-            "question_text": {
-                "en": "BAY AREA TRAFFIC RELIEF PLAN. Shall voters authorize a plan to reduce auto and truck traffic, relieve crowding on BART, unclog freeway bottlenecks, and improve bus, ferry, BART and commuter rail service as specified in the plan in this voter pamphlet, with a $1 toll increase effective in 2019, a $1 increase in 2022, and a $1 increase in 2025, on all Bay Area toll bridges except the Golden Gate Bridge, with independent oversight of all funds?",
-                "es": "PLAN PARA DISMINUIR EL TRÁFICO EN EL ÁREA DE LA BAHÍA. ¿Deben autorizar los votantes un plan para disminuir el tráfico de camiones y automóviles, disminuir el congestionamiento en BART, descongestionar los embotellamientos en las autopistas y mejorar los servicios de autobuses, transbordadores, BART y ferrovías suburbanas según lo especificado en el plan en este folleto para el votante, con un aumento de $1 efectivo en 2019, un aumento de $1 en 2022 y un aumento de $1 en 2025, en todos los puentes de peaje del Área de la Bahía, excepto el Puente Golden Gate, con una supervisión independiente de todos los fondos?",
-                "tl": "PLANO SA PAGPAPAHUPA NG TRAPIKO SA BAY AREA. Dapat bang pahintulutan ng mga botante ang isang planong bawasan ang trapiko ng auto at trak, bawasan ang siksikan sa BART, ayusin ang daloy sa mga pagsisiksikan sa freeway, at pabutihin ang serbisyo ng bus, ferry, BART at commuter rail alinsunod sa nakasaad sa plano sa librito ng botante na ito, sa pamamagitan ng $1 na dagdag sa toll simula 2019, $1 na dagdag sa 2022, at $1 na dagdag sa 2025, sa lahat ng tulay ng toll sa Bay Area maliban sa Golden Gate Bridge, na may independiyenteng pagbabantay sa lahat ng pondo?",
-                "zh": "灣區交通舒緩計劃。選民是否應授權一項計劃以減少汽車及卡車車流、舒緩灣區捷運人潮、疏通高速公路瓶頸，並改善公車、渡輪、灣區捷運和通勤鐵路運輸服務，按照選民手冊中所詳細說明之計劃，針對於除了金門大橋外，所有灣區收取通行費之橋樑，生效於2019年增加1美元通行費，2022年增加1美元並於2025年增加1美元，並對所有資金採取獨立監督？"
+                ],
+                "header_id": "HDR13",
+                "question_text": {
+                    "en": "BAY AREA TRAFFIC RELIEF PLAN. Shall voters authorize a plan to reduce auto and truck traffic, relieve crowding on BART, unclog freeway bottlenecks, and improve bus, ferry, BART and commuter rail service as specified in the plan in this voter pamphlet, with a $1 toll increase effective in 2019, a $1 increase in 2022, and a $1 increase in 2025, on all Bay Area toll bridges except the Golden Gate Bridge, with independent oversight of all funds?",
+                    "es": "PLAN PARA DISMINUIR EL TRÁFICO EN EL ÁREA DE LA BAHÍA. ¿Deben autorizar los votantes un plan para disminuir el tráfico de camiones y automóviles, disminuir el congestionamiento en BART, descongestionar los embotellamientos en las autopistas y mejorar los servicios de autobuses, transbordadores, BART y ferrovías suburbanas según lo especificado en el plan en este folleto para el votante, con un aumento de $1 efectivo en 2019, un aumento de $1 en 2022 y un aumento de $1 en 2025, en todos los puentes de peaje del Área de la Bahía, excepto el Puente Golden Gate, con una supervisión independiente de todos los fondos?",
+                    "tl": "PLANO SA PAGPAPAHUPA NG TRAPIKO SA BAY AREA. Dapat bang pahintulutan ng mga botante ang isang planong bawasan ang trapiko ng auto at trak, bawasan ang siksikan sa BART, ayusin ang daloy sa mga pagsisiksikan sa freeway, at pabutihin ang serbisyo ng bus, ferry, BART at commuter rail alinsunod sa nakasaad sa plano sa librito ng botante na ito, sa pamamagitan ng $1 na dagdag sa toll simula 2019, $1 na dagdag sa 2022, at $1 na dagdag sa 2025, sa lahat ng tulay ng toll sa Bay Area maliban sa Golden Gate Bridge, na may independiyenteng pagbabantay sa lahat ng pondo?",
+                    "zh": "灣區交通舒緩計劃。選民是否應授權一項計劃以減少汽車及卡車車流、舒緩灣區捷運人潮、疏通高速公路瓶頸，並改善公車、渡輪、灣區捷運和通勤鐵路運輸服務，按照選民手冊中所詳細說明之計劃，針對於除了金門大橋外，所有灣區收取通行費之橋樑，生效於2019年增加1美元通行費，2022年增加1美元並於2025年增加1美元，並對所有資金採取獨立監督？"
+                },
+                "result_style": "EMR",
+                "voting_district": "0"
+            }
+        ],
+        "districts": [
+            {
+                "_id": "0",
+                "name": "City and County of San Francisco",
+                "short_name": "San Francisco County",
+                "classification": "County",
+                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO"
             },
-            "result_style": "EMR",
-            "voting_district": "0"
-        }
-    ],
-    "districts": [
-        {
-            "_id": "0",
-            "name": "City and County of San Francisco",
-            "short_name": "San Francisco County",
-            "classification": "County",
-            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO"
-        },
-        {
-            "_id": "ASSM17",
-            "name": "California State Assembly District 17",
-            "short_name": "Assembly District 17",
-            "classification": "County Legislative District",
-            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO"
-        },
-        {
-            "_id": "SUPV1",
-            "name": "San Francisco County Supervisorial District  1",
-            "short_name": "Supervisorial District 1",
-            "classification": "County Legislative District"
-        },
-        {
-            "_id": "NEIG1",
-            "name": "Neighborhood of Bayview/Hunters Point",
-            "short_name": "Bayview/Hunters Point",
-            "classification": "Neighborhood"
-        }
-    ],
-    "election_area": {
-        "en": "City and County of San Francisco",
-        "es": "Ciudad y Condado de San Francisco",
-        "tl": "Lungsod at County ng San Francisco",
-        "zh": "舊金山市"
-    },
-    "election_date": "2018-06-05",
-    "headers": [
-        {
-            "_id": "HDR02",
-            "ballot_title": {
-                "en": "VOTER-NOMINATED OFFICES",
-                "es": "CARGOS NOMINADOS POR LOS ELECTORES",
-                "tl": "MGA KATUNGKULANG NOMINADO NG BOTANTE",
-                "zh": "選民提名職位"
+            {
+                "_id": "ASSM17",
+                "name": "California State Assembly District 17",
+                "short_name": "Assembly District 17",
+                "classification": "County Legislative District",
+                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO"
             },
-            "classification": "Office Group",
-            "header_id": ""
-        },
-        {
-            "_id": "HDR05",
-            "ballot_title": {
-                "en": "STATE",
-                "es": "ESTADO",
-                "tl": "ESTADO",
-                "zh": "州"
+            {
+                "_id": "SUPV1",
+                "name": "San Francisco County Supervisorial District  1",
+                "short_name": "Supervisorial District 1",
+                "classification": "County Legislative District"
             },
-            "classification": "Office Category",
-            "header_id": "HDR02"
+            {
+                "_id": "NEIG1",
+                "name": "Neighborhood of Bayview/Hunters Point",
+                "short_name": "Bayview/Hunters Point",
+                "classification": "Neighborhood"
+            }
+        ],
+        "election_area": {
+            "en": "City and County of San Francisco",
+            "es": "Ciudad y Condado de San Francisco",
+            "tl": "Lungsod at County ng San Francisco",
+            "zh": "舊金山市"
         },
-        {
-            "_id": "HDR06",
-            "ballot_title": {
-                "en": "NONPARTISAN OFFICES",
-                "es": "CARGOS NO PARTIDARIOS",
-                "tl": "MGA KATUNGKULANG HINDI MAKAPARTIDO",
-                "zh": "無黨派職位"
+        "election_date": "2018-06-05",
+        "headers": [
+            {
+                "_id": "HDR02",
+                "ballot_title": {
+                    "en": "VOTER-NOMINATED OFFICES",
+                    "es": "CARGOS NOMINADOS POR LOS ELECTORES",
+                    "tl": "MGA KATUNGKULANG NOMINADO NG BOTANTE",
+                    "zh": "選民提名職位"
+                },
+                "classification": "Office Group",
+                "header_id": ""
             },
-            "classification": "Office Group",
-            "header_id": ""
-        },
-        {
-            "_id": "HDR10",
-            "ballot_title": {
-                "en": "CITY AND COUNTY",
-                "es": "CIUDAD Y CONDADO",
-                "tl": "LUNGSOD AT COUNTY",
-                "zh": "市縣"
+            {
+                "_id": "HDR05",
+                "ballot_title": {
+                    "en": "STATE",
+                    "es": "ESTADO",
+                    "tl": "ESTADO",
+                    "zh": "州"
+                },
+                "classification": "Office Category",
+                "header_id": "HDR02"
             },
-            "classification": "District Name",
-            "header_id": "HDR06"
-        },
-        {
-            "_id": "HDR11",
-            "ballot_title": {
-                "en": "MEASURES SUBMITTED TO THE VOTERS",
-                "es": "INICIATIVAS DE LEY PRESENTADAS A LOS ELECTORES",
-                "tl": "MGA PANUKALANG ISINUMITE SA MGA BOTANTE",
-                "zh": "提交選民投票的提案"
+            {
+                "_id": "HDR06",
+                "ballot_title": {
+                    "en": "NONPARTISAN OFFICES",
+                    "es": "CARGOS NO PARTIDARIOS",
+                    "tl": "MGA KATUNGKULANG HINDI MAKAPARTIDO",
+                    "zh": "無黨派職位"
+                },
+                "classification": "Office Group",
+                "header_id": ""
             },
-            "classification": "Measure Group",
-            "header_id": ""
-        },
-        {
-            "_id": "HDR13",
-            "ballot_title": {
-                "en": "REGIONAL MEASURE",
-                "es": "INICIATIVA DE LEY REGIONAL",
-                "tl": "PANREHIYONG PANUKALA",
-                "zh": "區域提案"
+            {
+                "_id": "HDR10",
+                "ballot_title": {
+                    "en": "CITY AND COUNTY",
+                    "es": "CIUDAD Y CONDADO",
+                    "tl": "LUNGSOD AT COUNTY",
+                    "zh": "市縣"
+                },
+                "classification": "District Name",
+                "header_id": "HDR06"
             },
-            "classification": "Measure Category",
-            "header_id": "HDR11"
-        }
-    ],
-    "languages": [
-        "en",
-        "es",
-        "tl",
-        "zh"
-    ],
-    "precincts": [
-        {
-            "_id": "*",
-            "name": "All Precincts",
-            "short_name": "All Precincts"
-        },
-        {
-            "_id": "PCT1141",
-            "name": "Precinct 1141",
-            "short_name": "Precinct 1141"
-        },
-        {
-            "_id": "PCT7101",
-            "name": "Precinct 7101",
-            "short_name": "Precinct 7101",
-            "is_vbm": true
-        }
-   ],
-    "result_stat_types": [
-        {
-            "_id": "RSTot",
-            "heading": "Ballots Counted"
-        },
-        {
-            "_id": "RSCst",
-            "heading": "Ballots Cast"
-        },
-        {
-            "_id": "RSReg",
-            "heading": "Registered Voters"
-        },
-        {
-            "_id": "RSTrn",
-            "heading": "Voter Turnout",
-            "is_percent": true
-        },
-        {
-            "_id": "RSRej",
-            "heading": "Ballots Rejected"
-        },
-        {
-            "_id": "RSUnc",
-            "heading": "Ballots Uncounted"
-        },
-        {
-            "_id": "RSWri",
-            "heading": "Writein Votes"
-        },
-        {
-            "_id": "RSUnd",
-            "heading": "Undervotes"
-        },
-        {
-            "_id": "RSOvr",
-            "heading": "Overvotes"
-        },
-        {
-            "_id": "RSExh",
-            "heading": "Exhausted Ballots"
-        }
-    ],
-    "result_styles": [
-        {
-            "_id": "EMS",
-            "description": "Plurality voting, subtotal by Election Day/VBM",
-            "is_rcv": false,
-            "voting_group_ids": "TO ED MV",
-            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
-        },
-        {
-            "_id": "EMR",
-            "description": "RCV voting, subtotal by Election Day/VBM",
-            "is_rcv": true,
-            "voting_group_ids": "TO ED MV",
-            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
-        }
-    ],
-    "voting_groups": [
-        {
-            "_id": "TO",
-            "heading": "Total"
-        },
-        {
-            "_id": "ED",
-            "heading": "Election Day"
-        },
-        {
-            "_id": "MV",
-            "heading": "Vote By Mail"
-        },
-        {
-            "_id": "EV",
-            "heading": "Early Voting"
-        },
-        {
-            "_id": "IA",
-            "heading": "In-County"
-        },
-        {
-            "_id": "XA",
-            "heading": "Other Counties"
-        },
-        {
-            "_id": "PV",
-            "heading": "Provisional Voting"
-        }
-    ],
-    "translations": {
-        "ballots_cast": {
-            "en": "Ballots Cast"
-        },
-        "ballots_counted": {
-            "en": "Ballots Counted"
-        },
-        "ballots_rejected": {
-            "en": "Ballots Rejected"
-        },
-        "ballots_uncounted": {
-            "en": "Ballots Uncounted"
-        },
-        "exhausted_ballots": {
-            "en": "Exhausted Ballots"
-        },
-        "overvotes": {
-            "en": "Overvotes"
-        },
-        "registered_voters": {
-            "en": "Registered Voters"
-        },
-        "undervotes": {
-            "en": "Undervotes"
-        },
-        "voter_turnout": {
-            "en": "Voter Turnout"
-        },
-        "writein_votes": {
-            "en": "Writein Votes"
+            {
+                "_id": "HDR11",
+                "ballot_title": {
+                    "en": "MEASURES SUBMITTED TO THE VOTERS",
+                    "es": "INICIATIVAS DE LEY PRESENTADAS A LOS ELECTORES",
+                    "tl": "MGA PANUKALANG ISINUMITE SA MGA BOTANTE",
+                    "zh": "提交選民投票的提案"
+                },
+                "classification": "Measure Group",
+                "header_id": ""
+            },
+            {
+                "_id": "HDR13",
+                "ballot_title": {
+                    "en": "REGIONAL MEASURE",
+                    "es": "INICIATIVA DE LEY REGIONAL",
+                    "tl": "PANREHIYONG PANUKALA",
+                    "zh": "區域提案"
+                },
+                "classification": "Measure Category",
+                "header_id": "HDR11"
+            }
+        ],
+        "languages": [
+            "en",
+            "es",
+            "tl",
+            "zh"
+        ],
+        "precincts": [
+            {
+                "_id": "*",
+                "name": "All Precincts",
+                "short_name": "All Precincts"
+            },
+            {
+                "_id": "PCT1141",
+                "name": "Precinct 1141",
+                "short_name": "Precinct 1141"
+            },
+            {
+                "_id": "PCT7101",
+                "name": "Precinct 7101",
+                "short_name": "Precinct 7101",
+                "is_vbm": true
+            }
+       ],
+        "result_stat_types": [
+            {
+                "_id": "RSTot",
+                "heading": "Ballots Counted"
+            },
+            {
+                "_id": "RSCst",
+                "heading": "Ballots Cast"
+            },
+            {
+                "_id": "RSReg",
+                "heading": "Registered Voters"
+            },
+            {
+                "_id": "RSTrn",
+                "heading": "Voter Turnout",
+                "is_percent": true
+            },
+            {
+                "_id": "RSRej",
+                "heading": "Ballots Rejected"
+            },
+            {
+                "_id": "RSUnc",
+                "heading": "Ballots Uncounted"
+            },
+            {
+                "_id": "RSWri",
+                "heading": "Writein Votes"
+            },
+            {
+                "_id": "RSUnd",
+                "heading": "Undervotes"
+            },
+            {
+                "_id": "RSOvr",
+                "heading": "Overvotes"
+            },
+            {
+                "_id": "RSExh",
+                "heading": "Exhausted Ballots"
+            }
+        ],
+        "result_styles": [
+            {
+                "_id": "EMS",
+                "description": "Plurality voting, subtotal by Election Day/VBM",
+                "is_rcv": false,
+                "voting_group_ids": "TO ED MV",
+                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
+            },
+            {
+                "_id": "EMR",
+                "description": "RCV voting, subtotal by Election Day/VBM",
+                "is_rcv": true,
+                "voting_group_ids": "TO ED MV",
+                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
+            }
+        ],
+        "voting_groups": [
+            {
+                "_id": "TO",
+                "heading": "Total"
+            },
+            {
+                "_id": "ED",
+                "heading": "Election Day"
+            },
+            {
+                "_id": "MV",
+                "heading": "Vote By Mail"
+            },
+            {
+                "_id": "EV",
+                "heading": "Early Voting"
+            },
+            {
+                "_id": "IA",
+                "heading": "In-County"
+            },
+            {
+                "_id": "XA",
+                "heading": "Other Counties"
+            },
+            {
+                "_id": "PV",
+                "heading": "Provisional Voting"
+            }
+        ],
+        "translations": {
+            "ballots_cast": {
+                "en": "Ballots Cast"
+            },
+            "ballots_counted": {
+                "en": "Ballots Counted"
+            },
+            "ballots_rejected": {
+                "en": "Ballots Rejected"
+            },
+            "ballots_uncounted": {
+                "en": "Ballots Uncounted"
+            },
+            "exhausted_ballots": {
+                "en": "Exhausted Ballots"
+            },
+            "overvotes": {
+                "en": "Overvotes"
+            },
+            "registered_voters": {
+                "en": "Registered Voters"
+            },
+            "undervotes": {
+                "en": "Undervotes"
+            },
+            "voter_turnout": {
+                "en": "Voter Turnout"
+            },
+            "writein_votes": {
+                "en": "Writein Votes"
+            }
         }
     }
 }
