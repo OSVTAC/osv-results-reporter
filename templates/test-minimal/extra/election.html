@@ -32,12 +32,24 @@
       </p>
     {% endif %}
     <table>
-      <thead><tr><th>&nbsp;</th></tr></thead>
+      <thead><tr><th>&nbsp;</th>
+      {% for vg in contest.voting_groups_by_id() %}
+      <th>{{ vg.heading }}</th>
+      {% endfor %}
+      </tr></thead>
       {% for choice in contest.choices %}
-        <tr><td>{{ choice.ballot_title|translate }}</td></tr>
+        <tr><td>{{ choice.ballot_title|translate }}</td>
+        {% for v in choice.summary_results() %}
+        <td>{{ v }}</td>
+        {% endfor %}
+        </tr>
       {% endfor %}
       {% for stat in contest.result_stats_by_id() %}
         <tr><td>{{ stat.heading }}</td></tr>
+        {% for v in contest.summary_results(loop.index0) %}
+        <td>{{ v }}</td>
+        {% endfor %}
+        </tr>
       {% endfor %}
     </table>
     {% endfor %}

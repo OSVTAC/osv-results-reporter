@@ -31,7 +31,7 @@ from collections import OrderedDict
 from datetime import datetime
 import functools
 import logging
-
+import re
 
 _log = logging.getLogger(__name__)
 
@@ -477,10 +477,18 @@ class ResultStyle:
         Returns the list of voting group index values by the
         space separated list of ids. Unmatched ids are omitted.
         """
-        if not idlist or idlist == "*":
+        if (not idlist) or (idlist == "*"):
             return range(len(self.voting_groups))
 
-        return map_idlist(self.result_stat_type_index_by_id, idlist)
+        return map_idlist(self.voting_group_index_by_id, idlist)
+
+    def voting_groups_by_id(self, idlist):
+        """
+        Returns the list of voting group objects by the
+        space separated list of ids. Unmatched ids are omitted.
+        """
+        return [ self.voting_groups[i] for i in
+                 self.voting_group_indexes_by_id(idlist) ]
 
 
 
@@ -499,8 +507,6 @@ class ReportingGroup:
     def __init__(self, area, voting_group):
         self.area = area
         self.voting_group = voting_group
-        self.index = len(district.reporting_groups)
-        district.reporting_groups.append(self)
 
 # --- Precinct/District definitions ---
 
@@ -594,9 +600,10 @@ class District:
 
     @property
     def reporting_groups(self):
-        if self._reporting_groups == None:
+        if self._reporting_groups is None:
             # Create the reporting_groups list from IDs on first access
             self._reporting_groups = []
+            voting_groups_by_id = self.election.context['voting_groups_by_id']
             for s in self.reporting_group_ids.split():
                 m = re.match(r'(.*)~(.*)',s)
                 if not m:
@@ -605,7 +612,7 @@ class District:
                 area_id, group_id = m.groups()
                 rg = ReportingGroup(
                     self.election.areas_by_id[area_id],
-                    self.election.voting_groups_by_id[group_id])
+                    voting_groups_by_id[group_id])
                 setattr(rg, 'index', len(self._reporting_groups))
                 self._reporting_groups.append(rg)
         return self._reporting_groups
@@ -680,12 +687,13 @@ class Choice:
         title = i18n_repr(self.ballot_title)
         return f'<Choice id={self.id!r} title={title[:70]!r}...>'
 
+    @property
     def result_index(self):
         """
         Returns the column index into result values corresponding
         to this choice.
         """
-        return self.index + contest.result_stat_count
+        return self.index + self.contest.result_stat_count
 
     def summary_results(self, group_idlist=None):
         """
@@ -693,7 +701,7 @@ class Choice:
         computed for this choice.
         """
 
-        return self.contest.summary_results(self.result_index,idlist)
+        return self.contest.summary_results(self.result_index, group_idlist)
 
 class Candidate:
 
@@ -712,6 +720,22 @@ class Candidate:
         title = i18n_repr(self.ballot_title)
         return f'<Candidate id={self.id!r} title={title[:70]!r}...>'
 
+
+    @property
+    def result_index(self):
+        """
+        Returns the column index into result values corresponding
+        to this choice.
+        """
+        return self.index + self.contest.result_stat_count
+
+    def summary_results(self, group_idlist=None):
+        """
+        Returns the contest.summary_results with the choice_stat_index
+        computed for this choice.
+        """
+
+        return self.contest.summary_results(self.result_index, group_idlist)
 
 def get_path_difference(new_seq, old_seq):
     """
@@ -741,6 +765,13 @@ BALLOT_ITEM_CLASSES = {
     'ynoffice': Choice,
 }
 
+
+# List of results detail headers to copy to the contest
+results_details_headers = dict(
+    reporting_time=parse_date_time,
+    total_precincts=parse_int,
+    precincts_reporting=parse_int,
+    rcv_rounds=parse_int)
 
 class Contest:
 
@@ -834,12 +865,6 @@ class Contest:
         return choices_by_id
 
 
-    # List of results detail headers to copy to the contest
-    results_details_headers = dict(
-        reporting_time=parse_date_time,
-        total_precincts=parse_int,
-        precincts_reporting=parse_int,
-        rcv_rounds=parse_int)
 
     def load_results_details(self, filename=None):
         """
@@ -851,7 +876,7 @@ class Contest:
                       specified, the name will be composed with the
                       election.get_result_detail_filename.
         """
-        if self.getattr('results',None):
+        if hasattr(self,'results'):
             return
 
         if not filename:
@@ -870,24 +895,23 @@ class Contest:
                         f'invalid results line {line} in {filename}')
                 k, v = m.groups()
                 if k in results_details_headers:
+                    _log.debug(f'header {k}:{v}')
                     setattr(self, k, results_details_headers[k](self, v))
 
             # TODO: validate the format with contests hash
             # Copy the number of result stat types in this contest
 
-            # Init column counts and 2D array of values
-            self.result_stat_count = len(self.result_style.result_stat_types)
             self.choice_count = len(self.choices_by_id)
             self.reporting_group_count = len(self.reporting_groups)
             self.results = []
-            self.rcv_results = [ None * self.rcv_rounds ]
+            self.rcv_results = [ [None] * self.rcv_rounds ]
 
             # Read the column heading definition
             line = f.readline()
             ncols = len(line.split(sep='|'))
             if ncols != 2 + self.result_stat_count + self.choice_count:
                 raise RuntimeError(
-                    f'Mismatched column heading in {filename}: {line}')
+                    f'Mismatched column heading in {filename}: {line} stats={self.result_stat_count} choices={self.choice_count}')
             # We could verify column headings, but instead validate based
             # on a hash checksum of contest definitions, so the heading
             # line becomes a comment for unvalidated input
@@ -895,7 +919,9 @@ class Contest:
             # Read the results, RCV first
             next_rcv_round = self.rcv_rounds
             for line in f:
+                line = line.strip()
                 cols = line.split(sep='|')
+                _log.debug(f'col {cols}')
                 if len(cols) != ncols:
                     raise RuntimeError(
                         f'Mismatched columns in {filename}: {line}')
@@ -947,13 +973,19 @@ class Contest:
         return l
 
 
-    def result_stats_by_id(self, group_idlist=None):
+    def result_stats_by_id(self, stat_idlist=None):
         """
         Returns a list of ResultStatType, either all or the list
         matching the space separated IDs.
         """
         return [ self.result_style.result_stat_types[i]
-                for i in self.result_stat_indexes_by_id(group_idlist) ]
+                for i in self.result_stat_indexes_by_id(stat_idlist) ]
+
+    def voting_groups_by_id(self, group_idlist=None):
+        """
+        Helper function to reference the voting groups.
+        """
+        return self.result_style.voting_groups_by_id(group_idlist)
 
 
     def summary_results(self, choice_stat_index, group_idlist=None):
@@ -968,7 +1000,7 @@ class Contest:
         # TODO: check choice_stat_index
         return [ self.results[i][choice_stat_index]
                  for i in
-                 self.result_style.voting_group_indexes_by_id(idlist) ]
+                 self.result_style.voting_group_indexes_by_id(group_idlist) ]
 
     def detail_results(self, reporting_index, choice_stat_idlist=None):
         """
@@ -1024,7 +1056,7 @@ class Contest:
 
     @property
     def reporting_groups(self):
-        if self._reporting_groups == None:
+        if not hasattr(self,'_reporting_groups'):
             _reporting_groups = self.voting_district.reporting_groups
         return _reporting_groups
 
@@ -1179,10 +1211,11 @@ class Election:
         ('contests_by_id', process_contests, 'contests'),
     ]
 
-    def __init__(self):
+    def __init__(self,context=None):
         self.areas_by_id = OrderedDict()
         self.result_detail_dir = "./resultdata"
         self.result_detail_format_filepath = "{}/results.{}.psv"
+        self.context = context
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'

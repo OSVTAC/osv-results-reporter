@@ -204,7 +204,7 @@
                     "tl": "Iboto ang inyong una, pangalawa, at pangatlong pinili",
                     "zh": "投選您的第一、第二和第三選擇"
                 },
-                "result_style": "EMR",
+                "result_style": "EMRW",
                 "voting_district": "0",
                 "writeins_allowed": 1
             },
@@ -247,7 +247,7 @@
                     "tl": "PLANO SA PAGPAPAHUPA NG TRAPIKO SA BAY AREA. Dapat bang pahintulutan ng mga botante ang isang planong bawasan ang trapiko ng auto at trak, bawasan ang siksikan sa BART, ayusin ang daloy sa mga pagsisiksikan sa freeway, at pabutihin ang serbisyo ng bus, ferry, BART at commuter rail alinsunod sa nakasaad sa plano sa librito ng botante na ito, sa pamamagitan ng $1 na dagdag sa toll simula 2019, $1 na dagdag sa 2022, at $1 na dagdag sa 2025, sa lahat ng tulay ng toll sa Bay Area maliban sa Golden Gate Bridge, na may independiyenteng pagbabantay sa lahat ng pondo?",
                     "zh": "灣區交通舒緩計劃。選民是否應授權一項計劃以減少汽車及卡車車流、舒緩灣區捷運人潮、疏通高速公路瓶頸，並改善公車、渡輪、灣區捷運和通勤鐵路運輸服務，按照選民手冊中所詳細說明之計劃，針對於除了金門大橋外，所有灣區收取通行費之橋樑，生效於2019年增加1美元通行費，2022年增加1美元並於2025年增加1美元，並對所有資金採取獨立監督？"
                 },
-                "result_style": "EMR",
+                "result_style": "EMS",
                 "voting_district": "0"
             }
         ],
@@ -384,11 +384,25 @@
                 "description": "Plurality voting, subtotal by Election Day/VBM",
                 "is_rcv": false,
                 "voting_group_ids": "TO ED MV",
+                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr"
+            },
+            {
+                "_id": "EMSW",
+                "description": "Plurality voting, subtotal by Election Day/VBM, with writeins",
+                "is_rcv": false,
+                "voting_group_ids": "TO ED MV",
                 "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
             },
             {
                 "_id": "EMR",
                 "description": "RCV voting, subtotal by Election Day/VBM",
+                "is_rcv": true,
+                "voting_group_ids": "TO ED MV",
+                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr RSExh"
+            },
+            {
+                "_id": "EMRW",
+                "description": "RCV voting, subtotal by Election Day/VBM, with writeins",
                 "is_rcv": true,
                 "voting_group_ids": "TO ED MV",
                 "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
