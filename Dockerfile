@@ -36,6 +36,10 @@ COPY scripts/ scripts/
 COPY src/ src/
 COPY templates/ templates/
 
+# Add a marker file so we can check from within Python whether we
+# are running inside the Docker container.
+RUN touch src/orr/in_docker.py
+
 # Installing via pip lets us invoke the program using the console-script
 # entry-point "orr" defined in setup.py.
 RUN pip install ./src

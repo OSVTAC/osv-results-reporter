@@ -35,8 +35,15 @@ import sys
 
 import babel.dates
 
-
 _log = logging.getLogger(__name__)
+
+try:
+    # See the Dockerfile for where we create this module.
+    import orr.in_docker
+except ModuleNotFoundError:
+    IN_DOCKER = False
+else:
+    IN_DOCKER = True
 
 
 UTF8_ENCODING = 'utf-8'

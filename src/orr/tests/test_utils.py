@@ -27,10 +27,11 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+import unittest
 from unittest import TestCase
 
 import orr.utils as utils
-from orr.utils import US_LOCALE
+from orr.utils import IN_DOCKER, US_LOCALE
 
 
 class UtilsModuleTest(TestCase):
@@ -44,18 +45,29 @@ class UtilsModuleTest(TestCase):
             ((1000, None), '1000'),
             ((1000, US_LOCALE), '1,000'),
         ]
-        if sys.platform != 'darwin':
-            # Also test a locale where the thousands separator is a period.
-            # (This does not work on Mac OS X for some reason.)
-            case = ((1000, 'de_DE.UTF-8'), '1.000')
-            cases.append(case)
-
         for (num, loc), expected in cases:
             with self.subTest(num=num, loc=loc):
                 with utils.changing_locale(loc):
                     actual = utils.format_number(num)
 
                 self.assertEqual(actual, expected)
+
+    @unittest.skipUnless(IN_DOCKER, 'not running inside our Docker container')
+    def test_format_number__locale_de_DE(self):
+        """
+        Test a locale where the thousands separator is a period.
+
+        This doesn't work on Mac OS X for some reason.  More generally,
+        it's only guaranteed to work in our Docker container because we're
+        able to configure that environment correctly by installing the
+        needed locale.
+        """
+        num, loc, expected = 1000, 'de_DE.UTF-8', '1.000'
+
+        with utils.changing_locale(loc):
+            actual = utils.format_number(num)
+
+        self.assertEqual(actual, expected)
 
     def test_format_percent(self):
         cases = [
