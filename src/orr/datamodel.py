@@ -217,13 +217,16 @@ class AutoAttr:
         if self.unpack_context:
             # Only unpack the context keys that are needed / recognized.
             kwargs = {key: context[key] for key in context_keys}
-        else:
+        elif context_keys:
             kwargs = dict(context=context)
+        else:
+            kwargs = {}
 
         return kwargs
 
 
 # TODO: make context required?
+# TODO: rename cls_info to init_kwargs?
 def load_object(cls, data, cls_info=None, context=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
@@ -242,21 +245,18 @@ def load_object(cls, data, cls_info=None, context=None):
     except Exception:
         raise RuntimeError(f'error with cls {cls!r}: {cls_info!r}')
 
-    for info in obj.auto_attrs:
-        # TODO: simplify this logic.
-        if type(info) == AutoAttr:
-            attr_name = info.attr_name
-            load_value = info.load_value
-            data_key = info.data_key
-            kwargs = info.make_load_value_kwargs(context)
-        else:
-            # TODO: only permit len(info) == 2, otherwise use AutoAttr.
-            if len(info) == 2:
-                attr_name, load_value = info
-                data_key = attr_name
-            else:
-                attr_name, load_value, data_key = info
-            kwargs = {}
+    # Set all of the (remaining) object attributes -- iterating over all
+    # of the auto_attrs and parsing the corresponding JSON key values.
+    for attr in obj.auto_attrs:
+        # TODO: make the below inside of the loop a function or method of AutoAttr.
+        if type(attr) != AutoAttr:
+            assert type(attr) == tuple
+            attr = AutoAttr(*attr)
+
+        attr_name = attr.attr_name
+        load_value = attr.load_value
+        data_key = attr.data_key
+        kwargs = attr.make_load_value_kwargs(context)
 
         _log.debug(f'processing auto_attr: ({attr_name}, {data_key}, {load_value})')
         value = data.pop(data_key, None)
@@ -271,13 +271,14 @@ def load_object(cls, data, cls_info=None, context=None):
         except Exception:
             raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
 
+    # Check that all keys in the JSON have been processed.
     if data:
-        raise RuntimeError(
-            f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
+        raise RuntimeError(f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
 
     if hasattr(cls, 'finalize'):
         # Perform class-specific init after data is loaded
         obj.finalize()
+
     return obj
 
 
