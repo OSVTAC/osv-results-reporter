@@ -344,14 +344,24 @@ def add_object_by_id(mapping, obj):
     mapping[obj.id] = obj
 
 
-def index_objects(objects_by_id, objects):
+def create_mapping_by_id(objects):
     """
-    Set the index attribute on an iterable of objects, and add them to
-    a dict mapping object id to object.
+    Create and return an ordered dict mapping object id to object.
+    """
+    objects_by_id = OrderedDict()
+
+    for obj in objects:
+        add_object_by_id(objects_by_id, obj)
+
+    return objects_by_id
+
+
+def index_objects(objects):
+    """
+    Set the index attribute on a sequence of objects, starting with 0.
     """
     for index, obj in enumerate(objects):
         obj.index = index
-        add_object_by_id(objects_by_id, obj)
 
 
 def read_objects_to_dict(cls, seq, context=None):
@@ -365,12 +375,10 @@ def read_objects_to_dict(cls, seq, context=None):
       context: optional context dictionary that load_object() for the
         class depends on.
     """
-    obj_by_id = OrderedDict()
-    for data in seq:
-        item = load_object(cls, data, context=context)
-        add_object_by_id(obj_by_id, item)
+    objects = [load_object(cls, data, context=context) for data in seq]
+    objects_by_id = create_mapping_by_id(objects)
 
-    return obj_by_id
+    return objects_by_id
 
 
 # --- Results reporting group/type definitions ---
@@ -843,10 +851,9 @@ class Contest:
           choice_cls: the class to use to instantiate the choice (e.g.
             Candidate or Choice).
         """
-        choices_by_id = OrderedDict()
-
         choices = [self.enter_choice(data) for data in choices_data]
-        index_objects(choices_by_id, choices)
+        index_objects(choices)
+        choices_by_id = create_mapping_by_id(choices)
 
         return choices_by_id
 
@@ -1156,10 +1163,9 @@ class Election:
         Args:
           value: a list of dicts corresponding to the Header objects.
         """
-        headers_by_id = OrderedDict()
-
         headers = [load_object(Header, data) for data in value]
-        index_objects(headers_by_id, headers)
+        index_objects(headers)
+        headers_by_id = create_mapping_by_id(headers)
 
         for header in headers:
             process_header_id(header, headers_by_id)
@@ -1175,14 +1181,12 @@ class Election:
         Args:
           value: a list of dicts corresponding to the Contest objects.
         """
-        headers_by_id = self.headers_by_id
-        contests_by_id = OrderedDict()
-
         contests = [Contest.from_data(data, self, context=context) for data in value]
-        index_objects(contests_by_id, contests)
+        index_objects(contests)
+        contests_by_id = create_mapping_by_id(contests)
 
         for contest in contests:
-            process_header_id(contest, headers_by_id)
+            process_header_id(contest, self.headers_by_id)
 
         return contests_by_id
 
