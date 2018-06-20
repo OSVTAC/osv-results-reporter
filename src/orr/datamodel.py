@@ -229,7 +229,6 @@ def load_object(cls, data, cls_info=None, context=None):
             context_keys = info.context_keys
             data_key = info.data_key
             load_value = info.load_value
-            remaining = []
 
             # Check that the context has the needed specified keys
             if context_keys and not context_keys <= set(context):
@@ -242,21 +241,20 @@ def load_object(cls, data, cls_info=None, context=None):
                 kwargs = {key: context[key] for key in context_keys}
             else:
                 kwargs = dict(context=context)
-
         else:
-            attr_name, load_value, *remaining = info
-            kwargs = {}
-
-            if remaining:
-                data_key = remaining.pop(0)
-            else:
+            # TODO: only permit len(info) == 2, otherwise use AutoAttr.
+            if len(info) == 2:
+                attr_name, load_value = info
                 data_key = attr_name
+            else:
+                attr_name, load_value, data_key = info
+            kwargs = {}
 
         _log.debug(f'processing auto_attr: ({attr_name}, {data_key}, {load_value})')
         value = data.pop(data_key, None)
         if value is not None:
             try:
-                value = load_value(obj, value, *remaining, **kwargs)
+                value = load_value(obj, value, **kwargs)
             except Exception:
                 raise RuntimeError(f'while processing attr_name {attr_name!r} for: {obj!r}')
 
@@ -273,21 +271,6 @@ def load_object(cls, data, cls_info=None, context=None):
         # Perform class-specific init after data is loaded
         obj.finalize()
     return obj
-
-def process_id(obj, idstr, mapname):
-    """
-    Convert a string ID into a reference to the object
-    """
-
-    return mapping[idstr]
-
-def process_id_in_election(obj, idstr, mapname):
-    """
-    Convert a string ID into a reference to the object from a dict
-    within the obj.election dict
-    """
-
-    return getattr(obj.election,mapname)[idstr]
 
 
 def make_index_map(values):
@@ -460,6 +443,9 @@ class ResultStyle:
     def __init__(self):
         self.id = None
 
+    def __repr__(self):
+        return f'<ResultStyle id={self.id!r}>'
+
     def voting_group_indexes_by_id(self, idlist):
         """
         Returns the list of voting group index values by the
@@ -605,6 +591,7 @@ class District:
                 area_id, group_id = m.groups()
                 rg = ReportingGroup(self.areas_by_id[area_id],
                                     self.voting_groups_by_id[group_id])
+                # TODO: instead call a variant of index_objects().
                 setattr(rg, 'index', len(self._reporting_groups))
                 self._reporting_groups.append(rg)
         return self._reporting_groups
@@ -807,7 +794,7 @@ class Contest:
     """
 
     @classmethod
-    def from_data(cls, data, election):
+    def from_data(cls, data, election, context):
         """
         Create and return a Header object from data.
         """
@@ -824,7 +811,7 @@ class Contest:
         cls_info = dict(type_name=type_name, choice_cls=choice_cls,
                         election=election)
 
-        contest = load_object(Contest, data, cls_info=cls_info)
+        contest = load_object(Contest, data, cls_info=cls_info, context=context)
 
         return contest
 
@@ -995,8 +982,13 @@ class Contest:
         Returns a list of vote stat and choice values for the reporting
         group correspinding to the reporting_index value. Reporting
         """
-
         # TODO: check
+
+    def parse_result_style(self, value, result_styles_by_id):
+        return result_styles_by_id[value]
+
+    def parse_voting_district(self, value, areas_by_id):
+        return areas_by_id[value]
 
     auto_attrs = [
         ('id', parse_id, '_id'),
@@ -1010,8 +1002,10 @@ class Contest:
         ('is_partisan', parse_as_is),
         ('number_elected', parse_as_is),
         ('question_text', parse_as_is),
-        ('result_style', process_id_in_election, 'result_style', 'result_style_by_id'),
-        ('voting_district', process_id_in_election, 'voting_district', 'areas_by_id'),
+        AutoAttr('result_style', parse_result_style,
+            context_keys=('result_styles_by_id',), unpack_context=True),
+        AutoAttr('voting_district', parse_voting_district,
+            context_keys=('areas_by_id',), unpack_context=True),
         ('type', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
@@ -1143,9 +1137,6 @@ class Election:
     def process_result_stat_types(self, value):
         return read_objects_to_dict(ResultStatType, value, context=context)
 
-    def process_result_styles(self, value, context):
-        return read_objects_to_dict(ResultStyle, value, context=context)
-
     def process_voting_groups(self, value):
         return read_objects_to_dict(VotingGroup, value)
 
@@ -1168,7 +1159,7 @@ class Election:
 
         return headers_by_id
 
-    def process_contests(self, value):
+    def process_contests(self, value, context):
         """
         Process the source data representing the contest items.
 
@@ -1180,7 +1171,7 @@ class Election:
         headers_by_id = self.headers_by_id
         contests_by_id = OrderedDict()
 
-        contests = [Contest.from_data(data, self) for data in value]
+        contests = [Contest.from_data(data, self, context=context) for data in value]
         index_objects(contests_by_id, contests)
 
         for contest in contests:
@@ -1199,20 +1190,17 @@ class Election:
         AutoAttr('districts', process_districts,
             context_keys=('voting_groups_by_id',), unpack_context=True),
         ('precincts', process_precincts),
-        # Enter the VotingGroup and enumerated definitions
-        ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
-        # Processing result_styles requires result_stat_types and voting_groups.
-        AutoAttr('result_style_by_id', process_result_styles,
-            data_key='result_styles',
-            context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
-        ('contests_by_id', process_contests, 'contests'),
+        AutoAttr('contests_by_id', process_contests,
+            data_key='contests', context_keys=('result_styles_by_id',)),
     ]
 
-    def __init__(self):
-        self.areas_by_id = OrderedDict()
+    # TODO: eliminate the need to pass areas_by_id here.
+    def __init__(self, areas_by_id):
+        self.areas_by_id = areas_by_id
+
         self.result_detail_dir = "./resultdata"
         self.result_detail_format_filepath = "{}/results.{}.psv"
 

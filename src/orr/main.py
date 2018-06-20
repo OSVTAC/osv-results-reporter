@@ -27,6 +27,7 @@ Documentation: [TODO]
 """
 
 import argparse
+from collections import OrderedDict
 from datetime import datetime
 import json
 import logging
@@ -41,7 +42,7 @@ import yaml
 
 import orr.configlib as configlib
 import orr.datamodel as datamodel
-from orr.datamodel import ResultStatType, VotingGroup
+from orr.datamodel import ResultStatType, ResultStyle, VotingGroup
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
@@ -283,14 +284,14 @@ def load_input(data, path):
 
 
 # TODO: move this to datamodel.py?
-def read_object_list(data, key, object_cls):
+def read_object_list(data, key, object_cls, context=None):
     """
     Read a key-value in the JSON data, where the value is a list of objects.
 
     Returns a dict mapping object id to object.
     """
     object_data = data[key]
-    objects_by_id = datamodel.read_objects_to_dict(object_cls, object_data)
+    objects_by_id = datamodel.read_objects_to_dict(object_cls, object_data, context=context)
 
     return objects_by_id
 
@@ -314,15 +315,23 @@ def load_model(dir_path, build_time):
     infos = [
         ('result_stat_types_by_id', 'result_stat_types', ResultStatType),
         ('voting_groups_by_id', 'voting_groups', VotingGroup),
+        # Processing result_styles requires result_stat_types and voting_groups.
+        ('result_styles_by_id', 'result_styles', ResultStyle),
     ]
+
     for context_key, data_key, object_cls in infos:
-        objects_by_id = read_object_list(data, data_key, object_cls)
+        objects_by_id = read_object_list(data, data_key, object_cls, context=context)
         context[context_key] = objects_by_id
 
     # TODO: make more objects top-level.
     election_data = data['election']
 
-    election = datamodel.load_object(Election, election_data, context=context)
+    # TODO: move and process areas as top-level JSON items.
+    areas_by_id = OrderedDict()
+    context['areas_by_id'] = areas_by_id
+    cls_info = dict(areas_by_id=areas_by_id)
+    election = datamodel.load_object(Election, election_data, cls_info=cls_info,
+                                     context=context)
 
     election.result_detail_dir = dir_path / 'resultdata'
 

@@ -378,36 +378,6 @@
                 "is_vbm": true
             }
         ],
-        "result_styles": [
-            {
-                "_id": "EMS",
-                "description": "Plurality voting, subtotal by Election Day/VBM",
-                "is_rcv": false,
-                "voting_group_ids": "TO ED MV",
-                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr"
-            },
-            {
-                "_id": "EMSW",
-                "description": "Plurality voting, subtotal by Election Day/VBM, with writeins",
-                "is_rcv": false,
-                "voting_group_ids": "TO ED MV",
-                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
-            },
-            {
-                "_id": "EMR",
-                "description": "RCV voting, subtotal by Election Day/VBM",
-                "is_rcv": true,
-                "voting_group_ids": "TO ED MV",
-                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr RSExh"
-            },
-            {
-                "_id": "EMRW",
-                "description": "RCV voting, subtotal by Election Day/VBM, with writeins",
-                "is_rcv": true,
-                "voting_group_ids": "TO ED MV",
-                "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
-            }
-        ],
         "translations": {
             "ballots_cast": {
                 "en": "Ballots Cast"
@@ -482,6 +452,36 @@
         {
             "_id": "RSExh",
             "heading": "Exhausted Ballots"
+        }
+    ],
+    "result_styles": [
+        {
+            "_id": "EMS",
+            "description": "Plurality voting, subtotal by Election Day/VBM",
+            "is_rcv": false,
+            "voting_group_ids": "TO ED MV",
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr"
+        },
+        {
+            "_id": "EMSW",
+            "description": "Plurality voting, subtotal by Election Day/VBM, with writeins",
+            "is_rcv": false,
+            "voting_group_ids": "TO ED MV",
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
+        },
+        {
+            "_id": "EMR",
+            "description": "RCV voting, subtotal by Election Day/VBM",
+            "is_rcv": true,
+            "voting_group_ids": "TO ED MV",
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr RSExh"
+        },
+        {
+            "_id": "EMRW",
+            "description": "RCV voting, subtotal by Election Day/VBM, with writeins",
+            "is_rcv": true,
+            "voting_group_ids": "TO ED MV",
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
         }
     ],
     "voting_groups": [
