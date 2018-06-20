@@ -65,13 +65,13 @@
                 "header_id": "HDR05",
                 "is_partisan": "Y",
                 "number_elected": 1,
+                "result_style": "EMS",
                 "vote_for_msg": {
                     "en": "Vote for One",
                     "es": "Vote por uno",
                     "tl": "Bumoto ng Isa",
                     "zh": "選一名"
                 },
-                "result_style": "EMS",
                 "voting_district": "ASSM17",
                 "writeins_allowed": 1
             },
@@ -198,13 +198,13 @@
                     "zh": "您最多可以投選三個選擇。如果投選的候選人少於三名候選人，多餘欄目可留為空白。"
                 },
                 "number_elected": 1,
+                "result_style": "EMRW",
                 "vote_for_msg": {
                     "en": "Vote your first, second, and third choices",
                     "es": "Vote por su primera, segunda y tercera preferencias",
                     "tl": "Iboto ang inyong una, pangalawa, at pangatlong pinili",
                     "zh": "投選您的第一、第二和第三選擇"
                 },
-                "result_style": "EMRW",
                 "voting_district": "0",
                 "writeins_allowed": 1
             },
@@ -254,29 +254,29 @@
         "districts": [
             {
                 "_id": "0",
-                "name": "City and County of San Francisco",
-                "short_name": "San Francisco County",
                 "classification": "County",
-                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO"
+                "name": "City and County of San Francisco",
+                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO",
+                "short_name": "San Francisco County"
             },
             {
                 "_id": "ASSM17",
-                "name": "California State Assembly District 17",
-                "short_name": "Assembly District 17",
                 "classification": "County Legislative District",
-                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO"
+                "name": "California State Assembly District 17",
+                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO",
+                "short_name": "Assembly District 17"
             },
             {
                 "_id": "SUPV1",
+                "classification": "County Legislative District",
                 "name": "San Francisco County Supervisorial District  1",
-                "short_name": "Supervisorial District 1",
-                "classification": "County Legislative District"
+                "short_name": "Supervisorial District 1"
             },
             {
                 "_id": "NEIG1",
+                "classification": "Neighborhood",
                 "name": "Neighborhood of Bayview/Hunters Point",
-                "short_name": "Bayview/Hunters Point",
-                "classification": "Neighborhood"
+                "short_name": "Bayview/Hunters Point"
             }
         ],
         "election_area": {
@@ -373,9 +373,9 @@
             },
             {
                 "_id": "PCT7101",
+                "is_vbm": true,
                 "name": "Precinct 7101",
-                "short_name": "Precinct 7101",
-                "is_vbm": true
+                "short_name": "Precinct 7101"
             }
         ],
         "translations": {
@@ -459,29 +459,29 @@
             "_id": "EMS",
             "description": "Plurality voting, subtotal by Election Day/VBM",
             "is_rcv": false,
-            "voting_group_ids": "TO ED MV",
-            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr"
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr",
+            "voting_group_ids": "TO ED MV"
         },
         {
             "_id": "EMSW",
             "description": "Plurality voting, subtotal by Election Day/VBM, with writeins",
             "is_rcv": false,
-            "voting_group_ids": "TO ED MV",
-            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr"
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr",
+            "voting_group_ids": "TO ED MV"
         },
         {
             "_id": "EMR",
             "description": "RCV voting, subtotal by Election Day/VBM",
             "is_rcv": true,
-            "voting_group_ids": "TO ED MV",
-            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr RSExh"
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSUnd RSOvr RSExh",
+            "voting_group_ids": "TO ED MV"
         },
         {
             "_id": "EMRW",
             "description": "RCV voting, subtotal by Election Day/VBM, with writeins",
             "is_rcv": true,
-            "voting_group_ids": "TO ED MV",
-            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh"
+            "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh",
+            "voting_group_ids": "TO ED MV"
         }
     ],
     "voting_groups": [
