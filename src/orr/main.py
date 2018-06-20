@@ -326,6 +326,8 @@ def load_model(dir_path, build_time):
                                      cls_info=dict(context=context),
                                      context=context)
 
+    election.result_detail_dir = dir_path / 'resultdata'
+
     context.update(
         build_time=build_time,
         election=election,
