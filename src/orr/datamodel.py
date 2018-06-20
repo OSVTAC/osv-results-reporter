@@ -353,20 +353,14 @@ def add_object_by_id(mapping, obj):
     mapping[obj.id] = obj
 
 
-def index_object(mapping, obj):
+def index_objects(objects_by_id, objects):
     """
-    Add an object in our data model to a lookup dict that references
-    objects by id, and also add an index / sequence number.
-
-    Args:
-      mapping: a dict to lookup by obj.id
-      obj: object to be added
+    Set the index attribute on an iterable of objects, and add them to
+    a dict mapping object id to object.
     """
-    # TODO: don't set obj.index here e.g. since choices and results are combined?
-    # TODO: assign index numbers at the end, when creating the convenience
-    #  list for an object type?
-    obj.index = len(mapping)  # Assign a sequence number (0-based)
-    add_object_by_id(mapping,obj)
+    for index, obj in enumerate(objects):
+        obj.index = index
+        add_object_by_id(objects_by_id, obj)
 
 
 def read_objects_to_dict(cls, seq, context=None):
@@ -834,7 +828,7 @@ class Contest:
 
         return contest
 
-    def enter_choice(self, data, choices_by_id):
+    def enter_choice(self, data):
         """
         Common processing to enter a candidate or measure choice
 
@@ -845,9 +839,9 @@ class Contest:
         choice = load_object(choice_cls, data)
         choice.contest = self     # Add back reference
 
-        index_object(choices_by_id, choice)
+        return choice
 
-    def enter_choices(self, choices):
+    def enter_choices(self, choices_data):
         """
         Scan an input data list of contest choice entries to create.
 
@@ -857,8 +851,8 @@ class Contest:
         """
         choices_by_id = OrderedDict()
 
-        for data in choices:
-            self.enter_choice(data, choices_by_id=choices_by_id)
+        choices = [self.enter_choice(data) for data in choices_data]
+        index_objects(choices_by_id, choices)
 
         return choices_by_id
 
@@ -1165,10 +1159,12 @@ class Election:
           value: a list of dicts corresponding to the Header objects.
         """
         headers_by_id = OrderedDict()
-        for data in value:
-            header = load_object(Header, data)
+
+        headers = [load_object(Header, data) for data in value]
+        index_objects(headers_by_id, headers)
+
+        for header in headers:
             process_header_id(header, headers_by_id)
-            index_object(headers_by_id, header)
 
         return headers_by_id
 
@@ -1184,10 +1180,11 @@ class Election:
         headers_by_id = self.headers_by_id
         contests_by_id = OrderedDict()
 
-        for data in value:
-            contest = Contest.from_data(data, self)
+        contests = [Contest.from_data(data, self) for data in value]
+        index_objects(contests_by_id, contests)
+
+        for contest in contests:
             process_header_id(contest, headers_by_id)
-            index_object(contests_by_id, contest)
 
         return contests_by_id
 
