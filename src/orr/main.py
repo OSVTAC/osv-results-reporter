@@ -322,9 +322,7 @@ def load_model(dir_path, build_time):
     # TODO: make more objects top-level.
     election_data = data['election']
 
-    election = datamodel.load_object(Election, election_data,
-                                     cls_info=dict(context=context),
-                                     context=context)
+    election = datamodel.load_object(Election, election_data, context=context)
 
     election.result_detail_dir = dir_path / 'resultdata'
 

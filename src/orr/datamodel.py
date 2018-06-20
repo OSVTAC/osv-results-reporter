@@ -594,25 +594,29 @@ class District:
         ('reporting_group_ids', parse_as_is)
     ]
 
-    def __init__(self):
+    def __init__(self, voting_groups_by_id, areas_by_id):
         Area.__init__(self)
-        self._reporting_groups = None;
+
+        self._reporting_groups = None
+
+        # TODO: can we eliminate needing to set areas_by_id and
+        #  voting_groups_by_id since it's only needed for lazy loading?
+        self.areas_by_id = areas_by_id
+        self.voting_groups_by_id = voting_groups_by_id
 
     @property
     def reporting_groups(self):
         if self._reporting_groups is None:
             # Create the reporting_groups list from IDs on first access
             self._reporting_groups = []
-            voting_groups_by_id = self.election.context['voting_groups_by_id']
             for s in self.reporting_group_ids.split():
                 m = re.match(r'(.*)~(.*)',s)
                 if not m:
                     raise RuntimeError(
                         f"invalid reporting_group_ids '{s}' for district {self.id}")
                 area_id, group_id = m.groups()
-                rg = ReportingGroup(
-                    self.election.areas_by_id[area_id],
-                    voting_groups_by_id[group_id])
+                rg = ReportingGroup(self.areas_by_id[area_id],
+                                    self.voting_groups_by_id[group_id])
                 setattr(rg, 'index', len(self._reporting_groups))
                 self._reporting_groups.append(rg)
         return self._reporting_groups
@@ -864,8 +868,6 @@ class Contest:
 
         return choices_by_id
 
-
-
     def load_results_details(self, filename=None):
         """
         Load the detailed results for this contest with reporting groups with
@@ -972,7 +974,6 @@ class Contest:
 
         return l
 
-
     def result_stats_by_id(self, stat_idlist=None):
         """
         Returns a list of ResultStatType, either all or the list
@@ -986,7 +987,6 @@ class Contest:
         Helper function to reference the voting groups.
         """
         return self.result_style.voting_groups_by_id(group_idlist)
-
 
     def summary_results(self, choice_stat_index, group_idlist=None):
         """
@@ -1125,7 +1125,7 @@ class Election:
     represented as candidate objects.
     """
 
-    def process_areas(self, value, cls):
+    def process_areas(self, value, cls, cls_info=None):
         """
         Process source data representing a precinct or district. The
         object is entered into the Election.areas_by_id.
@@ -1137,15 +1137,17 @@ class Election:
         """
         areas = []
         for data in value:
-            area = load_object(cls, data)
-            setattr(area, 'election', self)
+            area = load_object(cls, data, cls_info=cls_info)
             areas.append(area)
             add_object_by_id(self.areas_by_id, area)
 
         return areas
 
-    def process_districts(self, value):
-        return self.process_areas(value, District)
+    def process_districts(self, value, voting_groups_by_id):
+        cls_info = dict(areas_by_id=self.areas_by_id,
+            voting_groups_by_id=voting_groups_by_id
+        )
+        return self.process_areas(value, District, cls_info=cls_info)
 
     def process_precincts(self, value):
         return self.process_areas(value, Precinct)
@@ -1203,7 +1205,8 @@ class Election:
         ('translations', parse_as_is),
         # Process precincts and districts before contests so
         # contests may reference and map the district ID
-        ('districts', process_districts),
+        AutoAttr('districts', process_districts,
+            context_keys=('voting_groups_by_id',), unpack_context=True),
         ('precincts', process_precincts),
         # Enter the VotingGroup and enumerated definitions
         ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
@@ -1217,11 +1220,10 @@ class Election:
         ('contests_by_id', process_contests, 'contests'),
     ]
 
-    def __init__(self,context=None):
+    def __init__(self):
         self.areas_by_id = OrderedDict()
         self.result_detail_dir = "./resultdata"
         self.result_detail_format_filepath = "{}/results.{}.psv"
-        self.context = context
 
     def __repr__(self):
         return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
