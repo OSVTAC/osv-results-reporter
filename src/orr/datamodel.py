@@ -202,6 +202,26 @@ class AutoAttr:
         self.load_value = load_value
         self.unpack_context = unpack_context
 
+    def make_load_value_kwargs(self, context):
+        """
+        Create and return the kwargs to pass to the load_value() function.
+        """
+        context_keys = self.context_keys
+
+        # Check that the context has the needed specified keys
+        if context_keys and not context_keys <= set(context):
+            msg = (f'context does not have keys {sorted(context_keys)} '
+                   f'while calling {self.load_value}: {sorted(context)}')
+            raise RuntimeError(msg)
+
+        if self.unpack_context:
+            # Only unpack the context keys that are needed / recognized.
+            kwargs = {key: context[key] for key in context_keys}
+        else:
+            kwargs = dict(context=context)
+
+        return kwargs
+
 
 # TODO: make context required?
 def load_object(cls, data, cls_info=None, context=None):
@@ -226,21 +246,9 @@ def load_object(cls, data, cls_info=None, context=None):
         # TODO: simplify this logic.
         if type(info) == AutoAttr:
             attr_name = info.attr_name
-            context_keys = info.context_keys
-            data_key = info.data_key
             load_value = info.load_value
-
-            # Check that the context has the needed specified keys
-            if context_keys and not context_keys <= set(context):
-                msg = (f'context does not have keys {sorted(context_keys)} '
-                       f'while calling {load_value}: {sorted(context)}')
-                raise RuntimeError(msg)
-
-            if info.unpack_context:
-                # Only unpack the context keys that are needed / recognized.
-                kwargs = {key: context[key] for key in context_keys}
-            else:
-                kwargs = dict(context=context)
+            data_key = info.data_key
+            kwargs = info.make_load_value_kwargs(context)
         else:
             # TODO: only permit len(info) == 2, otherwise use AutoAttr.
             if len(info) == 2:
@@ -463,7 +471,6 @@ class ResultStyle:
         """
         return [ self.voting_groups[i] for i in
                  self.voting_group_indexes_by_id(idlist) ]
-
 
 
 class ReportingGroup:
