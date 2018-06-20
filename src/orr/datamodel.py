@@ -306,7 +306,17 @@ def make_id_to_index_map(objlist):
     return make_index_map(obj.id for obj in objlist)
 
 
-def process_index_idlist(data, objects_by_id):
+# TODO: share code with process_index_idlist()?
+def filter_by_ids(objects_by_id, idlist):
+    """
+    Splits a space separated list of ids and returns the non-null
+    values as a result.
+    """
+    ids = idlist.split()
+    return [objects_by_id[object_id] for object_id in ids if object_id in objects_by_id]
+
+
+def process_index_idlist(objects_by_id, data):
     """
     Parse a space-separated list of object IDS into objects.
 
@@ -378,13 +388,6 @@ def read_objects_to_dict(cls, seq, context=None):
     return obj_by_id
 
 
-def map_idlist(mapping, idlist):
-    """
-    Splits a space separated list of ids and returns the non-null
-    values as a result.
-    """
-    return [mapping[k] for k in idlist.split() if k in mapping]
-
 # --- Results reporting group/type definitions ---
 
 class VotingGroup:
@@ -437,13 +440,13 @@ class ResultStyle:
     """
 
     def process_result_stat_types(self, value, result_stat_types_by_id):
-        result_stat_types, indexes_by_id = process_index_idlist(value, result_stat_types_by_id)
+        result_stat_types, indexes_by_id = process_index_idlist(result_stat_types_by_id, value)
         self.result_stat_type_index_by_id = indexes_by_id
 
         return result_stat_types
 
     def process_voting_groups(self, value, voting_groups_by_id):
-        voting_groups, indexes_by_id = process_index_idlist(value, voting_groups_by_id)
+        voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
         self.voting_group_index_by_id = indexes_by_id
 
         return voting_groups
@@ -471,7 +474,7 @@ class ResultStyle:
         if (not idlist) or (idlist == "*"):
             return range(len(self.voting_groups))
 
-        return map_idlist(self.voting_group_index_by_id, idlist)
+        return filter_by_ids(self.voting_group_index_by_id, idlist)
 
     def voting_groups_by_id(self, idlist):
         """
