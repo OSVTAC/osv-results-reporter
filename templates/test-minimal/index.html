@@ -4,6 +4,10 @@
   <title>TEST-MINIMAL</title>
 </head>
 <body>
+{% macro link_with_hash(src) -%}
+<li><a href="{{ src }}">{{ src }}</a>
+  (<code>{{ src|secure_hash }}</code>)</li>
+{%- endmacro %}
 <h1>Minimal Test</h1>
 <p>
   Build time: {{ build_time }}
@@ -15,11 +19,11 @@
     {% set options.lang = lang %}
     {% set src = "election-{}.html".format(lang) %}
     {% do subtemplate('election.html', src) %}
-    <li><a href="{{ src }}">{{ src }}</a>
-      (<code>{{ src|secure_hash }}</code>)</li>
+    {{ link_with_hash(src) }}
   {% endwith %}
 
 {% endfor %}
+  {# We can't include SHASUMS' hash because SHASUMS includes this file. #}
   <li><a href="{{ SHASUMS_PATH }}"><code>{{ SHASUMS_PATH }}</code></a></li>
 </ul>
 </body>
