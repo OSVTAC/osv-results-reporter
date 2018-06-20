@@ -1195,8 +1195,6 @@ class Election:
         ('ballot_title', parse_i18n),
         ('date', parse_date, 'election_date'),
         ('election_area', parse_i18n),
-        ('languages', parse_as_is),
-        ('translations', parse_as_is),
         # Process precincts and districts before contests so
         # contests may reference and map the district ID
         AutoAttr('districts', process_districts,

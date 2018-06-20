@@ -283,19 +283,6 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
-# TODO: move this to datamodel.py?
-def read_object_list(data, key, object_cls, context=None):
-    """
-    Read a key-value in the JSON data, where the value is a list of objects.
-
-    Returns a dict mapping object id to object.
-    """
-    object_data = data[key]
-    objects_by_id = datamodel.read_objects_to_dict(object_cls, object_data, context=context)
-
-    return objects_by_id
-
-
 def load_model(dir_path, build_time):
     """
     Populate our data model, and return the context to use for Jinja2.
@@ -309,6 +296,13 @@ def load_model(dir_path, build_time):
     data = utils.read_json(path)
     context = {}
 
+    # TODO: share code with load_object() for much of the logic below,
+    #  as this is similar to processing auto_attrs.
+    for data_key in ('languages', 'translations'):
+        if data_key not in data:
+            continue
+        context[data_key] = data.pop(data_key)
+
     # Add "result_stat_types_by_id" and "voting_groups_by_id" to the context
     # now since processing "election" depends on them.
     # Each info below is a 3-tuple of: (context key, data key, object class).
@@ -320,11 +314,16 @@ def load_model(dir_path, build_time):
     ]
 
     for context_key, data_key, object_cls in infos:
-        objects_by_id = read_object_list(data, data_key, object_cls, context=context)
+        if data_key not in data:
+            continue
+        object_data = data.pop(data_key)
+        objects_by_id = datamodel.read_objects_to_dict(object_cls, object_data, context=context)
         context[context_key] = objects_by_id
 
     # TODO: make more objects top-level.
-    election_data = data['election']
+    election_data = data.pop('election')
+    if data:
+        raise RuntimeError(f'unprocessed keys in the json file: {sorted(data.keys())}')
 
     # TODO: move and process areas as top-level JSON items.
     areas_by_id = OrderedDict()
@@ -338,8 +337,6 @@ def load_model(dir_path, build_time):
     context.update(
         build_time=build_time,
         election=election,
-        languages=election.languages,
-        translations=election.translations,
     )
 
     return context
