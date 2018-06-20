@@ -45,7 +45,7 @@
         </tr>
       {% endfor %}
       {% for stat in contest.result_stats_by_id() %}
-        <tr><td>{{ stat.heading }}</td></tr>
+        <tr><td>{{ stat.heading }}</td>
         {% for v in contest.summary_results(loop.index0) %}
         <td>{{ v }}</td>
         {% endfor %}
