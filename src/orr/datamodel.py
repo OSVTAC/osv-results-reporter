@@ -327,15 +327,6 @@ def process_index_idlist(data, objects_by_id):
     return objects, indexes_by_id
 
 
-def process_idlist(obj, liststr, mapname):
-    """
-    For a list represented as a space separated list of IDs, split
-    the string and return the values from the mapping dict.
-    """
-    mapping = getattr(obj,mapname)
-    return [mapping[i] for i in liststr.split()]
-
-
 def add_object_by_id(mapping, obj):
     """
     Add an object to a dict mapping object id to object.
