@@ -364,7 +364,11 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
 
 
 def make_sha256sums_file(dir_path):
-    contents = utils.directory_sha256sum(dir_path)
+    # Don't include SHA256SUMS because its hash will necessarily be incorrect
+    # after SHA256SUMS is updated.
+    exclude_paths = [SHA256SUMS_FILENAME]
+
+    contents = utils.directory_sha256sum(dir_path, exclude_paths=exclude_paths)
     sha256sums_path = dir_path / SHA256SUMS_FILENAME
     sha256sums_path.write_text(contents)
 

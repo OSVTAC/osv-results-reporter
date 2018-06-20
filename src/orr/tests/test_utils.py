@@ -26,6 +26,7 @@ from datetime import date, datetime
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
+from textwrap import dedent
 from unittest import TestCase
 
 import orr.utils as utils
@@ -125,4 +126,25 @@ class UtilsModuleTest(TestCase):
             expected = 'bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721'
 
             actual = utils.hash_file(path)
+            self.assertEqual(actual, expected)
+
+    # TODO: also test files inside directories.
+    def test_directory_sha256sum(self):
+        file_infos = [
+            ('a.txt', 'aaa'),
+            ('b.txt', 'bbb'),
+            ('c.txt', 'ccc'),
+            ('SHA256SUMS', 'xxx'),
+        ]
+        exclude_paths = ['a.txt', 'c.txt']
+        expected = dedent("""\
+        cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860 *SHA256SUMS
+        3e744b9dc39389baf0c5a0660589b8402f3dbb49b89b3e75f2c9355852a3c677 *b.txt
+        """)
+        with TemporaryDirectory() as temp_dir:
+            for rel_path, text in file_infos:
+                path = Path(temp_dir) / rel_path
+                path.write_text(text)
+
+            actual = utils.directory_sha256sum(temp_dir, exclude_paths=exclude_paths)
             self.assertEqual(actual, expected)

@@ -173,7 +173,7 @@ def get_files_recursive(dir_path):
     # over so the resulting paths will be relative to that.
     with changing_cwd(dir_path):
         cwd = Path('.')
-        paths = sorted(path for path in cwd.glob('**/*') if not path.is_dir())
+        paths = sorted(str(path) for path in cwd.glob('**/*') if not path.is_dir())
 
     return paths
 
@@ -195,15 +195,31 @@ def get_sha256sum_args():
     return args
 
 
-# TODO: test this.
 # TODO: also expose a function to check a SHA256SUMS file.
-def directory_sha256sum(dir_path):
+def directory_sha256sum(dir_path, exclude_paths=None):
+    """
+    Run sha256sum (or shasum on Mac OS X) on the files in a directory, and
+    return the result as a string.
+
+    Args:
+      exclude_paths: an optional iterable of path-like objects to
+        exclude from passing to sha256sum.
+    """
+    if exclude_paths is None:
+        exclude_paths = []
+
     dir_path = Path(dir_path)
 
     # Get the paths relative to the directory we are recursing over.
     # Also, `sha256sum` breaks if passed a directory path, so we need to
     # be filtering those out, which get_files_recursive() does do.
     rel_paths = get_files_recursive(dir_path)
+
+    # Convert the path-like objects to strings before doing the equality check.
+    rel_paths = [str(rel_path) for rel_path in rel_paths]
+    exclude_paths = set(str(path) for path in exclude_paths)
+
+    rel_paths = [path for path in rel_paths if path not in exclude_paths]
 
     initial_args = get_sha256sum_args()
     args = initial_args.copy()
