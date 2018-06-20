@@ -1144,6 +1144,12 @@ class Election:
 
         return areas
 
+    def process_districts(self, value):
+        return self.process_areas(value, District)
+
+    def process_precincts(self, value):
+        return self.process_areas(value, Precinct)
+
     def process_result_stat_types(self, value):
         return read_objects_to_dict(ResultStatType, value, context=context)
 
@@ -1197,8 +1203,8 @@ class Election:
         ('translations', parse_as_is),
         # Process precincts and districts before contests so
         # contests may reference and map the district ID
-        ('districts', process_areas, 'districts', District),
-        ('precincts', process_areas, 'precincts', Precinct),
+        ('districts', process_districts),
+        ('precincts', process_precincts),
         # Enter the VotingGroup and enumerated definitions
         ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
         # Processing result_styles requires result_stat_types and voting_groups.
