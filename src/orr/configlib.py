@@ -30,6 +30,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2.utils import Namespace
 
 import orr.templating as templating
+import orr.utils as utils
 from orr.templating import ENGLISH_LANG
 from orr.utils import SHA256SUMS_FILENAME
 
@@ -80,6 +81,9 @@ def create_jinja_env(output_dir, template_dirs=None):
         format_date_medium=templating.format_date_medium,
         secure_hash=templating.secure_hash,
         translate=templating.translate,
+        format_number=utils.format_number,
+        format_percent=utils.format_percent,
+        format_percent2=utils.format_percent2,
     )
     tests = {}
 
