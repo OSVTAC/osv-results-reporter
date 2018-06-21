@@ -31,6 +31,7 @@
         {{ contest.vote_for_msg|translate }}
       </p>
     {% endif %}
+    <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting</p>
     <table>
       <thead><tr><th>Subtotal Area</th>
       {% for choice in contest.choices %}

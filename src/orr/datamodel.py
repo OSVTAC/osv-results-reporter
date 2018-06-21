@@ -869,7 +869,7 @@ class Contest:
                       election.get_result_detail_filename.
         """
         if hasattr(self,'results'):
-            return
+            return ''
 
         if not filename:
             filename = self.election.get_result_detail_filename(self.id)
@@ -930,6 +930,7 @@ class Contest:
             if len(self.results) != self.reporting_group_count:
                 raise RuntimeError(
                     f'Mismatched reporting groups in {filename}')
+        return ''
 
     def result_stat_indexes_by_id(self, stat_idlist=None):
         """

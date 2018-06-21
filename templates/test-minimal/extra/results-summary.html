@@ -31,6 +31,7 @@
         {{ contest.vote_for_msg|translate }}
       </p>
     {% endif %}
+    <p>{{ contest.load_results_details() }}{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting</p>
     <table>
       <thead><tr><th>&nbsp;</th>
       {% for vg in contest.voting_groups_by_id() %}
