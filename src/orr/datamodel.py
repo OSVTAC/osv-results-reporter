@@ -997,7 +997,10 @@ class Contest:
         Returns a list of vote stat and choice values for the reporting
         group correspinding to the reporting_index value. Reporting
         """
-        # TODO: check
+        self.load_results_details()
+
+        return [ self.results[reporting_index][i]
+                 for i in self.result_stat_indexes_by_id(choice_stat_idlist) ]
 
     def parse_result_style(self, value, result_styles_by_id):
         return result_styles_by_id[value]

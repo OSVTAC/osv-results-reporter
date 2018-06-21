@@ -2,16 +2,17 @@
 <head>
   <meta charset="utf-8">
   <title>{{ election.date|format_date_medium }} -
-    {{ election.ballot_title|translate }} {# This is the wrong title, should say results #}
+    {{ election.ballot_title|translate }}
   </title>
 </head>
 <body>
-  <h1>{{ election.ballot_title|translate }}</h1>{# This is the wrong title, should say results #}
+  <h1>{{ election.ballot_title|translate }}</h1>
   <h2>{{ election.date|format_date }} -
     {{ election.election_area|translate }}</h2>
   <p>
   {% with %}
-    {% for headers, contest in election.contests_with_headers() %}
+    {% set contest = options.contest %}
+    {% set headers = options.headers %}
       {# First display any headers, if there are new headers. #}
       {% for level, header in headers %}
         {% if level == 1 %}
@@ -20,7 +21,6 @@
           <h4>{{ header.ballot_title|translate }}</h4>
         {% endif %}
       {% endfor %}
-
     <p>{{ contest.ballot_title|translate}}
       {% if contest.ballot_subtitle %}
         - {{ contest.ballot_subtitle|translate }}
@@ -32,31 +32,23 @@
       </p>
     {% endif %}
     <table>
-      <thead><tr><th>&nbsp;</th>
-      {% for vg in contest.voting_groups_by_id() %}
-      <th>{{ vg.heading }}</th>
-      {% endfor %}
-      </tr></thead>
+      <thead><tr><th>Subtotal Area</th>
       {% for choice in contest.choices %}
-        <tr><td>{{ choice.ballot_title|translate }}</td>
-        {% for v in choice.summary_results() %}
-        <td>{{ v }}</td>
-        {% endfor %}
-        </tr>
+        <th class="choice">{{ choice.ballot_title|translate }}</th>
       {% endfor %}
       {% for stat in contest.result_stats_by_id() %}
-        <tr><td>{{ stat.heading }}</td>
-        {% for v in contest.summary_results(loop.index0) %}
+        <th class="choice">{{ stat.heading }}</th>
+      {% endfor %}
+      </tr></thead>
+      {% for i in range(contest.reporting_group_count) %}
+        {% set rg = contest.reporting_groups[i] %}
+        <tr><td>{{ rg.area.short_name }}{% if rg.voting_group.id != 'TO' or rg.area.id == '*' %} - {{ rg.voting_group.heading }}{% endif %}</td>
+        {% for v in contest.detail_results(i, 'CHOICES *') %}
         <td>{{ v }}</td>
         {% endfor %}
         </tr>
       {% endfor %}
     </table>
-        {% set src = "results-{}-{}.html".format(contest.id,options.lang) %}
-        {% set options.contest = contest %}
-        {% set options.headers = headers %}
-        {% do subtemplate('results-detail.html', src) %}
-    {% endfor %}
   {% endwith %}
 
 </body>
