@@ -218,7 +218,12 @@ class AutoAttr:
     def __repr__(self):
         # Using __qualname__ instead of __name__ includes also the class
         # name and not just the function / method name.
-        return f'<AutoAttr {self.attr_name!r}: data_key={self.data_key!r}, load_value={self.load_value.__qualname__}>'
+        try:
+            func_name = self.load_value.__qualname__
+        except AttributeError:
+            func_name = repr(self.load_value)
+
+        return f'<AutoAttr {self.attr_name!r}: data_key={self.data_key!r}, load_value={func_name}>'
 
     def make_load_value_kwargs(self, context):
         """
@@ -231,14 +236,17 @@ class AutoAttr:
 
         # Check that the context has the needed specified keys
         if context_keys and not context_keys <= set(context):
-            msg = (f'context does not have keys {sorted(context_keys)} '
+            missing = context_keys - set(context)
+            msg = (f'context does not have keys {sorted(missing)} '
                    f'while calling {self.load_value}: {sorted(context)}')
             raise RuntimeError(msg)
 
+        # Only pass the context keys that are needed / recognized.
+        context = {key: context[key] for key in context_keys}
+
         if self.unpack_context:
-            # Only unpack the context keys that are needed / recognized.
-            kwargs = {key: context[key] for key in context_keys}
-        elif context_keys:
+            kwargs = context
+        elif context:
             kwargs = dict(context=context)
         else:
             kwargs = {}
@@ -597,7 +605,7 @@ class Precinct(Area):
         ('name', parse_i18n),
         ('short_name', parse_i18n),
         ('is_vbm', parse_bool),
-        ('consolidated_ids',parse_as_is)
+        ('consolidated_ids', parse_as_is)
     ]
 
     def __init__(self):
@@ -694,7 +702,6 @@ class Header:
         self.header_id = None
         self.id = None
         self.parent_header = None
-        self.areas_by_id = OrderedDict()
 
     def __repr__(self):
         return f'<Header id={self.id!r} title={i18n_repr(self.ballot_title)}>'
@@ -1185,10 +1192,10 @@ class Election:
     represented as candidate objects.
     """
 
-    def process_areas(self, value, cls, cls_info=None):
+    def process_areas(self, value, cls, areas_by_id, cls_info=None):
         """
         Process source data representing a precinct or district. The
-        object is entered into the Election.areas_by_id.
+        object is entered into the context's areas_by_id.
 
         Returns a list of either Precincts or Districts.
 
@@ -1199,24 +1206,16 @@ class Election:
         for data in value:
             area = load_object(cls, data, cls_info=cls_info)
             areas.append(area)
-            add_object_by_id(self.areas_by_id, area)
+            add_object_by_id(areas_by_id, area)
 
         return areas
 
-    def process_districts(self, value, voting_groups_by_id):
-        cls_info = dict(areas_by_id=self.areas_by_id,
-            voting_groups_by_id=voting_groups_by_id
-        )
-        return self.process_areas(value, District, cls_info=cls_info)
+    def process_districts(self, value, voting_groups_by_id, areas_by_id):
+        cls_info = dict(areas_by_id=areas_by_id, voting_groups_by_id=voting_groups_by_id)
+        return self.process_areas(value, District, areas_by_id=areas_by_id, cls_info=cls_info)
 
-    def process_precincts(self, value):
-        return self.process_areas(value, Precinct)
-
-    def process_result_stat_types(self, value):
-        return read_objects_to_dict(ResultStatType, value, context=context)
-
-    def process_voting_groups(self, value):
-        return read_objects_to_dict(VotingGroup, value)
+    def process_precincts(self, value, areas_by_id):
+        return self.process_areas(value, Precinct, areas_by_id=areas_by_id)
 
     def process_headers(self, value):
         """
@@ -1261,27 +1260,35 @@ class Election:
         # Process precincts and districts before contests so
         # contests may reference and map the district ID
         AutoAttr('districts', process_districts,
-            context_keys=('voting_groups_by_id',), unpack_context=True),
-        ('precincts', process_precincts),
+            context_keys=('areas_by_id', 'voting_groups_by_id'), unpack_context=True),
+        AutoAttr('precincts', process_precincts,
+            context_keys=('areas_by_id',), unpack_context=True),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
-        AutoAttr('contests_by_id', process_contests,
-            data_key='contests', context_keys=('result_styles_by_id',)),
+        AutoAttr('contests_by_id', process_contests, data_key='contests',
+            context_keys=('areas_by_id', 'result_styles_by_id')),
     ]
 
-    # TODO: eliminate the need to pass areas_by_id here.
-    def __init__(self, areas_by_id):
+    def __init__(self, input_dir):
+        """
+        Args:
+          input_dir: the directory containing the input data, as a Path object.
+        """
+        assert input_dir is not None
+        self.input_dir = input_dir
+
         self.ballot_title = None
         self.date = None
 
-        self.result_detail_dir = "./resultdata"
         self.result_detail_format_filepath = "{}/results.{}.psv"
-
-        self.areas_by_id = areas_by_id
 
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
+
+    @property
+    def result_detail_dir(self):
+        return self.input_dir / 'resultdata'
 
     # Also expose the dict values as an (ordered) list, for convenience.
     @property
@@ -1323,7 +1330,7 @@ class Election:
         name formatting can be configured in the election settings.
         """
         return self.result_detail_format_filepath.format(
-            self.result_detail_dir,contest_id)
+            self.result_detail_dir, contest_id)
 
 
     def load_results_details(self, filedir=None, filename_format=None):
@@ -1346,3 +1353,56 @@ class Election:
 
         for c in self.contests:
             c.load_results_details()
+
+
+class ModelRoot:
+
+    """
+    The root object for all of the loaded data.
+    """
+
+    def __init__(self, context, input_dir):
+        """
+        Args:
+          context: the current Jinja2 context.
+          input_dir: the directory containing the input data, as a Path object.
+        """
+        name_values = [
+            ('context', context),
+            ('input_dir', input_dir),
+        ]
+        for name, value in name_values:
+            # Call super() to bypass our override.
+            super().__setattr__(name, value)
+
+    # Override __setattr__ to cause load_object() to add attr values to
+    # the Jinja2 context rather than storing them to instance attributes.
+    def __setattr__(self, name, value):
+        self.context[name] = value
+
+    def process_result_stat_types(self, value):
+        return read_objects_to_dict(ResultStatType, value)
+
+    def process_voting_groups(self, value):
+        return read_objects_to_dict(VotingGroup, value)
+
+    def process_result_styles(self, value, context):
+        return read_objects_to_dict(ResultStyle, value, context=context)
+
+    def process_election(self, value, context):
+        cls_info = dict(input_dir=self.input_dir)
+        return load_object(Election, value, cls_info=cls_info, context=context)
+
+    auto_attrs = [
+        ('languages', parse_as_is),
+        ('translations', parse_as_is),
+        # Set "result_stat_types_by_id" and "voting_groups_by_id" now since
+        # processing "election" depends on them.
+        ('result_stat_types_by_id', process_result_stat_types, 'result_stat_types'),
+        ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
+        # Processing result_styles requires result_stat_types and voting_groups.
+        AutoAttr('result_styles_by_id', process_result_styles, data_key='result_styles',
+            context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
+        AutoAttr('election', process_election,
+            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+    ]

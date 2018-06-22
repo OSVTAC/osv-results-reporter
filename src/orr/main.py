@@ -42,8 +42,7 @@ import yaml
 
 import orr.configlib as configlib
 import orr.datamodel as datamodel
-from orr.datamodel import ResultStatType, ResultStyle, VotingGroup
-from orr.datamodel import Election
+from orr.datamodel import ModelRoot
 import orr.templating as templating
 import orr.utils as utils
 from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME, US_LOCALE
@@ -283,61 +282,24 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
-def load_model(dir_path, build_time):
+def load_model(input_dir, build_time):
     """
     Populate our data model, and return the context to use for Jinja2.
 
     Args:
-      dir_path: the path to the input directory.
+      input_dir: the directory containing the input data, as a Path object.
       build_time: a datetime object representing the current build time
         (e.g. datetime.datetime.now()).
     """
-    path = dir_path / 'election.json'
+    path = input_dir / 'election.json'
     data = utils.read_json(path)
-    context = {}
-
-    # TODO: share code with load_object() for much of the logic below,
-    #  as this is similar to processing auto_attrs.
-    for data_key in ('languages', 'translations'):
-        if data_key not in data:
-            continue
-        context[data_key] = data.pop(data_key)
-
-    # Add "result_stat_types_by_id" and "voting_groups_by_id" to the context
-    # now since processing "election" depends on them.
-    # Each info below is a 3-tuple of: (context key, data key, object class).
-    infos = [
-        ('result_stat_types_by_id', 'result_stat_types', ResultStatType),
-        ('voting_groups_by_id', 'voting_groups', VotingGroup),
-        # Processing result_styles requires result_stat_types and voting_groups.
-        ('result_styles_by_id', 'result_styles', ResultStyle),
-    ]
-
-    for context_key, data_key, object_cls in infos:
-        if data_key not in data:
-            continue
-        object_data = data.pop(data_key)
-        objects_by_id = datamodel.read_objects_to_dict(object_cls, object_data, context=context)
-        context[context_key] = objects_by_id
-
-    # TODO: make more objects top-level.
-    election_data = data.pop('election')
-    if data:
-        raise RuntimeError(f'unprocessed keys in the json file: {sorted(data.keys())}')
 
     # TODO: move and process areas as top-level JSON items.
     areas_by_id = OrderedDict()
-    context['areas_by_id'] = areas_by_id
-    cls_info = dict(areas_by_id=areas_by_id)
-    election = datamodel.load_object(Election, election_data, cls_info=cls_info,
-                                     context=context)
+    context = dict(areas_by_id=areas_by_id, build_time=build_time)
 
-    election.result_detail_dir = dir_path / 'resultdata'
-
-    context.update(
-        build_time=build_time,
-        election=election,
-    )
+    cls_info = dict(context=context, input_dir=input_dir)
+    model = datamodel.load_object(ModelRoot, data, cls_info=cls_info, context=context)
 
     return context
 
