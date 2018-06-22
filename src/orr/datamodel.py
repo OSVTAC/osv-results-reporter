@@ -267,6 +267,31 @@ class AutoAttr:
         return value
 
 
+def process_auto_attr(obj, attr, data, context):
+    """
+    Process an attribute in obj.auto_attrs.
+
+    Args:
+      attr: an element of obj.auto_attrs.
+      data: the dict of data containing the key-values to process.
+      context: the current Jinja2 context.
+    """
+    if type(attr) != AutoAttr:
+        assert type(attr) == tuple
+        attr = AutoAttr(*attr)
+
+    _log.debug(f'processing auto_attr {attr!r} for: {obj!r}')
+    try:
+        value = attr.process_key(obj, data=data, context=context)
+    except Exception:
+        raise RuntimeError(f'while processing auto_attr {attr!r} for: {obj!r}')
+
+    try:
+        setattr(obj, attr.attr_name, value)
+    except Exception:
+        raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
+
+
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
 def load_object(cls, data, cls_info=None, context=None):
@@ -275,6 +300,9 @@ def load_object(cls, data, cls_info=None, context=None):
     attribute, from the given deserialized json data.
 
     Args:
+      data: the dict of data containing the key-values to process.
+      cls_info: a dict of keyword arguments to pass to the class constructor
+        before processing attributes.
       context: the current Jinja2 context.
     """
     if cls_info is None:
@@ -293,21 +321,7 @@ def load_object(cls, data, cls_info=None, context=None):
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
     for attr in obj.auto_attrs:
-        # TODO: make the inside of this loop a function?
-        if type(attr) != AutoAttr:
-            assert type(attr) == tuple
-            attr = AutoAttr(*attr)
-
-        _log.debug(f'processing auto_attr {attr!r} for: {obj!r}')
-        try:
-            value = attr.process_key(obj, data=data, context=context)
-        except Exception:
-            raise RuntimeError(f'while processing auto_attr {attr!r} for: {obj!r}')
-
-        try:
-            setattr(obj, attr.attr_name, value)
-        except Exception:
-            raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
+        process_auto_attr(obj, attr, data=data, context=context)
 
     # Check that all keys in the JSON have been processed.
     if data:
