@@ -40,6 +40,7 @@ def get_file_names(dir_path):
     return sorted(path.name for path in dir_path.iterdir())
 
 
+# TODO: also do an end-to-end test through the CLI and using subprocess?
 class EndToEndTest(TestCase):
 
     """
@@ -64,10 +65,14 @@ class EndToEndTest(TestCase):
         actual_names, expected_names = (get_file_names(dir_path) for dir_path in dirs)
         self.assertEqual(actual_names, expected_names)
 
-        if SHA256SUMS_FILENAME in actual_names:
-            # Then check it last so we can see better diffs.
-            actual_names.remove(SHA256SUMS_FILENAME)
-            actual_names.append(SHA256SUMS_FILENAME)
+        # Move the files that contain secure file hashes to the end of the
+        # list so that the file diff we see is more informative (i.e.
+        # not just a difference in hash values).
+        # Also, make SHA256SUMS_FILENAME the very last file checked.
+        for name in ('index.html', SHA256SUMS_FILENAME):
+            if name in actual_names:
+                actual_names.remove(name)
+                actual_names.append(name)
 
         for file_name in actual_names:
             actual_path, expected_path = (dir_path / file_name for dir_path in dirs)

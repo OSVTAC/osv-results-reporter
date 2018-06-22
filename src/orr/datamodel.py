@@ -293,12 +293,12 @@ def load_object(cls, data, cls_info=None, context=None):
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
     for attr in obj.auto_attrs:
+        # TODO: make the inside of this loop a function?
         if type(attr) != AutoAttr:
             assert type(attr) == tuple
             attr = AutoAttr(*attr)
 
         _log.debug(f'processing auto_attr {attr!r} for: {obj!r}')
-
         try:
             value = attr.process_key(obj, data=data, context=context)
         except Exception:

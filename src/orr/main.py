@@ -46,7 +46,7 @@ from orr.datamodel import ResultStatType, ResultStyle, VotingGroup
 from orr.datamodel import Election
 import orr.templating as templating
 import orr.utils as utils
-from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME
+from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME, US_LOCALE
 
 
 _log = logging.getLogger(__name__)
@@ -446,8 +446,11 @@ def run(config_path=None, input_paths=None, template_dir=None,
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    render_template_dir(template_dir, output_dir=output_dir, env=env,
-        context=context, test_mode=test_mode)
+    # TODO: allow different locales to be used (e.g. the system's default
+    #  locale and/or a locale passed in via the command-line)?
+    with utils.changing_locale(US_LOCALE):
+        render_template_dir(template_dir, output_dir=output_dir, env=env,
+            context=context, test_mode=test_mode)
 
     make_sha256sums_file(output_dir)
 

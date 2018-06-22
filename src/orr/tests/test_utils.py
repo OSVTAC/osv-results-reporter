@@ -60,7 +60,7 @@ class UtilsModuleTest(TestCase):
 
     def test_format_number(self):
         cases = [
-            ((1000, None), '1000'),
+            ((1000, 'C'), '1000'),
             ((1000, US_LOCALE), '1,000'),
         ]
         for (num, loc), expected in cases:
