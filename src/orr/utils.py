@@ -97,6 +97,7 @@ def format_number(num):
     '9,999'
     """
     # The "n" option adds a locale-aware thousands separator.
+    if num is None: return ''
     return f'{num:n}'
 
 
@@ -107,16 +108,18 @@ def format_percent(percent):
     >>> format_percent(12.4)
     '12.40%'
     """
+    if percent is None:
+        return ''
     return f'{percent:.2f}%'
 
 def format_percent2(num,denom):
     """
     Format a percentage for display as num/denom.
     """
-    if denom == 0:
-        return format_percent(0)
+    if denom is None or num is None or denom == 0:
+        return ''
     else:
-        return(format_percent(num/denom))
+        return(format_percent(100*num/denom))
 
 def read_json(path):
     with open(path) as f:
