@@ -40,6 +40,24 @@ class UtilsModuleTest(TestCase):
     Test the functions in orr.utils.
     """
 
+    def test_truncate(self):
+        # Create a string that exceeds the truncation length.
+        long_string = 100 * 'a'
+
+        cases = [
+            ('abc', "'abc'"),
+            # Test a string that exceeds the truncation length.
+            (long_string, "'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'..."),
+            # Test a non-string.
+            ({'a': 1}, '"{\'a\': 1}"'),
+            # Test a non-string that exceeds the truncation length.
+            ({long_string: 1}, '"{\'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"...'),
+        ]
+        for obj, expected in cases:
+            with self.subTest(obj=obj):
+                actual = utils.truncate(obj)
+                self.assertEqual(actual, expected)
+
     def test_format_number(self):
         cases = [
             ((1000, None), '1000'),

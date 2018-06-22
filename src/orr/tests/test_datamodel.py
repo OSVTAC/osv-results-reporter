@@ -95,7 +95,7 @@ class ChoiceTest(TestCase):
         choice = Choice()
         choice.id = 100
         choice.ballot_title = title
-        expected = "<Choice id=100 title='English text aaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
+        expected = "<Choice id=100 title=[en]'English text aaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
         actual = repr(choice)
         self.assertEqual(actual, expected)
 

@@ -35,6 +35,7 @@ import sys
 
 import babel.dates
 
+
 _log = logging.getLogger(__name__)
 
 try:
@@ -56,6 +57,20 @@ HASH_BYTES = 2 ** 12  # 4K
 DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
 
 SHA256SUMS_FILENAME = 'SHA256SUMS'
+
+
+def truncate(obj):
+    """
+    Return an object representation guaranteed not to exceed a reasonable
+    length.  This is useful e.g. for logging.
+    """
+    if type(obj) != str:
+        obj = repr(obj)
+    if len(obj) > 40:
+        # Add an ellipsis to indicate that a truncation occurred.
+        return f'{obj[:40]!r}...'
+
+    return repr(obj)
 
 
 @contextmanager

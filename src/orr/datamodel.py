@@ -33,6 +33,9 @@ import functools
 import logging
 import re
 
+from orr.utils import truncate
+
+
 _log = logging.getLogger(__name__)
 
 
@@ -77,7 +80,7 @@ def parse_as_is(obj, value):
     """
     Return the given value as is, without any validation, etc.
     """
-    _log.debug(f'parsing as is: {value}')
+    _log.debug(f'parsing as is: {truncate(value)}')
     return value
 
 
@@ -144,6 +147,7 @@ def parse_date(obj, value):
 
     return date
 
+
 def parse_date_time(obj, value):
     """
     Remove and parse a date time from the given data.
@@ -163,17 +167,21 @@ def parse_i18n(obj, value):
     """
     Remove and parse an i18n string from the given data.
     """
-    _log.debug(f'processing parse_i18n: {value}')
+    _log.debug(f'processing parse_i18n: {truncate(value)}')
     return value
 
 
+# TODO: test this.
 def i18n_repr(i18n_text):
-    if 'en' in i18n_text:
-        title = i18n_text['en']
-    else:
-        title = str(i18n_text)
+    """
+    Return a representation suitable for direct inclusion in a __repr__
+    value, for example f'<Item title={i18n_repr(self.title)}>'.
+    """
+    if type(i18n_text) == dict and 'en' in i18n_text:
+        # Add a prefix to indicate the English was picked out.
+        return '[en]{}'.format(truncate(i18n_text['en']))
 
-    return title[:40]
+    return truncate(i18n_text)
 
 
 class AutoAttr:
@@ -207,9 +215,17 @@ class AutoAttr:
         self.load_value = load_value
         self.unpack_context = unpack_context
 
+    def __repr__(self):
+        # Using __qualname__ instead of __name__ includes also the class
+        # name and not just the function / method name.
+        return f'<AutoAttr {self.attr_name!r}: data_key={self.data_key!r}, load_value={self.load_value.__qualname__}>'
+
     def make_load_value_kwargs(self, context):
         """
         Create and return the kwargs to pass to the load_value() function.
+
+        Args:
+          context: the current Jinja2 context.
         """
         context_keys = self.context_keys
 
@@ -229,6 +245,27 @@ class AutoAttr:
 
         return kwargs
 
+    def process_key(self, obj, data, context):
+        """
+        Parse and process the value in the given data dict corresponding
+        to the current AutoAttr instance.
+
+        Args:
+          data: the dict of data containing the key-value to process.
+          context: the current Jinja2 context.
+        """
+        value = data.pop(self.data_key, None)
+        if value is None:
+            return
+
+        kwargs = self.make_load_value_kwargs(context)
+
+        # TODO: can we eliminate needing to pass obj if load_value doesn't
+        #  depend on it?
+        value = self.load_value(obj, value, **kwargs)
+
+        return value
+
 
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
@@ -236,6 +273,9 @@ def load_object(cls, data, cls_info=None, context=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
+
+    Args:
+      context: the current Jinja2 context.
     """
     if cls_info is None:
         cls_info = {}
@@ -253,26 +293,19 @@ def load_object(cls, data, cls_info=None, context=None):
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
     for attr in obj.auto_attrs:
-        # TODO: make the below inside of the loop a function or method of AutoAttr.
         if type(attr) != AutoAttr:
             assert type(attr) == tuple
             attr = AutoAttr(*attr)
 
-        attr_name = attr.attr_name
-        load_value = attr.load_value
-        data_key = attr.data_key
-        kwargs = attr.make_load_value_kwargs(context)
-
-        _log.debug(f'processing auto_attr: ({attr_name}, {data_key}, {load_value})')
-        value = data.pop(data_key, None)
-        if value is not None:
-            try:
-                value = load_value(obj, value, **kwargs)
-            except Exception:
-                raise RuntimeError(f'while processing attr_name {attr_name!r} for: {obj!r}')
+        _log.debug(f'processing auto_attr {attr!r} for: {obj!r}')
 
         try:
-            setattr(obj, attr_name, value)
+            value = attr.process_key(obj, data=data, context=context)
+        except Exception:
+            raise RuntimeError(f'while processing auto_attr {attr!r} for: {obj!r}')
+
+        try:
+            setattr(obj, attr.attr_name, value)
         except Exception:
             raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
 
@@ -370,6 +403,9 @@ def index_objects(objects):
         obj.index = index
 
 
+# TODO: add a should_index argument and pass a callable whose signature
+#  is load(data).
+# TODO: rename to load_sequence_to_dict()?
 def read_objects_to_dict(cls, seq, context=None):
     """
     Read from JSON data a list of objects that don't require an "index"
@@ -647,8 +683,7 @@ class Header:
         self.areas_by_id = OrderedDict()
 
     def __repr__(self):
-        title = i18n_repr(self.ballot_title)
-        return f'<Header id={self.id!r} title={title[:70]!r}...>'
+        return f'<Header id={self.id!r} title={i18n_repr(self.ballot_title)}>'
 
     def add_child_item(self, item):
         """
@@ -683,9 +718,12 @@ class Choice:
         ('ballot_title', parse_i18n),
     ]
 
+    def __init__(self):
+        self.ballot_title = None
+        self.id = None
+
     def __repr__(self):
-        title = i18n_repr(self.ballot_title)
-        return f'<Choice id={self.id!r} title={title[:70]!r}...>'
+        return f'<Choice id={self.id!r} title={i18n_repr(self.ballot_title)}>'
 
     @property
     def result_index(self):
@@ -716,10 +754,12 @@ class Candidate(Choice):
         ('candidate_party', parse_i18n),
     ]
 
-    def __repr__(self):
-        title = i18n_repr(self.ballot_title)
-        return f'<Candidate id={self.id!r} title={title[:70]!r}...>'
+    def __init__(self):
+        self.ballot_title = None
+        self.id = None
 
+    def __repr__(self):
+        return f'<Candidate id={self.id!r} title={i18n_repr(self.ballot_title)}>'
 
 def get_path_difference(new_seq, old_seq):
     """
@@ -1218,13 +1258,16 @@ class Election:
 
     # TODO: eliminate the need to pass areas_by_id here.
     def __init__(self, areas_by_id):
-        self.areas_by_id = areas_by_id
+        self.ballot_title = None
+        self.date = None
 
         self.result_detail_dir = "./resultdata"
         self.result_detail_format_filepath = "{}/results.{}.psv"
 
+        self.areas_by_id = areas_by_id
+
     def __repr__(self):
-        return f'<Election ballot_title={self.ballot_title!r} election_date={self.date!r}>'
+        return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
 
     # Also expose the dict values as an (ordered) list, for convenience.
     @property
