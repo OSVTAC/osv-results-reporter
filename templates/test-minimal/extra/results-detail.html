@@ -45,7 +45,7 @@
         {% set rg = contest.reporting_groups[i] %}
         <tr><td>{{ rg.area.short_name }}{% if rg.voting_group.id != 'TO' or rg.area.id == '*' %} - {{ rg.voting_group.heading }}{% endif %}</td>
         {% for v in contest.detail_results(i, 'CHOICES *') %}
-        <td>{{ v }}</td>
+        <td>{{ v|format_number }}</td>
         {% endfor %}
         </tr>
       {% endfor %}

@@ -703,7 +703,7 @@ class Choice:
 
         return self.contest.summary_results(self.result_index, group_idlist)
 
-class Candidate:
+class Candidate(Choice):
 
     """
     Represents a candidate selection on a ballot-.
@@ -720,22 +720,6 @@ class Candidate:
         title = i18n_repr(self.ballot_title)
         return f'<Candidate id={self.id!r} title={title[:70]!r}...>'
 
-
-    @property
-    def result_index(self):
-        """
-        Returns the column index into result values corresponding
-        to this choice.
-        """
-        return self.index + self.contest.result_stat_count
-
-    def summary_results(self, group_idlist=None):
-        """
-        Returns the contest.summary_results with the choice_stat_index
-        computed for this choice.
-        """
-
-        return self.contest.summary_results(self.result_index, group_idlist)
 
 def get_path_difference(new_seq, old_seq):
     """
@@ -931,7 +915,7 @@ class Contest:
                     next_rcv_round -= 1
                 else:
                     # We could verify the reporting group but will skip
-                    self.results.append(cols[2:])
+                    self.results.append([ int(v) for v in cols[2:]])
             if len(self.results) != self.reporting_group_count:
                 raise RuntimeError(
                     f'Mismatched reporting groups in {filename}')
@@ -989,9 +973,20 @@ class Contest:
         Returns a list of vote summary values (total votes for each
         VotingGroup defined. If group_idlist is defined it will be
         interpreted as a space separated list of VotingGroup IDs.
+
+        The choice_stat_index may be an integer, 0..result_stat_count
+        for stats, or ..result_stat_count+choice_count for an index
+        representing a choice, or alternatively can be a choice object,
+        where the index is computed from the choice.
         """
         # Load the results if not already loaded
         self.load_results_details()
+
+        if isinstance(choice_stat_index, Choice):
+            choice_stat_index = choice_stat_index.index + self.result_stat_count
+        else:
+            if (not type(choice_stat_index) is int) or choice_stat_index<0 or choice_stat_index >= self.result_stat_count + self.choice_count:
+                raise RuntimeError(f'Invalid choice_stat_index {choice_stat_index} in contest {self.id}')
 
         # TODO: check choice_stat_index
         return [ self.results[i][choice_stat_index]
@@ -1047,8 +1042,6 @@ class Contest:
         self.header_id = None
         self.parent_header = None
         self.result_details = []    # result detail definitions
-        self.result_stats = []      # Pseudo choice for result summary attrs
-        self.subtotal_types = []    # summary subtotals available
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
     def __repr__(self):
@@ -1072,6 +1065,13 @@ class Contest:
         Helper function to get the number of result stats
         """
         return len(self.result_style.result_stat_types)
+
+    @property
+    def result_stats(self):
+        """
+        Helper function to get the result stat object list
+        """
+        return self.result_style.result_stat_types
 
     def _iter_headers(self):
         item = self

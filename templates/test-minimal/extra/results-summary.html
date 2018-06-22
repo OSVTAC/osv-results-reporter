@@ -40,15 +40,15 @@
       </tr></thead>
       {% for choice in contest.choices %}
         <tr><td>{{ choice.ballot_title|translate }}</td>
-        {% for v in choice.summary_results() %}
+        {% for v in contest.summary_results(choice) %}
         <td>{{ v }}</td>
         {% endfor %}
         </tr>
       {% endfor %}
-      {% for stat in contest.result_stats_by_id() %}
-        <tr><td>{{ stat.heading }}</td>
-        {% for v in contest.summary_results(loop.index0) %}
-        <td>{{ v }}</td>
+      {% for i in contest.result_stat_indexes_by_id() %}
+        <tr><td>{{ contest.result_stats[i].heading }}</td>
+        {% for v in contest.summary_results(i) %}
+        <td>{{ v|format_number}}</td>
         {% endfor %}
         </tr>
       {% endfor %}
