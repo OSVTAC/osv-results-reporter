@@ -1360,13 +1360,7 @@ class ModelRoot:
 
     def process_areas(self, value, voting_groups_by_id):
         """
-        Process source data representing a precinct or district. The
-        object is entered into the context's areas_by_id.
-
-        Returns a list of either Precincts or Districts.
-
-        Args:
-          value: a list of dicts corresponding to the Precinct objects.
+        Process source data representing an area (e.g. precinct or district).
         """
         cls_info = dict(voting_groups_by_id=voting_groups_by_id)
         load_data = functools.partial(load_object, Area, cls_info=cls_info)
