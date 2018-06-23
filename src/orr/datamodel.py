@@ -564,9 +564,9 @@ class ReportingGroup:
         self.area = area
         self.voting_group = voting_group
 
-# --- Precinct/District definitions ---
 
 class Area:
+
     """
     The Area object represents any kind of precinct or district
     that corresponds to a geographic area. ID codes for precincts
@@ -575,20 +575,12 @@ class Area:
     Sometimes we want to access IDs that may be either a precinct
     or district (i.e. a Precinct acts as a district for voting),
     but usually precints and districts are distinct.
-    """
-    def __init__(self):
-        self.id = None
-        self.name = None
-        self.short_name = None
-        self.is_vbm = False
 
-class Precinct(Area):
-    """
-    The Precinct object can represent a base precinct, a precinct
-    split (precinct divided into unique combinations of intersecting
-    districts), or consolidated precinct-- a group of precincts
-    combined for voting and reporting. A consolidated precinct may
-    be the same as a base precinct, i.e. have only one precinct.
+    An Area object of classification "Precinct" can represent a base
+    precinct, a precinct split (precinct divided into unique combinations of
+    intersecting districts), or consolidated precinct -- a group of precincts
+    combined for voting and reporting. A consolidated precinct may be the
+    same as a base precinct, i.e. have only one precinct.
 
     A consolidated precinct ID might be shared with a base precinct,
     but when loading data, the precinct list should be either
@@ -603,8 +595,10 @@ class Precinct(Area):
     there might be election day voting for some contests but VBM-only
     for others in that precinct.
     """
+
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('classification', parse_as_is),
         ('name', parse_i18n),
         ('short_name', parse_i18n),
         ('is_vbm', parse_bool),
@@ -612,7 +606,11 @@ class Precinct(Area):
     ]
 
     def __init__(self):
-        Area.__init__(self)
+        self.id = None
+        self.name = None
+        self.short_name = None
+        self.is_vbm = False
+
 
 class District:
     """
@@ -651,14 +649,12 @@ class District:
     ]
 
     def __init__(self, voting_groups_by_id, areas_by_id):
-        Area.__init__(self)
-
-        self._reporting_groups = None
-
         # TODO: can we eliminate needing to set areas_by_id and
         #  voting_groups_by_id since it's only needed for lazy loading?
         self.areas_by_id = areas_by_id
         self.voting_groups_by_id = voting_groups_by_id
+
+        self._reporting_groups = None
 
     @property
     def reporting_groups(self):
@@ -677,7 +673,6 @@ class District:
                 setattr(rg, 'index', len(self._reporting_groups))
                 self._reporting_groups.append(rg)
         return self._reporting_groups
-
 
 
 # --- Ballot Item definitions
@@ -1193,30 +1188,10 @@ class Election:
     represented as candidate objects.
     """
 
-    def process_areas(self, value, cls, areas_by_id, cls_info=None):
-        """
-        Process source data representing a precinct or district. The
-        object is entered into the context's areas_by_id.
-
-        Returns a list of either Precincts or Districts.
-
-        Args:
-          value: a list of dicts corresponding to the Precinct objects.
-        """
-        areas = []
-        for data in value:
-            area = load_object(cls, data, cls_info=cls_info)
-            areas.append(area)
-            add_object_by_id(areas_by_id, area)
-
-        return areas
-
+    # TODO: move districts to the top-level "areas" key.
     def process_districts(self, value, voting_groups_by_id, areas_by_id):
         cls_info = dict(areas_by_id=areas_by_id, voting_groups_by_id=voting_groups_by_id)
-        return self.process_areas(value, District, areas_by_id=areas_by_id, cls_info=cls_info)
-
-    def process_precincts(self, value, areas_by_id):
-        return self.process_areas(value, Precinct, areas_by_id=areas_by_id)
+        return process_region(value, District, areas_by_id=areas_by_id, cls_info=cls_info)
 
     def process_headers(self, value):
         """
@@ -1256,12 +1231,11 @@ class Election:
         ('ballot_title', parse_i18n),
         ('date', parse_date, 'election_date'),
         ('election_area', parse_i18n),
-        # Process precincts and districts before contests so
-        # contests may reference and map the district ID
+        # Process areas before contests so contests can reference the
+        # area ID (as the "voting_district").
+        # TODO: process districts as part of areas.
         AutoAttr('districts', process_districts,
             context_keys=('areas_by_id', 'voting_groups_by_id'), unpack_context=True),
-        AutoAttr('precincts', process_precincts,
-            context_keys=('areas_by_id',), unpack_context=True),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
@@ -1354,6 +1328,23 @@ class Election:
             c.load_results_details()
 
 
+def process_region(value, cls, areas_by_id, cls_info=None):
+    """
+    Process source data representing a precinct or district. The
+    object is entered into the context's areas_by_id.
+
+    Returns a list of either Precincts or Districts.
+
+    Args:
+      value: a list of dicts corresponding to the Precinct objects.
+    """
+    for data in value:
+        area = load_object(cls, data, cls_info=cls_info)
+        add_object_by_id(areas_by_id, area)
+
+    return areas_by_id
+
+
 class ModelRoot:
 
     """
@@ -1391,6 +1382,10 @@ class ModelRoot:
         load_data = functools.partial(load_object, ResultStyle, context=context)
         return load_objects_to_mapping(load_data, value)
 
+    def process_areas(self, value):
+        areas_by_id = OrderedDict()
+        return process_region(value, Area, areas_by_id=areas_by_id)
+
     def process_election(self, value, context):
         cls_info = dict(input_dir=self.input_dir)
         return load_object(Election, value, cls_info=cls_info, context=context)
@@ -1405,6 +1400,7 @@ class ModelRoot:
         # Processing result_styles requires result_stat_types and voting_groups.
         AutoAttr('result_styles_by_id', process_result_styles, data_key='result_styles',
             context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
+        ('areas_by_id', process_areas, 'areas'),
         AutoAttr('election', process_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]

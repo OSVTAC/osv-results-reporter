@@ -1,4 +1,25 @@
 {
+    "areas": [
+        {
+            "_id": "*",
+            "classification": "All",
+            "name": "All Precincts",
+            "short_name": "All Precincts"
+        },
+        {
+            "_id": "PCT1141",
+            "classification": "Precinct",
+            "name": "Precinct 1141",
+            "short_name": "Precinct 1141"
+        },
+        {
+            "_id": "PCT7101",
+            "classification": "Precinct",
+            "is_vbm": true,
+            "name": "Precinct 7101",
+            "short_name": "Precinct 7101"
+        }
+    ],
     "election": {
         "ballot_title": {
             "en": "Consolidated Statewide Direct Primary Election",
@@ -352,24 +373,6 @@
                 },
                 "classification": "Measure Category",
                 "header_id": "HDR11"
-            }
-        ],
-        "precincts": [
-            {
-                "_id": "*",
-                "name": "All Precincts",
-                "short_name": "All Precincts"
-            },
-            {
-                "_id": "PCT1141",
-                "name": "Precinct 1141",
-                "short_name": "Precinct 1141"
-            },
-            {
-                "_id": "PCT7101",
-                "is_vbm": true,
-                "name": "Precinct 7101",
-                "short_name": "Precinct 7101"
             }
         ]
     },

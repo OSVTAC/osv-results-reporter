@@ -294,9 +294,7 @@ def load_model(input_dir, build_time):
     path = input_dir / 'election.json'
     data = utils.read_json(path)
 
-    # TODO: move and process areas as top-level JSON items.
-    areas_by_id = OrderedDict()
-    context = dict(areas_by_id=areas_by_id, build_time=build_time)
+    context = dict(build_time=build_time)
 
     cls_info = dict(context=context, input_dir=input_dir)
     model = datamodel.load_object(ModelRoot, data, cls_info=cls_info, context=context)
