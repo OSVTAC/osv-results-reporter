@@ -427,10 +427,8 @@ def index_objects(objects):
 
 def load_objects_to_mapping(load_data, seq, should_index=False):
     """
-    Read from JSON data a list of objects that don't require an "index"
-    attribute.
-
-    Returns a dict mapping id to object.
+    Read from JSON data a list of objects, and return a dict mapping id
+    to object.
 
     Args:
       load_data: a function with signature load_data(data) that returns
