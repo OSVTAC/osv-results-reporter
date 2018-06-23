@@ -344,28 +344,30 @@ def load_object(cls, data, cls_info=None, context=None):
 
 def make_index_map(values):
     """
-    Return a dict mapping the value to its (0-based) index in the list.
+    Return an `indexes_by_value` dict mapping the value to its (0-based)
+    index in the list.
     """
     return {value: index for index, value in enumerate(values)}
 
 
+# TODO: remove this?
 def make_id_to_index_map(objlist):
     """
-    A dict mapping an object id to list index is created for
-    a list of objects. The index converts the id to the index
+    An `indexes_by_id` dict mapping an object id to list index is created
+    for a list of objects. The index converts the id to the index
     in the list 0..len(objlist)-1
     """
     return make_index_map(obj.id for obj in objlist)
 
 
 # TODO: share code with process_index_idlist()?
-def filter_by_ids(objects_by_id, idlist):
+def filter_idlist_by_mapping(idlist, objects_by_id):
     """
-    Splits a space separated list of ids and returns the non-null
-    values as a result.
+    Split a space-separated list of ids, and return the ids that exist
+    as keys in objects_by_id.
     """
     ids = idlist.split()
-    return [objects_by_id[object_id] for object_id in ids if object_id in objects_by_id]
+    return [id_ for id_ in ids if id_ in objects_by_id]
 
 
 def process_index_idlist(objects_by_id, data):
@@ -379,8 +381,8 @@ def process_index_idlist(objects_by_id, data):
 
     Returns: (objects, indexes_by_id)
       objects: the objects as a list.
-      indexes_by_id: a dict mapping (0-based) index to object.
-
+      indexes_by_id: a dict mapping object id to its (0-based) index in
+        the list.
     """
     ids = data.split()
     indexes_by_id = make_index_map(ids)
@@ -505,7 +507,7 @@ class ResultStyle:
 
     def process_voting_groups(self, value, voting_groups_by_id):
         voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
-        self.voting_group_index_by_id = indexes_by_id
+        self.voting_group_indexes_by_id = indexes_by_id
 
         return voting_groups
 
@@ -523,27 +525,53 @@ class ResultStyle:
 
     def __init__(self):
         self.id = None
+        # This is set by process_voting_groups().
+        self.voting_group_indexes_by_id = None
 
     def __repr__(self):
         return f'<ResultStyle id={self.id!r}>'
 
-    def voting_group_indexes_by_id(self, idlist):
+    def get_voting_group_by_id(self, id_):
+        index = self.voting_group_indexes_by_id[id_]
+        voting_group = self.voting_groups[index]
+
+        return voting_group
+
+    def voting_group_ids_from_idlist(self, idlist):
         """
-        Returns the list of voting group index values by the
-        space separated list of ids. Unmatched ids are omitted.
+        Return the matching voting group ids, as a list.
+
+        Args:
+          idlist: a space-separated list of ids.
         """
         if (not idlist) or (idlist == "*"):
-            return range(len(self.voting_groups))
+            # Then return all of the ids, in order.
+            return [voting_group.id for voting_group in self.voting_groups]
 
-        return filter_by_ids(self.voting_group_index_by_id, idlist)
+        # Otherwise, return only the matching ones.
+        ids = filter_idlist_by_mapping(idlist, self.voting_group_indexes_by_id)
 
-    def voting_groups_by_id(self, idlist):
+        return ids
+
+    def voting_group_indexes_from_idlist(self, idlist):
+        """
+        Returns the list of voting group index values by the
+        space-separated list of ids. Unmatched ids are omitted.
+        """
+        ids = self.voting_group_ids_from_idlist(idlist)
+        indexes = [self.voting_group_indexes_by_id[id_] for id_ in ids]
+
+        return indexes
+
+    def voting_groups_from_idlist(self, idlist):
         """
         Returns the list of voting group objects by the
-        space separated list of ids. Unmatched ids are omitted.
+        space-separated list of ids. Unmatched ids are omitted.
         """
-        return [ self.voting_groups[i] for i in
-                 self.voting_group_indexes_by_id(idlist) ]
+        ids = self.voting_group_ids_from_idlist(idlist)
+        voting_groups = [self.get_voting_group_by_id(id_) for id_ in ids]
+
+        return voting_groups
 
 
 class ReportingGroup:
@@ -1109,11 +1137,11 @@ class Contest:
         return [ self.result_style.result_stat_types[i]
                 for i in self.result_stat_indexes_by_id(stat_idlist) ]
 
-    def voting_groups_by_id(self, group_idlist=None):
+    def voting_groups_from_idlist(self, group_idlist=None):
         """
         Helper function to reference the voting groups.
         """
-        return self.result_style.voting_groups_by_id(group_idlist)
+        return self.result_style.voting_groups_from_idlist(group_idlist)
 
     def summary_results(self, choice_stat_index, group_idlist=None):
         """
@@ -1138,7 +1166,7 @@ class Contest:
         # TODO: check choice_stat_index
         return [ self.results[i][choice_stat_index]
                  for i in
-                 self.result_style.voting_group_indexes_by_id(group_idlist) ]
+                 self.result_style.voting_group_indexes_from_idlist(group_idlist) ]
 
     def detail_results(self, reporting_index, choice_stat_idlist=None):
         """

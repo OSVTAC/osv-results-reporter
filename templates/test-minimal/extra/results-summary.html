@@ -34,7 +34,7 @@
     <p>{{ contest.load_results_details() }}{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})</p>
     <table>
       <thead><tr><th>&nbsp;</th>
-      {% for vg in contest.voting_groups_by_id() %}
+      {% for vg in contest.voting_groups_from_idlist() %}
       <th>{{ vg.heading }}</th>
       {% endfor %}
       </tr></thead>
