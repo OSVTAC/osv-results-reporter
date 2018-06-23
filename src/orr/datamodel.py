@@ -318,6 +318,11 @@ def load_object(cls, data, cls_info=None, context=None):
     if context is None:
         context = {}
 
+    auto_attrs = cls.auto_attrs
+
+    if hasattr(cls, 'model_class'):
+        cls = cls.model_class
+
     try:
         # This is where we use composition over inheritance.
         # We inject additional attributes and behavior into the class
@@ -328,7 +333,7 @@ def load_object(cls, data, cls_info=None, context=None):
 
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
-    for attr in obj.auto_attrs:
+    for attr in auto_attrs:
         process_auto_attr(obj, attr, data=data, context=context)
 
     # Check that all keys in the JSON have been processed.
@@ -1179,84 +1184,16 @@ class Contest:
                  for i in self.result_stat_indexes_by_id(choice_stat_idlist) ]
 
 
-def process_header_id(item, headers_by_id):
-    """
-    Add the two-way association between a ballot item (header or contest)
-    and its header, if it has a header.
-
-    Args:
-      item: a Header or Contest object.
-    """
-    if not item.header_id:
-        # Then there is nothing to do.
-        return
-
-    # Add this ballot item to the header's ballot item list.
-    try:
-        header = headers_by_id[item.header_id]
-    except KeyError:
-        msg = f'Header id {item.header_id!r} not found for item: {item!r}'
-        raise RuntimeError(msg)
-
-    header.add_child_item(item)
-
-
 class Election:
 
     """
-    The election is the root object for all content defined for an
-    election operated by an Election Administration (EA), e.g. a
-    county.
+    The election is the root object for all content defined for an election
+    operated by an Election Administration (EA), e.g. a county.
 
     An Election object without a date can be used to hold a definition
     of all current elected offices, represented as a contest and incumbents
     represented as candidate objects.
     """
-
-    def process_headers(self, value):
-        """
-        Process the source data representing the header items.
-
-        Returns an OrderedDict mapping header id to Header object.
-
-        Args:
-          value: a list of dicts corresponding to the Header objects.
-        """
-        load_data = functools.partial(load_object, Header)
-        headers_by_id = load_objects_to_mapping(load_data, value, should_index=True)
-
-        for header in headers_by_id.values():
-            process_header_id(header, headers_by_id)
-
-        return headers_by_id
-
-    def process_contests(self, value, context):
-        """
-        Process the source data representing the contest items.
-
-        Returns an OrderedDict mapping contest id to Contest object.
-
-        Args:
-          value: a list of dicts corresponding to the Contest objects.
-        """
-        load_data = functools.partial(Contest.from_data, election=self, context=context)
-        contests_by_id = load_objects_to_mapping(load_data, value, should_index=True)
-
-        for contest in contests_by_id.values():
-            process_header_id(contest, self.headers_by_id)
-
-        return contests_by_id
-
-    auto_attrs = [
-        ('ballot_title', parse_i18n),
-        ('date', parse_date, 'election_date'),
-        ('election_area', parse_i18n),
-        # Process headers before contests since the contest data references
-        # the headers but not vice versa.
-        ('headers_by_id', process_headers, 'headers'),
-        AutoAttr('contests_by_id', process_contests, data_key='contests',
-            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
-    ]
 
     def __init__(self, input_dir):
         """
@@ -1388,8 +1325,11 @@ class ModelRoot:
         return areas_by_id
 
     def process_election(self, value, context):
+        # TODO: remove this nested import.
+        from orr.dataloading import ElectionLoader
+
         cls_info = dict(input_dir=self.input_dir)
-        return load_object(Election, value, cls_info=cls_info, context=context)
+        return load_object(ElectionLoader, value, cls_info=cls_info, context=context)
 
     auto_attrs = [
         ('languages', parse_as_is),
