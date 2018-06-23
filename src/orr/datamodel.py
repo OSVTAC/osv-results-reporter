@@ -658,11 +658,16 @@ class Area:
         """
         for s in self.reporting_group_ids.split():
             m = self.reporting_group_pattern.match(s)
-            if not m:
-                raise RuntimeError(f"invalid reporting_group_ids '{s}' for district {self.id}")
-            area_id, group_id = m.groups()
-            group = ReportingGroup(self.areas_by_id[area_id],
-                                   self.voting_groups_by_id[group_id])
+            try:
+                if not m:
+                    raise ValueError(f'reporting_group_id {s!r} does not match pattern')
+                area_id, group_id = m.groups()
+                area = self.areas_by_id[area_id]
+                voting_group = self.voting_groups_by_id[group_id]
+                group = ReportingGroup(area, voting_group)
+            except Exception:
+                raise RuntimeError(f"invalid reporting_group_id for district {self.id!r}")
+
             yield group
 
     @property
