@@ -425,10 +425,7 @@ def index_objects(objects):
         obj.index = index
 
 
-# TODO: add a should_index argument and pass a callable whose signature
-#  is load(data).
-# TODO: rename to load_sequence_to_dict()?
-def read_objects_to_dict(cls, seq, context=None):
+def load_objects_to_mapping(load_data, seq, should_index=False):
     """
     Read from JSON data a list of objects that don't require an "index"
     attribute.
@@ -436,10 +433,16 @@ def read_objects_to_dict(cls, seq, context=None):
     Returns a dict mapping id to object.
 
     Args:
-      context: optional context dictionary that load_object() for the
-        class depends on.
+      load_data: a function with signature load_data(data) that returns
+        an object of the proper type.
+      seq: an iterable of data items to pass to load_data().
+      should_index: whether to set the index attribute on the resulting
+        objects (using 0-based indices).
     """
-    objects = [load_object(cls, data, context=context) for data in seq]
+    objects = [load_data(data) for data in seq]
+    if should_index:
+        index_objects(objects)
+
     objects_by_id = create_mapping_by_id(objects)
 
     return objects_by_id
@@ -902,9 +905,7 @@ class Contest:
           choice_cls: the class to use to instantiate the choice (e.g.
             Candidate or Choice).
         """
-        choices = [self.enter_choice(data) for data in choices_data]
-        index_objects(choices)
-        choices_by_id = create_mapping_by_id(choices)
+        choices_by_id = load_objects_to_mapping(self.enter_choice, choices_data, should_index=True)
 
         return choices_by_id
 
@@ -1226,11 +1227,10 @@ class Election:
         Args:
           value: a list of dicts corresponding to the Header objects.
         """
-        headers = [load_object(Header, data) for data in value]
-        index_objects(headers)
-        headers_by_id = create_mapping_by_id(headers)
+        load_data = functools.partial(load_object, Header)
+        headers_by_id = load_objects_to_mapping(load_data, value, should_index=True)
 
-        for header in headers:
+        for header in headers_by_id.values():
             process_header_id(header, headers_by_id)
 
         return headers_by_id
@@ -1244,11 +1244,10 @@ class Election:
         Args:
           value: a list of dicts corresponding to the Contest objects.
         """
-        contests = [Contest.from_data(data, self, context=context) for data in value]
-        index_objects(contests)
-        contests_by_id = create_mapping_by_id(contests)
+        load_data = functools.partial(Contest.from_data, election=self, context=context)
+        contests_by_id = load_objects_to_mapping(load_data, value, should_index=True)
 
-        for contest in contests:
+        for contest in contests_by_id.values():
             process_header_id(contest, self.headers_by_id)
 
         return contests_by_id
@@ -1381,13 +1380,16 @@ class ModelRoot:
         self.context[name] = value
 
     def process_result_stat_types(self, value):
-        return read_objects_to_dict(ResultStatType, value)
+        load_data = functools.partial(load_object, ResultStatType)
+        return load_objects_to_mapping(load_data, value)
 
     def process_voting_groups(self, value):
-        return read_objects_to_dict(VotingGroup, value)
+        load_data = functools.partial(load_object, VotingGroup)
+        return load_objects_to_mapping(load_data, value)
 
     def process_result_styles(self, value, context):
-        return read_objects_to_dict(ResultStyle, value, context=context)
+        load_data = functools.partial(load_object, ResultStyle, context=context)
+        return load_objects_to_mapping(load_data, value)
 
     def process_election(self, value, context):
         cls_info = dict(input_dir=self.input_dir)
