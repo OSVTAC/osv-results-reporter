@@ -658,13 +658,13 @@ class Area:
             m = self.reporting_group_pattern.match(s)
             try:
                 if not m:
-                    raise ValueError(f'reporting_group_id {s!r} does not match pattern')
+                    raise ValueError(f'ReportingGroup id does not match pattern')
                 area_id, group_id = m.groups()
                 area = self.areas_by_id[area_id]
                 voting_group = self.voting_groups_by_id[group_id]
                 group = ReportingGroup(area, voting_group)
             except Exception:
-                raise RuntimeError(f"invalid reporting_group_id for district {self.id!r}")
+                raise RuntimeError(f"invalid ReportingGroup id {s!r} for area {self.id!r}")
 
             yield group
 
