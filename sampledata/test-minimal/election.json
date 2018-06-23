@@ -18,6 +18,32 @@
             "is_vbm": true,
             "name": "Precinct 7101",
             "short_name": "Precinct 7101"
+        },
+        {
+            "_id": "0",
+            "classification": "County",
+            "name": "City and County of San Francisco",
+            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO",
+            "short_name": "San Francisco County"
+        },
+        {
+            "_id": "ASSM17",
+            "classification": "County Legislative District",
+            "name": "California State Assembly District 17",
+            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO",
+            "short_name": "Assembly District 17"
+        },
+        {
+            "_id": "SUPV1",
+            "classification": "County Legislative District",
+            "name": "San Francisco County Supervisorial District  1",
+            "short_name": "Supervisorial District 1"
+        },
+        {
+            "_id": "NEIG1",
+            "classification": "Neighborhood",
+            "name": "Neighborhood of Bayview/Hunters Point",
+            "short_name": "Bayview/Hunters Point"
         }
     ],
     "election": {
@@ -270,34 +296,6 @@
                 },
                 "result_style": "EMS",
                 "voting_district": "0"
-            }
-        ],
-        "districts": [
-            {
-                "_id": "0",
-                "classification": "County",
-                "name": "City and County of San Francisco",
-                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO",
-                "short_name": "San Francisco County"
-            },
-            {
-                "_id": "ASSM17",
-                "classification": "County Legislative District",
-                "name": "California State Assembly District 17",
-                "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO",
-                "short_name": "Assembly District 17"
-            },
-            {
-                "_id": "SUPV1",
-                "classification": "County Legislative District",
-                "name": "San Francisco County Supervisorial District  1",
-                "short_name": "Supervisorial District 1"
-            },
-            {
-                "_id": "NEIG1",
-                "classification": "Neighborhood",
-                "name": "Neighborhood of Bayview/Hunters Point",
-                "short_name": "Bayview/Hunters Point"
             }
         ],
         "election_area": {
