@@ -555,12 +555,11 @@ class ReportingGroup:
     a reporting_group_ids string that is a space-separated list of
     area_id~voting_group_id ID pairs that reference a list of (area,group)
     tuples.
-
-    When creating a ReportingGroup, it is appended to the district.
     """
-    def __init__(self, area, voting_group):
+    def __init__(self, area, voting_group, index):
         self.area = area
         self.voting_group = voting_group
+        self.index = index
 
 
 class Area:
@@ -632,15 +631,7 @@ class Area:
         ('reporting_group_ids', parse_as_is),
     ]
 
-    def __init__(self, voting_groups_by_id):
-        # TODO: can we eliminate needing to set areas_by_id and
-        #  voting_groups_by_id since it's only needed for lazy loading?
-        self.voting_groups_by_id = voting_groups_by_id
-        # The areas_by_id attribute is set in process_areas().
-        self.areas_by_id = None
-
-        self._reporting_groups = None
-
+    def __init__(self):
         self.id = None
         self.classification = None
         self.name = None
@@ -650,34 +641,23 @@ class Area:
     def __repr__(self):
         return f'<Area {self.classification!r}: id={self.id!r}>'
 
-    def make_reporting_groups(self):
+    def iter_reporting_groups(self, areas_by_id, voting_groups_by_id):
         """
         An iterator that creates and yields the reporting groups.
         """
-        for s in self.reporting_group_ids.split():
+        for index, s in enumerate(self.reporting_group_ids.split()):
             m = self.reporting_group_pattern.match(s)
             try:
                 if not m:
                     raise ValueError(f'ReportingGroup id does not match pattern')
                 area_id, group_id = m.groups()
-                area = self.areas_by_id[area_id]
-                voting_group = self.voting_groups_by_id[group_id]
-                group = ReportingGroup(area, voting_group)
+                area = areas_by_id[area_id]
+                voting_group = voting_groups_by_id[group_id]
+                group = ReportingGroup(area, voting_group, index=index)
             except Exception:
-                raise RuntimeError(f"invalid ReportingGroup id {s!r} for area {self.id!r}")
+                raise RuntimeError(f"error handling ReportingGroup id {s!r} for area {self.id!r}")
 
             yield group
-
-    @property
-    def reporting_groups(self):
-        if self._reporting_groups is None:
-            # Create the reporting_groups list from IDs on first access
-            groups = list(self.make_reporting_groups())
-            # Set the index attribute on each group.
-            index_objects(groups)
-            self._reporting_groups = groups
-
-        return self._reporting_groups
 
 
 # --- Ballot Item definitions
@@ -877,8 +857,12 @@ class Contest:
         except KeyError:
             raise RuntimeError(f'invalid ballot item type: {type_name!r}')
 
-        cls_info = dict(type_name=type_name, choice_cls=choice_cls,
-                        election=election)
+        areas_by_id = context['areas_by_id']
+        voting_groups_by_id = context['voting_groups_by_id']
+
+        cls_info = dict(type_name=type_name,
+            choice_cls=choice_cls, election=election, areas_by_id=areas_by_id,
+            voting_groups_by_id=voting_groups_by_id)
 
         contest = load_object(Contest, data, cls_info=cls_info, context=context)
 
@@ -908,6 +892,107 @@ class Contest:
         choices_by_id = load_objects_to_mapping(self.enter_choice, choices_data, should_index=True)
 
         return choices_by_id
+
+    def parse_result_style(self, value, result_styles_by_id):
+        return result_styles_by_id[value]
+
+    def parse_voting_district(self, value, areas_by_id):
+        return areas_by_id[value]
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('ballot_subtitle', parse_i18n),
+        ('ballot_title', parse_i18n),
+        # TODO: this should be parsed out.
+        ('choice_names', parse_as_is),
+        ('choices_by_id', enter_choices, 'choices'),
+        ('header_id', parse_as_is),
+        ('instructions_text', parse_as_is),
+        ('is_partisan', parse_as_is),
+        ('number_elected', parse_as_is),
+        ('question_text', parse_as_is),
+        AutoAttr('result_style', parse_result_style,
+            context_keys=('result_styles_by_id',), unpack_context=True),
+        AutoAttr('voting_district', parse_voting_district,
+            context_keys=('areas_by_id',), unpack_context=True),
+        ('type', parse_as_is),
+        ('vote_for_msg', parse_as_is),
+        ('writeins_allowed', parse_int),
+    ]
+
+    # TODO: don't pass election.
+    def __init__(self, type_name, choice_cls=None, id_=None, election=None,
+        areas_by_id=None, voting_groups_by_id=None):
+        assert type_name is not None
+        assert election is not None
+
+        self.id = id_
+        self.type_name = type_name
+        self.choice_cls = choice_cls
+        self.election = election
+        self.areas_by_id = areas_by_id
+        self.all_voting_groups_by_id = voting_groups_by_id
+
+        self.header_id = None
+        self.parent_header = None
+        self.result_details = []    # result detail definitions
+        self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
+
+    def __repr__(self):
+        return f'<Contest {self.type_name!r}: id={self.id!r}>'
+
+    # Also expose the dict values as an ordered list, for convenience.
+    @property
+    def choices(self):
+        # Here we use that choices_by_id is an OrderedDict.
+        yield from self.choices_by_id.values()
+
+    @property
+    def reporting_groups(self):
+        """
+        Create and return a list of ReportingGroup objects.
+        """
+        area = self.voting_district
+        voting_groups_by_id = self.all_voting_groups_by_id
+        iterator = area.iter_reporting_groups(self.areas_by_id, voting_groups_by_id=voting_groups_by_id)
+        return list(iterator)
+
+    @property
+    def result_stat_count(self):
+        """
+        Helper function to get the number of result stats
+        """
+        return len(self.result_style.result_stat_types)
+
+    @property
+    def result_stats(self):
+        """
+        Helper function to get the result stat object list
+        """
+        return self.result_style.result_stat_types
+
+    def _iter_headers(self):
+        item = self
+        while item.parent_header:
+            yield item.parent_header
+
+            item = item.parent_header
+
+    def make_header_path(self):
+        """
+        Return the list of successive parent headers, starting from the root.
+        """
+        return list(reversed(list(self._iter_headers())))
+
+    def get_new_headers(self, header_path):
+        """
+        Return the headers that are **new** compared with header_path.
+
+        Returns: a list of pairs (i, header), where i is the (1-based)
+          integer level of the header.
+        """
+        my_header_path = self.make_header_path()
+        return get_path_difference(my_header_path, header_path)
 
     def load_results_details(self, filename=None):
         """
@@ -1065,99 +1150,6 @@ class Contest:
         return [ self.results[reporting_index][i]
                  for i in self.result_stat_indexes_by_id(choice_stat_idlist) ]
 
-    def parse_result_style(self, value, result_styles_by_id):
-        return result_styles_by_id[value]
-
-    def parse_voting_district(self, value, areas_by_id):
-        return areas_by_id[value]
-
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('ballot_subtitle', parse_i18n),
-        ('ballot_title', parse_i18n),
-        # TODO: this should be parsed out.
-        ('choice_names', parse_as_is),
-        ('choices_by_id', enter_choices, 'choices'),
-        ('header_id', parse_as_is),
-        ('instructions_text', parse_as_is),
-        ('is_partisan', parse_as_is),
-        ('number_elected', parse_as_is),
-        ('question_text', parse_as_is),
-        AutoAttr('result_style', parse_result_style,
-            context_keys=('result_styles_by_id',), unpack_context=True),
-        AutoAttr('voting_district', parse_voting_district,
-            context_keys=('areas_by_id',), unpack_context=True),
-        ('type', parse_as_is),
-        ('vote_for_msg', parse_as_is),
-        ('writeins_allowed', parse_int),
-    ]
-
-    def __init__(self, type_name, choice_cls=None, id_=None, election=None):
-        assert type_name is not None
-        assert election is not None
-
-        self.id = id_
-        self.type_name = type_name
-        self.choice_cls = choice_cls
-        self.election = election
-
-        self.header_id = None
-        self.parent_header = None
-        self.result_details = []    # result detail definitions
-        self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
-
-    def __repr__(self):
-        return f'<Contest {self.type_name!r}: id={self.id!r}>'
-
-    # Also expose the dict values as an ordered list, for convenience.
-    @property
-    def choices(self):
-        # Here we use that choices_by_id is an OrderedDict.
-        yield from self.choices_by_id.values()
-
-    @property
-    def reporting_groups(self):
-        if not hasattr(self,'_reporting_groups'):
-            _reporting_groups = self.voting_district.reporting_groups
-        return _reporting_groups
-
-    @property
-    def result_stat_count(self):
-        """
-        Helper function to get the number of result stats
-        """
-        return len(self.result_style.result_stat_types)
-
-    @property
-    def result_stats(self):
-        """
-        Helper function to get the result stat object list
-        """
-        return self.result_style.result_stat_types
-
-    def _iter_headers(self):
-        item = self
-        while item.parent_header:
-            yield item.parent_header
-
-            item = item.parent_header
-
-    def make_header_path(self):
-        """
-        Return the list of successive parent headers, starting from the root.
-        """
-        return list(reversed(list(self._iter_headers())))
-
-    def get_new_headers(self, header_path):
-        """
-        Return the headers that are **new** compared with header_path.
-
-        Returns: a list of pairs (i, header), where i is the (1-based)
-          integer level of the header.
-        """
-        my_header_path = self.make_header_path()
-        return get_path_difference(my_header_path, header_path)
-
 
 def process_header_id(item, headers_by_id):
     """
@@ -1235,7 +1227,7 @@ class Election:
         # the headers but not vice versa.
         ('headers_by_id', process_headers, 'headers'),
         AutoAttr('contests_by_id', process_contests, data_key='contests',
-            context_keys=('areas_by_id', 'result_styles_by_id')),
+            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
 
     def __init__(self, input_dir):
@@ -1358,18 +1350,12 @@ class ModelRoot:
         load_data = functools.partial(load_object, ResultStyle, context=context)
         return load_objects_to_mapping(load_data, value)
 
-    def process_areas(self, value, voting_groups_by_id):
+    def process_areas(self, value):
         """
         Process source data representing an area (e.g. precinct or district).
         """
-        cls_info = dict(voting_groups_by_id=voting_groups_by_id)
-        load_data = functools.partial(load_object, Area, cls_info=cls_info)
+        load_data = functools.partial(load_object, Area)
         areas_by_id = load_objects_to_mapping(load_data, value)
-
-        # Set the areas_by_id attribute so reporting groups are able to
-        # be computed lazily.
-        for area in areas_by_id.values():
-            area.areas_by_id = areas_by_id
 
         return areas_by_id
 
@@ -1387,8 +1373,7 @@ class ModelRoot:
         # Processing result_styles requires result_stat_types and voting_groups.
         AutoAttr('result_styles_by_id', process_result_styles, data_key='result_styles',
             context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
-        AutoAttr('areas_by_id', process_areas, data_key='areas',
-            context_keys=('voting_groups_by_id',), unpack_context=True),
+        ('areas_by_id', process_areas, 'areas'),
         AutoAttr('election', process_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
