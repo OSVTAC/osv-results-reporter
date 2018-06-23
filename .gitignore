@@ -4,3 +4,5 @@ __pycache__/
 _build/
 .DS_Store
 .python-version
+# We don't want to accidentally store PDF's in source control.
+*.pdf
