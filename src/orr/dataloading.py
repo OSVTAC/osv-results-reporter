@@ -118,8 +118,9 @@ class HeaderLoader:
         ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
         ('classification', parse_as_is),
-        # TODO: remove header_id as an attribute (only have parent_header).
-        ('header_id', parse_as_is),
+        # This is needed only while loading.
+        # TODO: can we eliminate having to store this as an attribute?
+        AutoAttr('_header_id', parse_as_is, data_key='header_id'),
     ]
 
 
@@ -206,7 +207,9 @@ class ContestLoader:
         # TODO: this should be parsed out.
         ('choice_names', parse_as_is),
         ('choices_by_id', load_choices, 'choices'),
-        ('header_id', parse_as_is),
+        # This is needed only while loading.
+        # TODO: can we eliminate having to store this as an attribute?
+        AutoAttr('_header_id', parse_as_is, data_key='header_id'),
         ('instructions_text', parse_as_is),
         ('is_partisan', parse_as_is),
         ('number_elected', parse_as_is),
@@ -271,15 +274,17 @@ def link_with_header(item, headers_by_id):
     Args:
       item: a Header or Contest object.
     """
-    if not item.header_id:
+    header_id = item._header_id
+
+    if not header_id:
         # Then there is nothing to do.
         return
 
     # Add this ballot item to the header's ballot item list.
     try:
-        header = headers_by_id[item.header_id]
+        header = headers_by_id[header_id]
     except KeyError:
-        msg = f'Header id {item.header_id!r} not found for item: {item!r}'
+        msg = f'Header id {header_id!r} not found for item: {item!r}'
         raise RuntimeError(msg)
 
     add_child_to_header(header, item)
@@ -298,7 +303,7 @@ def load_headers(election, headers_data):
     headers_by_id = load_objects_to_mapping(load_data, headers_data, should_index=True)
 
     for header in headers_by_id.values():
-        link_with_header(header, headers_by_id)
+        link_with_header(header, headers_by_id=headers_by_id)
 
     return headers_by_id
 
@@ -316,7 +321,7 @@ def load_contests(election, contests_data, context):
     contests_by_id = load_objects_to_mapping(load_data, contests_data, should_index=True)
 
     for contest in contests_by_id.values():
-        link_with_header(contest, election.headers_by_id)
+        link_with_header(contest, headers_by_id=election.headers_by_id)
 
     return contests_by_id
 

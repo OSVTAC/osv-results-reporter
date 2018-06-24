@@ -649,15 +649,12 @@ class Header:
 
       ballot_items: the child items, which are either Contest objects,
         or other Header objects.
-      header_id: id of the parent header object containing this item
-        (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
     """
 
     def __init__(self):
         self.ballot_title = None
         self.ballot_items = []
-        self.header_id = None
         self.id = None
         self.parent_header = None
 
@@ -813,7 +810,6 @@ class Contest:
         self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
 
-        self.header_id = None
         self.parent_header = None
         self.result_details = []    # result detail definitions
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
