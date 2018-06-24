@@ -396,63 +396,6 @@ def process_index_idlist(objects_by_id, data):
     return objects, indexes_by_id
 
 
-def add_object_by_id(mapping, obj):
-    """
-    Add an object to a dict mapping object id to object.
-
-    Args:
-      mapping: a dict to lookup by obj.id
-      obj: object to be added
-    """
-    if not obj.id:
-        raise RuntimeError(f'object does not have an id: {obj!r}')
-    if obj.id in mapping:
-        raise RuntimeError(f'duplicate object id: {obj!r}')
-
-    mapping[obj.id] = obj
-
-
-def create_mapping_by_id(objects):
-    """
-    Create and return an ordered dict mapping object id to object.
-    """
-    objects_by_id = OrderedDict()
-
-    for obj in objects:
-        add_object_by_id(objects_by_id, obj)
-
-    return objects_by_id
-
-
-def index_objects(objects):
-    """
-    Set the index attribute on a sequence of objects, starting with 0.
-    """
-    for index, obj in enumerate(objects):
-        obj.index = index
-
-
-def load_objects_to_mapping(load_data, seq, should_index=False):
-    """
-    Read from JSON data a list of objects, and return a dict mapping id
-    to object.
-
-    Args:
-      load_data: a function with signature load_data(data) that returns
-        an object of the proper type.
-      seq: an iterable of data items to pass to load_data().
-      should_index: whether to set the index attribute on the resulting
-        objects (using 0-based indices).
-    """
-    objects = [load_data(data) for data in seq]
-    if should_index:
-        index_objects(objects)
-
-    objects_by_id = create_mapping_by_id(objects)
-
-    return objects_by_id
-
-
 # --- Results reporting group/type definitions ---
 
 class VotingGroup:
