@@ -10,6 +10,9 @@ Following an election orr can be used to create results summary
 pages on election night, and detailed Statement of Vote reports
 with precinct detail on each contest.
 
+This is an official project of San Francisco's [Open Source Voting System
+Technical Advisory Committee][osvtac] (OSVTAC).
+
 
 ### To install
 
@@ -105,6 +108,21 @@ $ docker build -t orr . \
 
 TODO: change the above to a bash script?
 
+## History
+
+Work on this project started informally around the beginning of May 2018.
+The [Open Source Voting System Technical Advisory Committee][osvtac]
+(OSVTAC) adopted it as an official project by unanimous vote at its
+June 14, 2018 meeting.  The source code was first made public on June 18,
+2018 under OSVTAC's GitHub account.
+
+Note that because OSVTAC is an official meeting body of the City and
+County of San Francisco, members must follow San Francisco's [Sunshine
+Ordinance][sunshine-ordinance] and California's [Brown Act][brown-act].
+Thus, members are limited in the extent to which they can collaborate
+with one another outside of meetings.
+
+
 ## Copyright
 
 Copyright (C) 2018  Carl Hage
@@ -136,3 +154,8 @@ The authors can be reached at--
 
 * Carl Hage <ch@carlhage.com>
 * Chris Jerdonek <chris.jerdonek@gmail.com>
+
+
+[brown-act]: https://en.wikipedia.org/wiki/Brown_Act
+[osvtac]: https://osvtac.github.io/
+[sunshine-ordinance]: https://www.sfcityattorney.org/good-government/sunshine/sunshine-ordinance/
