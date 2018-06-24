@@ -595,19 +595,18 @@ class Area:
 
     The voting district for a contest may be associated with a list
     of "reporting groups"
+
+    Attributes:
+      id:
+      classification:
+      name:
+      short_name:
+      is_vbm:
+      consolidated_ids:
+      reporting_group_ids:
     """
 
     reporting_group_pattern = re.compile(r'(.*)~(.*)')
-
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('classification', parse_as_is),
-        ('name', parse_i18n),
-        ('short_name', parse_i18n),
-        ('is_vbm', parse_bool),
-        ('consolidated_ids', parse_as_is),
-        ('reporting_group_ids', parse_as_is),
-    ]
 
     def __init__(self):
         self.id = None
@@ -644,18 +643,16 @@ class Header:
 
     """
     Attributes:
+      id:
+      ballot_title:
+      classification:
+
       ballot_items: the child items, which are either Contest objects,
         or other Header objects.
       header_id: id of the parent header object containing this item
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
     """
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('ballot_title', parse_i18n),
-        ('classification', parse_as_is),
-        ('header_id', parse_as_is),
-    ]
 
     def __init__(self):
         self.ballot_title = None
@@ -666,18 +663,6 @@ class Header:
 
     def __repr__(self):
         return f'<Header id={self.id!r} title={i18n_repr(self.ballot_title)}>'
-
-    def add_child_item(self, item):
-        """
-        Link a child ballot item with its parent.
-
-        Args:
-          item: a Contest or Header object.
-        """
-        assert type(item) in (Contest, Header)
-
-        self.ballot_items.append(item)
-        item.parent_header = self  # back reference
 
 
 class Choice:
@@ -693,12 +678,12 @@ class Choice:
     rejected votes and totals. The RESULT_STATS contain an id
     (that is distinct from a candidate/choice id) and "ballot_title"
     that can be used as a label in a report analogous to a candidate/choice name.
-    """
 
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('ballot_title', parse_i18n),
-    ]
+    Instance attributes:
+
+      id:
+      ballot_title:
+    """
 
     def __init__(self):
         self.ballot_title = None
@@ -723,18 +708,19 @@ class Choice:
 
         return self.contest.summary_results(self.result_index, group_idlist)
 
+
 class Candidate(Choice):
 
     """
     Represents a candidate selection on a ballot-.
-    """
 
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('ballot_title', parse_i18n),
-        ('ballot_designation', parse_i18n),
-        ('candidate_party', parse_i18n),
-    ]
+    Instance attributes:
+
+      id:
+      ballot_title:
+      ballot_designation:
+      candidate_party:
+    """
 
     def __init__(self):
         self.ballot_title = None
@@ -742,6 +728,7 @@ class Candidate(Choice):
 
     def __repr__(self):
         return f'<Candidate id={self.id!r} title={i18n_repr(self.ballot_title)}>'
+
 
 def get_path_difference(new_seq, old_seq):
     """

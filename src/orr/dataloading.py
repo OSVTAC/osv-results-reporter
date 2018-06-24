@@ -29,17 +29,9 @@ import functools
 import orr.datamodel as datamodel
 # TODO: move all but the model classes themselves into this module.
 from orr.datamodel import (load_object,
-    parse_as_is, parse_date, parse_i18n, parse_id, parse_int,
-    Area, AutoAttr, Candidate, Choice, Contest, Header, ResultStatType,
+    parse_as_is, parse_bool, parse_date, parse_i18n, parse_id, parse_int,
+    AutoAttr, Candidate, Choice, Contest, Header, ResultStatType,
     ResultStyle, VotingGroup)
-
-
-# Dict mapping contest data "_type" name to choice class.
-BALLOT_ITEM_CLASSES = {
-    'office': Candidate,
-    'measure': Choice,
-    'ynoffice': Choice,
-}
 
 
 def index_objects(objects):
@@ -99,7 +91,72 @@ def load_objects_to_mapping(load_data, seq, should_index=False):
     return objects_by_id
 
 
+# Area loading
+
+class AreaLoader:
+
+    model_class = datamodel.Area
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('classification', parse_as_is),
+        ('name', parse_i18n),
+        ('short_name', parse_i18n),
+        ('is_vbm', parse_bool),
+        ('consolidated_ids', parse_as_is),
+        ('reporting_group_ids', parse_as_is),
+    ]
+
+
+# Header loading
+
+class HeaderLoader:
+
+    model_class = Header
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('ballot_title', parse_i18n),
+        ('classification', parse_as_is),
+        # TODO: remove header_id as an attribute (only have parent_header).
+        ('header_id', parse_as_is),
+    ]
+
+
+# Choice loading
+
+class ChoiceLoader:
+
+    model_class = Choice
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('ballot_title', parse_i18n),
+    ]
+
+
+# Candidate loading
+
+class CandidateLoader:
+
+    model_class = Candidate
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('ballot_title', parse_i18n),
+        ('ballot_designation', parse_i18n),
+        ('candidate_party', parse_i18n),
+    ]
+
+
 # Contest loading
+
+# Dict mapping contest data "_type" name to choice loader class.
+BALLOT_ITEM_CLASSES = {
+    'office': CandidateLoader,
+    'measure': ChoiceLoader,
+    'ynoffice': ChoiceLoader,
+}
 
 def load_single_choice(contest, data):
     """
@@ -192,6 +249,20 @@ def load_single_contest(data, election, context):
 
 # Election loading
 
+def add_child_to_header(header, item):
+    """
+    Link a child ballot item with its parent.
+
+    Args:
+      header: the parent header, as a Header object.
+      item: a Contest or Header object.
+    """
+    assert type(item) in (Contest, Header)
+
+    header.ballot_items.append(item)
+    item.parent_header = header  # back reference
+
+
 def link_with_header(item, headers_by_id):
     """
     Add the two-way association between a ballot item (header or contest)
@@ -211,7 +282,7 @@ def link_with_header(item, headers_by_id):
         msg = f'Header id {item.header_id!r} not found for item: {item!r}'
         raise RuntimeError(msg)
 
-    header.add_child_item(item)
+    add_child_to_header(header, item)
 
 
 def load_headers(election, headers_data):
@@ -223,7 +294,7 @@ def load_headers(election, headers_data):
     Args:
       headers_data: a list of dicts corresponding to the Header objects.
     """
-    load_data = functools.partial(load_object, Header)
+    load_data = functools.partial(load_object, HeaderLoader)
     headers_by_id = load_objects_to_mapping(load_data, headers_data, should_index=True)
 
     for header in headers_by_id.values():
@@ -299,7 +370,7 @@ def load_areas(root, areas_data):
     """
     Process source data representing an area (e.g. precinct or district).
     """
-    load_data = functools.partial(load_object, Area)
+    load_data = functools.partial(load_object, AreaLoader)
     areas_by_id = load_objects_to_mapping(load_data, areas_data)
 
     return areas_by_id
