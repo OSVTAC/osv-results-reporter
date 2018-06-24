@@ -31,7 +31,7 @@ from orr.datamodel import (load_object, load_objects_to_mapping, parse_date,
     parse_i18n, AutoAttr, Contest, Header)
 
 
-def process_header_id(item, headers_by_id):
+def link_with_header(item, headers_by_id):
     """
     Add the two-way association between a ballot item (header or contest)
     and its header, if it has a header.
@@ -53,38 +53,38 @@ def process_header_id(item, headers_by_id):
     header.add_child_item(item)
 
 
-def process_headers(obj, value):
+def load_headers(obj, headers_data):
     """
     Process the source data representing the header items.
 
     Returns an OrderedDict mapping header id to Header object.
 
     Args:
-      value: a list of dicts corresponding to the Header objects.
+      headers_data: a list of dicts corresponding to the Header objects.
     """
     load_data = functools.partial(load_object, Header)
-    headers_by_id = load_objects_to_mapping(load_data, value, should_index=True)
+    headers_by_id = load_objects_to_mapping(load_data, headers_data, should_index=True)
 
     for header in headers_by_id.values():
-        process_header_id(header, headers_by_id)
+        link_with_header(header, headers_by_id)
 
     return headers_by_id
 
 
-def process_contests(election, value, context):
+def load_contests(election, contests_data, context):
     """
     Process the source data representing the contest items.
 
     Returns an OrderedDict mapping contest id to Contest object.
 
     Args:
-      value: a list of dicts corresponding to the Contest objects.
+      contests_data: a list of dicts corresponding to the Contest objects.
     """
     load_data = functools.partial(Contest.from_data, election=election, context=context)
-    contests_by_id = load_objects_to_mapping(load_data, value, should_index=True)
+    contests_by_id = load_objects_to_mapping(load_data, contests_data, should_index=True)
 
     for contest in contests_by_id.values():
-        process_header_id(contest, election.headers_by_id)
+        link_with_header(contest, election.headers_by_id)
 
     return contests_by_id
 
@@ -99,7 +99,7 @@ class ElectionLoader:
         ('election_area', parse_i18n),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
-        ('headers_by_id', process_headers, 'headers'),
-        AutoAttr('contests_by_id', process_contests, data_key='contests',
+        ('headers_by_id', load_headers, 'headers'),
+        AutoAttr('contests_by_id', load_contests, data_key='contests',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]

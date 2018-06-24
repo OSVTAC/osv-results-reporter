@@ -1193,6 +1193,17 @@ class Election:
     An Election object without a date can be used to hold a definition
     of all current elected offices, represented as a contest and incumbents
     represented as candidate objects.
+
+    Instance attributes:
+
+      input_dir:
+      result_detail_format_filepath:
+
+      ballot_title:
+      date:
+      election_area:
+      headers_by_id:
+      contests_by_id:
     """
 
     def __init__(self, input_dir):
