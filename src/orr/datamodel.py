@@ -821,20 +821,13 @@ def get_path_difference(new_seq, old_seq):
     return list(pair for pair in enumerate(new_seq[index:], start=index+1))
 
 
-# Dict mapping contest data "_type" name to choice class.
-BALLOT_ITEM_CLASSES = {
-    'office': Candidate,
-    'measure': Choice,
-    'ynoffice': Choice,
-}
-
-
 # List of results detail headers to copy to the contest
 results_details_headers = dict(
     reporting_time=parse_date_time,
     total_precincts=parse_int,
     precincts_reporting=parse_int,
     rcv_rounds=parse_int)
+
 
 class Contest:
 
@@ -876,84 +869,6 @@ class Contest:
     The attributes defining an elected office are included, and information
     on the incumbent/candidate can be defined.
     """
-
-    @classmethod
-    def from_data(cls, data, election, context):
-        """
-        Create and return a Header object from data.
-        """
-        try:
-            type_name = data.pop('_type')
-        except KeyError:
-            raise RuntimeError(f"key '_type' missing from data: {data}")
-
-        try:
-            choice_cls = BALLOT_ITEM_CLASSES[type_name]
-        except KeyError:
-            raise RuntimeError(f'invalid ballot item type: {type_name!r}')
-
-        areas_by_id = context['areas_by_id']
-        voting_groups_by_id = context['voting_groups_by_id']
-
-        cls_info = dict(type_name=type_name,
-            choice_cls=choice_cls, election=election, areas_by_id=areas_by_id,
-            voting_groups_by_id=voting_groups_by_id)
-
-        contest = load_object(Contest, data, cls_info=cls_info, context=context)
-
-        return contest
-
-    def enter_choice(self, data):
-        """
-        Common processing to enter a candidate or measure choice
-
-        Args:
-          choice_cls: the class to use to instantiate the choice.
-        """
-        choice_cls = self.choice_cls
-        choice = load_object(choice_cls, data)
-        choice.contest = self     # Add back reference
-
-        return choice
-
-    def enter_choices(self, choices_data):
-        """
-        Scan an input data list of contest choice entries to create.
-
-        Args:
-          choice_cls: the class to use to instantiate the choice (e.g.
-            Candidate or Choice).
-        """
-        choices_by_id = load_objects_to_mapping(self.enter_choice, choices_data, should_index=True)
-
-        return choices_by_id
-
-    def parse_result_style(self, value, result_styles_by_id):
-        return result_styles_by_id[value]
-
-    def parse_voting_district(self, value, areas_by_id):
-        return areas_by_id[value]
-
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('ballot_subtitle', parse_i18n),
-        ('ballot_title', parse_i18n),
-        # TODO: this should be parsed out.
-        ('choice_names', parse_as_is),
-        ('choices_by_id', enter_choices, 'choices'),
-        ('header_id', parse_as_is),
-        ('instructions_text', parse_as_is),
-        ('is_partisan', parse_as_is),
-        ('number_elected', parse_as_is),
-        ('question_text', parse_as_is),
-        AutoAttr('result_style', parse_result_style,
-            context_keys=('result_styles_by_id',), unpack_context=True),
-        AutoAttr('voting_district', parse_voting_district,
-            context_keys=('areas_by_id',), unpack_context=True),
-        ('type', parse_as_is),
-        ('vote_for_msg', parse_as_is),
-        ('writeins_allowed', parse_int),
-    ]
 
     # TODO: don't pass election.
     def __init__(self, type_name, choice_cls=None, id_=None, election=None,

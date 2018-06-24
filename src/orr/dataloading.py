@@ -28,8 +28,106 @@ import functools
 import orr.datamodel as datamodel
 # TODO: move all but the model classes themselves into this module.
 from orr.datamodel import (load_object, load_objects_to_mapping,
-    parse_as_is, parse_date, parse_i18n, Area, AutoAttr, Contest,
-    Header, ResultStatType, ResultStyle, VotingGroup)
+    parse_as_is, parse_date, parse_i18n, parse_id, parse_int,
+    Area, AutoAttr, Candidate, Choice, Contest, Header, ResultStatType,
+    ResultStyle, VotingGroup)
+
+
+# Dict mapping contest data "_type" name to choice class.
+BALLOT_ITEM_CLASSES = {
+    'office': Candidate,
+    'measure': Choice,
+    'ynoffice': Choice,
+}
+
+
+def load_single_choice(contest, data):
+    """
+    Common processing to enter a candidate or measure choice
+
+    Args:
+      choice_cls: the class to use to instantiate the choice.
+    """
+    choice_cls = contest.choice_cls
+    choice = load_object(choice_cls, data)
+    choice.contest = contest     # Add back reference
+
+    return choice
+
+
+def load_choices(contest, choices_data):
+    """
+    Scan an input data list of contest choice entries to create.
+
+    Args:
+      choice_cls: the class to use to instantiate the choice (e.g.
+        Candidate or Choice).
+    """
+    load_data = functools.partial(load_single_choice, contest)
+    choices_by_id = load_objects_to_mapping(load_data, choices_data, should_index=True)
+
+    return choices_by_id
+
+
+# We want a name other than load_result_styles() for uniqueness reasons.
+def load_contest_result_style(contest, value, result_styles_by_id):
+    return result_styles_by_id[value]
+
+
+def load_voting_district(contest, value, areas_by_id):
+    return areas_by_id[value]
+
+
+class ContestLoader:
+
+    model_class = Contest
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('ballot_subtitle', parse_i18n),
+        ('ballot_title', parse_i18n),
+        # TODO: this should be parsed out.
+        ('choice_names', parse_as_is),
+        ('choices_by_id', load_choices, 'choices'),
+        ('header_id', parse_as_is),
+        ('instructions_text', parse_as_is),
+        ('is_partisan', parse_as_is),
+        ('number_elected', parse_as_is),
+        ('question_text', parse_as_is),
+        AutoAttr('result_style', load_contest_result_style,
+            context_keys=('result_styles_by_id',), unpack_context=True),
+        AutoAttr('voting_district', load_voting_district,
+            context_keys=('areas_by_id',), unpack_context=True),
+        ('type', parse_as_is),
+        ('vote_for_msg', parse_as_is),
+        ('writeins_allowed', parse_int),
+    ]
+
+
+def load_single_contest(data, election, context):
+    """
+    Create and return a Header object from data.
+    """
+    try:
+        type_name = data.pop('_type')
+    except KeyError:
+        raise RuntimeError(f"key '_type' missing from data: {data}")
+
+    try:
+        choice_cls = BALLOT_ITEM_CLASSES[type_name]
+    except KeyError:
+        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
+
+    areas_by_id = context['areas_by_id']
+    voting_groups_by_id = context['voting_groups_by_id']
+
+    cls_info = dict(type_name=type_name,
+        choice_cls=choice_cls, election=election, areas_by_id=areas_by_id,
+        voting_groups_by_id=voting_groups_by_id)
+
+    contest = load_object(ContestLoader, data, cls_info=cls_info, context=context)
+
+    return contest
 
 
 def link_with_header(item, headers_by_id):
@@ -54,7 +152,7 @@ def link_with_header(item, headers_by_id):
     header.add_child_item(item)
 
 
-def load_headers(obj, headers_data):
+def load_headers(election, headers_data):
     """
     Process the source data representing the header items.
 
@@ -81,7 +179,7 @@ def load_contests(election, contests_data, context):
     Args:
       contests_data: a list of dicts corresponding to the Contest objects.
     """
-    load_data = functools.partial(Contest.from_data, election=election, context=context)
+    load_data = functools.partial(load_single_contest, election=election, context=context)
     contests_by_id = load_objects_to_mapping(load_data, contests_data, should_index=True)
 
     for contest in contests_by_id.values():
