@@ -27,8 +27,9 @@ import functools
 
 import orr.datamodel as datamodel
 # TODO: move all but the model classes themselves into this module.
-from orr.datamodel import (load_object, load_objects_to_mapping, parse_date,
-    parse_i18n, AutoAttr, Contest, Header)
+from orr.datamodel import (load_object, load_objects_to_mapping,
+    parse_as_is, parse_date, parse_i18n, Area, AutoAttr, Contest,
+    Header, ResultStatType, ResultStyle, VotingGroup)
 
 
 def link_with_header(item, headers_by_id):
@@ -101,5 +102,71 @@ class ElectionLoader:
         # the headers but not vice versa.
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
+            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+    ]
+
+
+def load_result_stat_types(root, types_data):
+    """
+    Args:
+      root: a ModelRoot object.
+    """
+    load_data = functools.partial(load_object, ResultStatType)
+    return load_objects_to_mapping(load_data, types_data)
+
+
+def load_voting_groups(root, groups_data):
+    """
+    Args:
+      root: a ModelRoot object.
+    """
+    load_data = functools.partial(load_object, VotingGroup)
+    return load_objects_to_mapping(load_data, groups_data)
+
+
+def load_result_styles(root, styles_data, context):
+    """
+    Args:
+      root: a ModelRoot object.
+    """
+    load_data = functools.partial(load_object, ResultStyle, context=context)
+    return load_objects_to_mapping(load_data, styles_data)
+
+
+def load_areas(root, areas_data):
+    """
+    Process source data representing an area (e.g. precinct or district).
+    """
+    load_data = functools.partial(load_object, Area)
+    areas_by_id = load_objects_to_mapping(load_data, areas_data)
+
+    return areas_by_id
+
+
+def load_election(root, election_data, context):
+    """
+    Args:
+      root: a ModelRoot object.
+    """
+    cls_info = dict(input_dir=root.input_dir)
+    return load_object(ElectionLoader, election_data, cls_info=cls_info, context=context)
+
+
+class RootLoader:
+
+    model_class = datamodel.ModelRoot
+
+    auto_attrs = [
+        ('languages', parse_as_is),
+        ('translations', parse_as_is),
+        # Set "result_stat_types_by_id" and "voting_groups_by_id" now since
+        # processing "election" depends on them.
+        ('result_stat_types_by_id', load_result_stat_types, 'result_stat_types'),
+        ('voting_groups_by_id', load_voting_groups, 'voting_groups'),
+        # Processing result_styles requires result_stat_types and voting_groups.
+        AutoAttr('result_styles_by_id', load_result_styles, data_key='result_styles',
+            context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
+        ('areas_by_id', load_areas, 'areas'),
+        AutoAttr('election', load_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]

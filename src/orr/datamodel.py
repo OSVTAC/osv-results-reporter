@@ -504,13 +504,15 @@ class ResultStyle:
     will be available.
     """
 
-    def process_result_stat_types(self, value, result_stat_types_by_id):
+    # We want a name other than load_result_stat_types() for uniqueness reasons.
+    def load_stat_types(self, value, result_stat_types_by_id):
         result_stat_types, indexes_by_id = process_index_idlist(result_stat_types_by_id, value)
         self.result_stat_type_index_by_id = indexes_by_id
 
         return result_stat_types
 
-    def process_voting_groups(self, value, voting_groups_by_id):
+    # We want a name other than load_voting_groups() for uniqueness reasons.
+    def load_result_voting_groups(self, value, voting_groups_by_id):
         voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
         self.voting_group_indexes_by_id = indexes_by_id
 
@@ -520,17 +522,17 @@ class ResultStyle:
         ('id', parse_id, '_id'),
         ('description', parse_i18n),
         ('is_rcv', parse_bool),
-        AutoAttr('voting_groups', process_voting_groups,
+        AutoAttr('voting_groups', load_result_voting_groups,
             data_key='voting_group_ids', context_keys=('voting_groups_by_id',),
             unpack_context=True),
-        AutoAttr('result_stat_types', process_result_stat_types,
+        AutoAttr('result_stat_types', load_stat_types,
             data_key='result_stat_type_ids', context_keys=('result_stat_types_by_id',),
             unpack_context=True),
     ]
 
     def __init__(self):
         self.id = None
-        # This is set by process_voting_groups().
+        # This is set by load_result_voting_groups().
         self.voting_group_indexes_by_id = None
 
     def __repr__(self):
@@ -1293,6 +1295,21 @@ class ModelRoot:
 
     """
     The root object for all of the loaded data.
+
+    Instance attributes:
+
+      context:
+      input_dir:
+
+    Context keys:
+
+      languages:
+      translations:
+      result_stat_types_by_id:
+      voting_groups_by_id:
+      result_styles_by_id:
+      areas_by_id:
+      election:
     """
 
     def __init__(self, context, input_dir):
@@ -1313,46 +1330,3 @@ class ModelRoot:
     # the Jinja2 context rather than storing them to instance attributes.
     def __setattr__(self, name, value):
         self.context[name] = value
-
-    def process_result_stat_types(self, value):
-        load_data = functools.partial(load_object, ResultStatType)
-        return load_objects_to_mapping(load_data, value)
-
-    def process_voting_groups(self, value):
-        load_data = functools.partial(load_object, VotingGroup)
-        return load_objects_to_mapping(load_data, value)
-
-    def process_result_styles(self, value, context):
-        load_data = functools.partial(load_object, ResultStyle, context=context)
-        return load_objects_to_mapping(load_data, value)
-
-    def process_areas(self, value):
-        """
-        Process source data representing an area (e.g. precinct or district).
-        """
-        load_data = functools.partial(load_object, Area)
-        areas_by_id = load_objects_to_mapping(load_data, value)
-
-        return areas_by_id
-
-    def process_election(self, value, context):
-        # TODO: remove this nested import.
-        from orr.dataloading import ElectionLoader
-
-        cls_info = dict(input_dir=self.input_dir)
-        return load_object(ElectionLoader, value, cls_info=cls_info, context=context)
-
-    auto_attrs = [
-        ('languages', parse_as_is),
-        ('translations', parse_as_is),
-        # Set "result_stat_types_by_id" and "voting_groups_by_id" now since
-        # processing "election" depends on them.
-        ('result_stat_types_by_id', process_result_stat_types, 'result_stat_types'),
-        ('voting_groups_by_id', process_voting_groups, 'voting_groups'),
-        # Processing result_styles requires result_stat_types and voting_groups.
-        AutoAttr('result_styles_by_id', process_result_styles, data_key='result_styles',
-            context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
-        ('areas_by_id', process_areas, 'areas'),
-        AutoAttr('election', process_election,
-            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
-    ]

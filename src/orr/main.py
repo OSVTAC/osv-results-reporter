@@ -41,8 +41,8 @@ from jinja2 import TemplateSyntaxError
 import yaml
 
 import orr.configlib as configlib
-import orr.datamodel as datamodel
-from orr.datamodel import ModelRoot
+import orr.dataloading as dataloading
+from orr.dataloading import RootLoader
 import orr.templating as templating
 import orr.utils as utils
 from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME, US_LOCALE
@@ -297,7 +297,7 @@ def load_model(input_dir, build_time):
     context = dict(build_time=build_time)
 
     cls_info = dict(context=context, input_dir=input_dir)
-    model = datamodel.load_object(ModelRoot, data, cls_info=cls_info, context=context)
+    model = dataloading.load_object(RootLoader, data, cls_info=cls_info, context=context)
 
     return context
 
