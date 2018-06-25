@@ -33,8 +33,7 @@ import orr.datamodel as datamodel
 # TODO: move all but the model classes themselves into this module.
 from orr.datamodel import (
     parse_as_is, parse_bool, parse_date, parse_i18n, parse_id, parse_int,
-    AutoAttr, Candidate, Choice, Contest, Header, ResultStatType,
-    ResultStyle, VotingGroup)
+    AutoAttr, Candidate, Choice, Contest, Header, ResultStatType, VotingGroup)
 import orr.utils as utils
 
 
@@ -199,6 +198,80 @@ def load_object(cls, data, cls_info=None, context=None):
         obj.finalize()
 
     return obj
+
+
+# ResultStyle loading
+
+def make_index_map(values):
+    """
+    Return an `indexes_by_value` dict mapping the value to its (0-based)
+    index in the list.
+    """
+    return {value: index for index, value in enumerate(values)}
+
+
+# TODO: remove this?
+def make_id_to_index_map(objlist):
+    """
+    An `indexes_by_id` dict mapping an object id to list index is created
+    for a list of objects. The index converts the id to the index
+    in the list 0..len(objlist)-1
+    """
+    return make_index_map(obj.id for obj in objlist)
+
+
+def process_index_idlist(objects_by_id, data):
+    """
+    Parse a space-separated list of object IDS into objects.
+
+    Args:
+      data: a space-separated list of IDS, as a string.
+      objects_by_id: the dict of all objects of a single type, mapping
+        object id to object.
+
+    Returns: (objects, indexes_by_id)
+      objects: the objects as a list.
+      indexes_by_id: a dict mapping object id to its (0-based) index in
+        the list.
+    """
+    ids = data.split()
+    indexes_by_id = make_index_map(ids)
+    objects = [objects_by_id[object_id] for object_id in ids]
+
+    return objects, indexes_by_id
+
+
+# We want a name other than load_result_stat_types() for uniqueness reasons.
+def load_stat_types(result_style, value, result_stat_types_by_id):
+    result_stat_types, indexes_by_id = process_index_idlist(result_stat_types_by_id, value)
+    result_style.result_stat_type_index_by_id = indexes_by_id
+
+    return result_stat_types
+
+
+# We want a name other than load_voting_groups() for uniqueness reasons.
+def load_result_voting_groups(result_style, value, voting_groups_by_id):
+    voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
+    result_style.voting_group_indexes_by_id = indexes_by_id
+
+    return voting_groups
+
+
+class ResultStyleLoader:
+
+    model_class = datamodel.ResultStyle
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('description', parse_i18n),
+        ('is_rcv', parse_bool),
+        AutoAttr('voting_groups', load_result_voting_groups,
+            data_key='voting_group_ids', context_keys=('voting_groups_by_id',),
+            unpack_context=True),
+        AutoAttr('result_stat_types', load_stat_types,
+            data_key='result_stat_type_ids', context_keys=('result_stat_types_by_id',),
+            unpack_context=True),
+    ]
 
 
 # Area loading
@@ -452,7 +525,7 @@ class ElectionLoader:
     ]
 
 
-# ModelRoot loading
+# Root context loading
 
 class ModelRoot:
 
@@ -509,7 +582,7 @@ def load_result_styles(root, styles_data, context):
     Args:
       root: a ModelRoot object.
     """
-    load_data = functools.partial(load_object, ResultStyle, context=context)
+    load_data = functools.partial(load_object, ResultStyleLoader, context=context)
     return load_objects_to_mapping(load_data, styles_data)
 
 

@@ -275,24 +275,6 @@ class AutoAttr:
         return value
 
 
-def make_index_map(values):
-    """
-    Return an `indexes_by_value` dict mapping the value to its (0-based)
-    index in the list.
-    """
-    return {value: index for index, value in enumerate(values)}
-
-
-# TODO: remove this?
-def make_id_to_index_map(objlist):
-    """
-    An `indexes_by_id` dict mapping an object id to list index is created
-    for a list of objects. The index converts the id to the index
-    in the list 0..len(objlist)-1
-    """
-    return make_index_map(obj.id for obj in objlist)
-
-
 # TODO: share code with process_index_idlist()?
 def filter_idlist_by_mapping(idlist, objects_by_id):
     """
@@ -301,27 +283,6 @@ def filter_idlist_by_mapping(idlist, objects_by_id):
     """
     ids = idlist.split()
     return [id_ for id_ in ids if id_ in objects_by_id]
-
-
-def process_index_idlist(objects_by_id, data):
-    """
-    Parse a space-separated list of object IDS into objects.
-
-    Args:
-      data: a space-separated list of IDS, as a string.
-      objects_by_id: the dict of all objects of a single type, mapping
-        object id to object.
-
-    Returns: (objects, indexes_by_id)
-      objects: the objects as a list.
-      indexes_by_id: a dict mapping object id to its (0-based) index in
-        the list.
-    """
-    ids = data.split()
-    indexes_by_id = make_index_map(ids)
-    objects = [objects_by_id[object_id] for object_id in ids]
-
-    return objects, indexes_by_id
 
 
 # --- Results reporting group/type definitions ---
@@ -367,43 +328,26 @@ class ResultStatType:
         self.id = None
         self.heading = None
 
+
 class ResultStyle:
 
     """
     Each contest references the id of a ResultStyle that defines a
     set of attributes for the type of voting including what result stats
     will be available.
+
+    Instance attributes:
+
+      id:
+      description:
+      is_rcv:
+      result_stat_types:
+      voting_group_indexes_by_id:
+      voting_groups:
     """
-
-    # We want a name other than load_result_stat_types() for uniqueness reasons.
-    def load_stat_types(self, value, result_stat_types_by_id):
-        result_stat_types, indexes_by_id = process_index_idlist(result_stat_types_by_id, value)
-        self.result_stat_type_index_by_id = indexes_by_id
-
-        return result_stat_types
-
-    # We want a name other than load_voting_groups() for uniqueness reasons.
-    def load_result_voting_groups(self, value, voting_groups_by_id):
-        voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
-        self.voting_group_indexes_by_id = indexes_by_id
-
-        return voting_groups
-
-    auto_attrs = [
-        ('id', parse_id, '_id'),
-        ('description', parse_i18n),
-        ('is_rcv', parse_bool),
-        AutoAttr('voting_groups', load_result_voting_groups,
-            data_key='voting_group_ids', context_keys=('voting_groups_by_id',),
-            unpack_context=True),
-        AutoAttr('result_stat_types', load_stat_types,
-            data_key='result_stat_type_ids', context_keys=('result_stat_types_by_id',),
-            unpack_context=True),
-    ]
 
     def __init__(self):
         self.id = None
-        # This is set by load_result_voting_groups().
         self.voting_group_indexes_by_id = None
 
     def __repr__(self):
