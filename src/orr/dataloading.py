@@ -21,6 +21,8 @@
 
 """
 Support for loading our data model from input data.
+
+The main function this module exposes is load_context().
 """
 
 from collections import OrderedDict
@@ -37,6 +39,37 @@ import orr.utils as utils
 
 
 _log = logging.getLogger(__name__)
+
+
+def load_context(input_dir, build_time):
+    """
+    Read the input data, and return the context to use for Jinja2.
+
+    Args:
+      input_dir: the directory containing the input data, as a Path object.
+      build_time: a datetime object representing the current build time,
+        e.g. datetime.datetime.now().
+
+    Returns a dict with keys:
+
+      areas_by_id:
+      build_time:
+      election:
+      languages:
+      result_stat_types_by_id:
+      result_styles_by_id:
+      translations:
+      voting_groups_by_id:
+    """
+    context = dict(build_time=build_time)
+
+    path = input_dir / 'election.json'
+    data = utils.read_json(path)
+
+    cls_info = dict(context=context, input_dir=input_dir)
+    load_object(RootLoader, data, cls_info=cls_info, context=context)
+
+    return context
 
 
 def index_objects(objects):
@@ -431,16 +464,6 @@ class ModelRoot:
 
       context:
       input_dir:
-
-    Context keys:
-
-      languages:
-      translations:
-      result_stat_types_by_id:
-      voting_groups_by_id:
-      result_styles_by_id:
-      areas_by_id:
-      election:
     """
 
     def __init__(self, context, input_dir):
@@ -527,23 +550,3 @@ class RootLoader:
         AutoAttr('election', load_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
-
-
-def load_context(input_dir, build_time):
-    """
-    Read the input data, and return the context to use for Jinja2.
-
-    Args:
-      input_dir: the directory containing the input data, as a Path object.
-      build_time: a datetime object representing the current build time
-        (e.g. datetime.datetime.now()).
-    """
-    context = dict(build_time=build_time)
-
-    path = input_dir / 'election.json'
-    data = utils.read_json(path)
-
-    cls_info = dict(context=context, input_dir=input_dir)
-    load_object(RootLoader, data, cls_info=cls_info, context=context)
-
-    return context
