@@ -32,6 +32,7 @@ from datetime import datetime
 import logging
 import re
 
+import orr.utils as utils
 from orr.utils import truncate
 
 
@@ -89,18 +90,17 @@ def parse_int(obj, value):
     return value
 
 
-def parse_date_time(obj, value):
+def parse_date_time(obj, dt_string):
     """
     Remove and parse a date time from the given data.
 
     Args:
-      value: a date string, e.g. of the form "2016-11-08 hh:mm:ss".
+      dt_string: a datetime string in the format "2016-11-08 hh:mm:ss".
     """
-    _log.debug(f'processing parse_date: {value}')
+    _log.debug(f'processing parse_date_time: {dt_string}')
+    dt = utils.parse_datetime(dt_string)
 
-    date = datetime.strptime(value, '%Y-%m-%d %H:%M:%S').date()
-
-    return date
+    return dt
 
 
 def parse_idlist(idlist):
