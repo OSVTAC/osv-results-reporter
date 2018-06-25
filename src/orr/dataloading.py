@@ -33,6 +33,7 @@ from orr.datamodel import (
     parse_as_is, parse_bool, parse_date, parse_i18n, parse_id, parse_int,
     AutoAttr, Candidate, Choice, Contest, Header, ResultStatType,
     ResultStyle, VotingGroup)
+import orr.utils as utils
 
 
 _log = logging.getLogger(__name__)
@@ -420,6 +421,48 @@ class ElectionLoader:
 
 # ModelRoot loading
 
+class ModelRoot:
+
+    """
+    A helper class for loading of all of the input data and populating
+    the Jinja2 context.
+
+    Instance attributes:
+
+      context:
+      input_dir:
+
+    Context keys:
+
+      languages:
+      translations:
+      result_stat_types_by_id:
+      voting_groups_by_id:
+      result_styles_by_id:
+      areas_by_id:
+      election:
+    """
+
+    def __init__(self, context, input_dir):
+        """
+        Args:
+          context: the current Jinja2 context.
+          input_dir: the directory containing the input data, as a Path object.
+        """
+        name_values = [
+            ('context', context),
+            ('input_dir', input_dir),
+        ]
+        for name, value in name_values:
+            # Call super() to bypass our override.
+            super().__setattr__(name, value)
+
+    # Override __setattr__ to cause load_object() to add attr values to
+    # the Jinja2 context rather than storing them to instance attributes.
+    def __setattr__(self, name, value):
+        self.context[name] = value
+
+
 def load_result_stat_types(root, types_data):
     """
     Args:
@@ -468,7 +511,7 @@ def load_election(root, election_data, context):
 
 class RootLoader:
 
-    model_class = datamodel.ModelRoot
+    model_class = ModelRoot
 
     auto_attrs = [
         ('languages', parse_as_is),
@@ -484,3 +527,23 @@ class RootLoader:
         AutoAttr('election', load_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
+
+
+def load_context(input_dir, build_time):
+    """
+    Read the input data, and return the context to use for Jinja2.
+
+    Args:
+      input_dir: the directory containing the input data, as a Path object.
+      build_time: a datetime object representing the current build time
+        (e.g. datetime.datetime.now()).
+    """
+    context = dict(build_time=build_time)
+
+    path = input_dir / 'election.json'
+    data = utils.read_json(path)
+
+    cls_info = dict(context=context, input_dir=input_dir)
+    load_object(RootLoader, data, cls_info=cls_info, context=context)
+
+    return context

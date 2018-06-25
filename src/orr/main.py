@@ -41,7 +41,6 @@ import yaml
 
 import orr.configlib as configlib
 import orr.dataloading as dataloading
-from orr.dataloading import RootLoader
 import orr.templating as templating
 import orr.utils as utils
 from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME, US_LOCALE
@@ -281,26 +280,6 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
 
-def load_model(input_dir, build_time):
-    """
-    Populate our data model, and return the context to use for Jinja2.
-
-    Args:
-      input_dir: the directory containing the input data, as a Path object.
-      build_time: a datetime object representing the current build time
-        (e.g. datetime.datetime.now()).
-    """
-    path = input_dir / 'election.json'
-    data = utils.read_json(path)
-
-    context = dict(build_time=build_time)
-
-    cls_info = dict(context=context, input_dir=input_dir)
-    model = dataloading.load_object(RootLoader, data, cls_info=cls_info, context=context)
-
-    return context
-
-
 #--- Top level processing: ---
 
 # TODO: render the directory recursively.
@@ -398,7 +377,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
         input_dir = Path(input_paths[0])
         if not input_dir.is_dir():
             raise RuntimeError(f'input path is not a directory: {input_path}')
-        context = load_model(input_dir, build_time=build_time)
+        context = dataloading.load_context(input_dir, build_time=build_time)
     else:
         context = {}
         for input_path in input_paths:
