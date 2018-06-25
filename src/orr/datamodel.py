@@ -103,6 +103,14 @@ def parse_date_time(obj, value):
     return date
 
 
+def parse_idlist(idlist):
+    """
+    Args:
+      idlist: space-separated list of IDS, as a string.
+    """
+    return idlist.split()
+
+
 # TODO: test this.
 def i18n_repr(i18n_text):
     """
@@ -114,16 +122,6 @@ def i18n_repr(i18n_text):
         return '[en]{}'.format(truncate(i18n_text['en']))
 
     return truncate(i18n_text)
-
-
-# TODO: share code with process_index_idlist()?
-def filter_idlist_by_mapping(idlist, objects_by_id):
-    """
-    Split a space-separated list of ids, and return the ids that exist
-    as keys in objects_by_id.
-    """
-    ids = idlist.split()
-    return [id_ for id_ in ids if id_ in objects_by_id]
 
 
 # --- Results reporting group/type definitions ---
@@ -208,14 +206,15 @@ class ResultStyle:
         Return the matching voting group ids, as a list.
 
         Args:
-          idlist: a space-separated list of ids.
+          idlist: a space-separated list of ids, as a string.
         """
         if (not idlist) or (idlist == "*"):
             # Then return all of the ids, in order.
             return [voting_group.id for voting_group in self.voting_groups]
 
         # Otherwise, return only the matching ones.
-        ids = filter_idlist_by_mapping(idlist, self.voting_group_indexes_by_id)
+        ids = parse_idlist(idlist)
+        ids = [id_ for id_ in ids if id_ in self.voting_group_indexes_by_id]
 
         return ids
 
@@ -338,7 +337,9 @@ class Area:
         """
         An iterator that creates and yields the reporting groups.
         """
-        for index, s in enumerate(self.reporting_group_ids.split()):
+        reporting_group_ids = parse_idlist(self.reporting_group_ids)
+
+        for index, s in enumerate(reporting_group_ids):
             m = self.reporting_group_pattern.match(s)
             try:
                 if not m:
@@ -682,7 +683,9 @@ class Contest:
         # A list comprehension is not easy due to python limitations
         l = []
         mapping = self.result_style.result_stat_type_index_by_id
-        for k in stat_idlist.split():
+        stat_ids = parse_idlist(stat_idlist)
+
+        for k in stat_ids:
             if k == '*':
                 l.extend(range(self.result_stat_count))
             elif k == 'CHOICES':

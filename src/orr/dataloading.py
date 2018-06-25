@@ -402,12 +402,12 @@ def make_id_to_index_map(objlist):
     return make_index_map(obj.id for obj in objlist)
 
 
-def process_index_idlist(objects_by_id, data):
+def process_index_idlist(objects_by_id, idlist):
     """
     Parse a space-separated list of object IDS into objects.
 
     Args:
-      data: a space-separated list of IDS, as a string.
+      idlist: a space-separated list of IDS, as a string.
       objects_by_id: the dict of all objects of a single type, mapping
         object id to object.
 
@@ -416,7 +416,7 @@ def process_index_idlist(objects_by_id, data):
       indexes_by_id: a dict mapping object id to its (0-based) index in
         the list.
     """
-    ids = data.split()
+    ids = datamodel.parse_idlist(idlist)
     indexes_by_id = make_index_map(ids)
     objects = [objects_by_id[object_id] for object_id in ids]
 
