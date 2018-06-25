@@ -26,15 +26,16 @@ The main function this module exposes is load_context().
 """
 
 from collections import OrderedDict
+from datetime import datetime
 import functools
 import logging
 
 import orr.datamodel as datamodel
 # TODO: move all but the model classes themselves into this module.
-from orr.datamodel import (
-    parse_as_is, parse_bool, parse_date, parse_i18n, parse_id, parse_int,
-    AutoAttr, Candidate, Choice, Contest, Header, ResultStatType, VotingGroup)
+from orr.datamodel import (parse_int, Candidate, Choice, Contest, Header,
+    ResultStatType, VotingGroup)
 import orr.utils as utils
+from orr.utils import truncate
 
 
 _log = logging.getLogger(__name__)
@@ -69,6 +70,164 @@ def load_context(input_dir, build_time):
     load_object(RootLoader, data, cls_info=cls_info, context=context)
 
     return context
+
+
+def parse_as_is(obj, value):
+    """
+    Return the given value as is, without any validation, etc.
+    """
+    _log.debug(f'parsing as is: {truncate(value)}')
+    return value
+
+
+# TODO: add validation.
+def parse_id(obj, value):
+    """
+    Remove and parse an id string from the given data.
+    """
+    _log.debug(f'parsing id: {value}')
+    return value
+
+
+def parse_bool(obj, value):
+    """
+    Remove and convert a bool value as True, False, or None.
+    A string value of Y or N becomes True or False, and a null
+    string maps to None. [The distinction facilitates import from
+    untyped input, e.g. TSV.]
+    """
+    _log.debug(f'parsing bool: {value}')
+    if type(value) is str:
+        if value == '':
+            value = None
+        elif value[0] in "YyTt1":
+            value = True
+        elif value[0] in "NnFf0":
+            value = False
+        else:
+            raise RuntimeError(
+                f'invalid boolean value for obj {obj!r}: {value}')
+    elif type(value) is int:
+        value = value != 0
+    elif type(value) is not bool and value != None:
+        raise RuntimeError(
+                f'invalid boolean value for obj {obj!r}: {value}')
+
+    return value
+
+
+def parse_date(obj, value):
+    """
+    Remove and parse a date from the given data.
+
+    Args:
+      value: a date string, e.g. of the form "2016-11-08".
+    """
+    _log.debug(f'processing parse_date: {value}')
+
+    date = datetime.strptime(value, '%Y-%m-%d').date()
+
+    return date
+
+
+# TODO: add validation.
+def parse_i18n(obj, value):
+    """
+    Remove and parse an i18n string from the given data.
+    """
+    _log.debug(f'processing parse_i18n: {truncate(value)}')
+    return value
+
+
+class AutoAttr:
+
+    """
+    Defines an attribute to set when loading JSON data, and how to load it.
+    """
+
+    def __init__(self, attr_name, load_value, data_key=None, context_keys=None,
+        unpack_context=False):
+        """
+        Args:
+          attr_name: the name of the attribute.
+          load_value: the function to call when loading.  The function
+            should have the signature load_value(obj, value, ...).
+          data_key: the name of the key to access from the JSON to obtain
+            the data value to pass to load_value().  Defaults to attr_name.
+          context_keys: the name of the context keys that processing this
+            attribute depends on.  Defaults to not depending on the context.
+          unpack_context: whether to unpack the context argument into
+            kwargs when calling the load_value() function.
+        """
+        if data_key is None:
+            data_key = attr_name
+        if context_keys is None:
+            context_keys = []
+
+        self.attr_name = attr_name
+        self.context_keys = set(context_keys)
+        self.data_key = data_key
+        self.load_value = load_value
+        self.unpack_context = unpack_context
+
+    def __repr__(self):
+        # Using __qualname__ instead of __name__ includes also the class
+        # name and not just the function / method name.
+        try:
+            func_name = self.load_value.__qualname__
+        except AttributeError:
+            func_name = repr(self.load_value)
+
+        return f'<AutoAttr {self.attr_name!r}: data_key={self.data_key!r}, load_value={func_name}>'
+
+    def make_load_value_kwargs(self, context):
+        """
+        Create and return the kwargs to pass to the load_value() function.
+
+        Args:
+          context: the current Jinja2 context.
+        """
+        context_keys = self.context_keys
+
+        # Check that the context has the needed specified keys
+        if context_keys and not context_keys <= set(context):
+            missing = context_keys - set(context)
+            msg = (f'context does not have keys {sorted(missing)} '
+                   f'while calling {self.load_value}: {sorted(context)}')
+            raise RuntimeError(msg)
+
+        # Only pass the context keys that are needed / recognized.
+        context = {key: context[key] for key in context_keys}
+
+        if self.unpack_context:
+            kwargs = context
+        elif context:
+            kwargs = dict(context=context)
+        else:
+            kwargs = {}
+
+        return kwargs
+
+    def process_key(self, obj, data, context):
+        """
+        Parse and process the value in the given data dict corresponding
+        to the current AutoAttr instance.
+
+        Args:
+          data: the dict of data containing the key-value to process.
+          context: the current Jinja2 context.
+        """
+        value = data.pop(self.data_key, None)
+        if value is None:
+            return
+
+        kwargs = self.make_load_value_kwargs(context)
+
+        # TODO: can we eliminate needing to pass obj if load_value doesn't
+        #  depend on it?
+        value = self.load_value(obj, value, **kwargs)
+
+        return value
 
 
 def index_objects(objects):
@@ -155,7 +314,7 @@ def process_auto_attr(obj, attr, data, context):
 
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
-def load_object(cls, data, cls_info=None, context=None):
+def load_object(loader_cls, data, cls_info=None, context=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
@@ -171,18 +330,16 @@ def load_object(cls, data, cls_info=None, context=None):
     if context is None:
         context = {}
 
-    auto_attrs = cls.auto_attrs
-
-    if hasattr(cls, 'model_class'):
-        cls = cls.model_class
+    auto_attrs = loader_cls.auto_attrs
+    model_cls = loader_cls.model_class
 
     try:
         # This is where we use composition over inheritance.
         # We inject additional attributes and behavior into the class
         # constructor.
-        obj = cls(**cls_info)
+        obj = model_cls(**cls_info)
     except Exception:
-        raise RuntimeError(f'error with cls {cls!r}: {cls_info!r}')
+        raise RuntimeError(f'error with model class {model_cls!r}: {cls_info!r}')
 
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
@@ -193,11 +350,36 @@ def load_object(cls, data, cls_info=None, context=None):
     if data:
         raise RuntimeError(f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
 
-    if hasattr(cls, 'finalize'):
+    if hasattr(loader_cls, 'finalize'):
         # Perform class-specific init after data is loaded
         obj.finalize()
 
     return obj
+
+
+# VotingGroup loading
+
+class VotingGroupLoader:
+
+    model_class = datamodel.ResultStatType
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('heading', parse_i18n),
+    ]
+
+
+# ResultStatType loading
+
+class ResultStatTypeLoader:
+
+    model_class = datamodel.ResultStatType
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('heading', parse_i18n),
+        ('is_percent', parse_bool),
+    ]
 
 
 # ResultStyle loading
@@ -564,7 +746,7 @@ def load_result_stat_types(root, types_data):
     Args:
       root: a ModelRoot object.
     """
-    load_data = functools.partial(load_object, ResultStatType)
+    load_data = functools.partial(load_object, ResultStatTypeLoader)
     return load_objects_to_mapping(load_data, types_data)
 
 
@@ -573,7 +755,7 @@ def load_voting_groups(root, groups_data):
     Args:
       root: a ModelRoot object.
     """
-    load_data = functools.partial(load_object, VotingGroup)
+    load_data = functools.partial(load_object, VotingGroupLoader)
     return load_objects_to_mapping(load_data, groups_data)
 
 

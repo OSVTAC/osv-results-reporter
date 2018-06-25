@@ -35,12 +35,6 @@ class DataModelModuleTest(TestCase):
     Test the functions in orr.datamodel.
     """
 
-    def test_parse_date(self):
-        data = {}
-        actual = datamodel.parse_date(None, '2016-11-08')
-        self.assertEqual(type(actual), datetime.date)
-        self.assertEqual(actual, datetime.date(2016, 11, 8))
-
     def test_get_path_difference(self):
         """
         Test the typical case.
