@@ -684,7 +684,7 @@ class CandidateLoader:
 # Contest loading
 
 # Dict mapping contest data "_type" name to choice loader class.
-BALLOT_ITEM_CLASSES = {
+CONTEST_TO_CHOICE_LOADER = {
     'office': CandidateLoader,
     'measure': ChoiceLoader,
     'ynoffice': ChoiceLoader,
@@ -697,8 +697,9 @@ def load_single_choice(contest_loader, data):
     Args:
       contest_loader: a ContestLoader object.
     """
-    choice_cls = contest_loader.choice_cls
-    choice_loader = choice_cls()
+    choice_loader_cls = contest_loader.choice_loader_cls
+    choice_loader = choice_loader_cls()
+
     contest = contest_loader.model_object
     assert type(contest) == Contest
     cls_info = dict(contest=contest)
@@ -757,14 +758,13 @@ class ContestLoader:
         ('writeins_allowed', parse_int),
     ]
 
-    def __init__(self, choice_cls):
+    def __init__(self, choice_loader_cls):
         """
         Args:
-          choice_cls: the class to use for the contest's choices (can be
-            Choice or Candidate).
-
+          choice_loader_cls: the loader class to use to load the contest's
+            choices (can be ChoiceLoader or CandidateLoader).
         """
-        self.choice_cls = choice_cls
+        self.choice_loader_cls = choice_loader_cls
 
 
 def load_single_contest(data, election, context):
@@ -777,7 +777,7 @@ def load_single_contest(data, election, context):
         raise RuntimeError(f"key '_type' missing from data: {data}")
 
     try:
-        choice_cls = BALLOT_ITEM_CLASSES[type_name]
+        choice_loader_cls = CONTEST_TO_CHOICE_LOADER[type_name]
     except KeyError:
         raise RuntimeError(f'invalid ballot item type: {type_name!r}')
 
@@ -787,7 +787,7 @@ def load_single_contest(data, election, context):
     cls_info = dict(type_name=type_name, election=election,
         areas_by_id=areas_by_id, voting_groups_by_id=voting_groups_by_id)
 
-    contest_loader = ContestLoader(choice_cls=choice_cls)
+    contest_loader = ContestLoader(choice_loader_cls=choice_loader_cls)
     contest = load_object(contest_loader, data, cls_info=cls_info, context=context)
 
     return contest
