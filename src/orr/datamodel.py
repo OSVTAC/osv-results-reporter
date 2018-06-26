@@ -383,9 +383,12 @@ class Choice:
 
       id:
       ballot_title:
+      contest: back-reference to a Contest object.
     """
 
-    def __init__(self):
+    def __init__(self, contest):
+        self.contest = contest
+
         self.ballot_title = None
         self.id = None
 
@@ -420,9 +423,12 @@ class Candidate(Choice):
       ballot_title:
       ballot_designation:
       candidate_party:
+      contest: back-reference to a Contest object.
     """
 
-    def __init__(self):
+    def __init__(self, contest):
+        self.contest = contest
+
         self.ballot_title = None
         self.id = None
 
@@ -461,8 +467,6 @@ class Contest:
       id: must be unique across all contests or headers
       type_name: a string indicating the Contest type (see below for
         descriptions).
-      choice_cls: the class to use for the contest's choices (can be
-        Choice or Candidate).
 
       ballot_title: text appearing on the ballot representing the contest.
       ballot_subtitle: second level title for this item
@@ -493,14 +497,13 @@ class Contest:
     """
 
     # TODO: don't pass election.
-    def __init__(self, type_name, choice_cls=None, id_=None, election=None,
-        areas_by_id=None, voting_groups_by_id=None):
+    def __init__(self, type_name, id_=None, election=None, areas_by_id=None,
+        voting_groups_by_id=None):
         assert type_name is not None
         assert election is not None
 
         self.id = id_
         self.type_name = type_name
-        self.choice_cls = choice_cls
         self.election = election
         self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
@@ -674,7 +677,7 @@ class Election:
 
     Instance attributes:
 
-      input_dir:
+      input_dir: the directory containing the input data, as a Path object.
       result_detail_format_filepath:
 
       ballot_title:

@@ -34,8 +34,8 @@ import logging
 import orr.datamodel as datamodel
 import orr.tsvio as tsvio
 # TODO: move all but the model classes themselves into this module.
-from orr.datamodel import (parse_int, Candidate, Choice, Contest, Header,
-    ResultStatType, VotingGroup)
+from orr.datamodel import (parse_int, Candidate, Choice, Contest, Election,
+    Header, ResultStatType, ResultStyle, VotingGroup)
 import orr.utils as utils
 from orr.utils import truncate
 
@@ -77,8 +77,8 @@ def load_context(input_dir, build_time):
     setattr(datamodel.Election,
             'load_contest_status',load_contest_status)
 
-    cls_info = dict(context=context, input_dir=input_dir)
-    root_loader = RootLoader()
+    cls_info = dict(context=context)
+    root_loader = RootLoader(input_dir=input_dir)
     load_object(root_loader, data, cls_info=cls_info, context=context)
 
     return context
@@ -233,12 +233,13 @@ class AutoAttr:
 
         return kwargs
 
-    def process_key(self, obj, data, context):
+    def process_key(self, loader, data, context):
         """
         Parse and process the value in the given data dict corresponding
         to the current AutoAttr instance.
 
         Args:
+          loader: an instance of a Loader class.
           data: the dict of data containing the key-value to process.
           context: the current Jinja2 context.
         """
@@ -250,7 +251,7 @@ class AutoAttr:
 
         # TODO: can we eliminate needing to pass obj if load_value doesn't
         #  depend on it?
-        value = self.load_value(obj, value, **kwargs)
+        value = self.load_value(loader, value, **kwargs)
 
         return value
 
@@ -328,7 +329,7 @@ def process_auto_attr(loader, obj, attr, data, context):
 
     _log.debug(f'processing auto_attr {attr!r} for: {obj!r}')
     try:
-        value = attr.process_key(obj, data=data, context=context)
+        value = attr.process_key(loader, data=data, context=context)
     except Exception:
         raise RuntimeError(f'while processing auto_attr {attr!r} for: {obj!r}')
 
@@ -352,6 +353,10 @@ def load_object(loader, data, cls_info=None, context=None):
         before processing attributes.
       context: the current Jinja2 context.
     """
+    if type(loader) == type:
+        msg = f'loader argument must be an instance of a Loader class: {loader}'
+        raise TypeError(msg)
+
     if cls_info is None:
         cls_info = {}
     if context is None:
@@ -364,24 +369,29 @@ def load_object(loader, data, cls_info=None, context=None):
         # This is where we use composition over inheritance.
         # We inject additional attributes and behavior into the class
         # constructor.
-        obj = model_cls(**cls_info)
+        model_obj = model_cls(**cls_info)
     except Exception:
         raise RuntimeError(f'error with model class {model_cls!r}: {cls_info!r}')
+
+    assert not hasattr(loader, 'model_object')
+    # Set the object being loaded on the loader.
+    loader.model_object = model_obj
 
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
     for attr in auto_attrs:
-        process_auto_attr(loader, obj, attr, data=data, context=context)
+        process_auto_attr(loader, model_obj, attr, data=data, context=context)
 
     # Check that all keys in the JSON have been processed.
     if data:
-        raise RuntimeError(f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
+        msg = f'unrecognized keys for model object {model_obj!r}: {sorted(data.keys())}'
+        raise RuntimeError(msg)
 
     if hasattr(loader, 'finalize'):
         # Perform class-specific init after data is loaded
-        obj.finalize()
+        model_obj.finalize()
 
-    return obj
+    return model_obj
 
 
 #--- Results Data Loading Routines ---
@@ -566,7 +576,14 @@ def process_index_idlist(objects_by_id, idlist):
 
 
 # We want a name other than load_result_stat_types() for uniqueness reasons.
-def load_stat_types(result_style, value, result_stat_types_by_id):
+def load_stat_types(result_style_loader, value, result_stat_types_by_id):
+    """
+    Args:
+      result_style_loader: a ResultStyleLoader object.
+    """
+    result_style = result_style_loader.model_object
+    assert type(result_style) == ResultStyle
+
     result_stat_types, indexes_by_id = process_index_idlist(result_stat_types_by_id, value)
     result_style.result_stat_type_index_by_id = indexes_by_id
 
@@ -574,7 +591,14 @@ def load_stat_types(result_style, value, result_stat_types_by_id):
 
 
 # We want a name other than load_voting_groups() for uniqueness reasons.
-def load_result_voting_groups(result_style, value, voting_groups_by_id):
+def load_result_voting_groups(result_style_loader, value, voting_groups_by_id):
+    """
+    Args:
+      result_style_loader: a ResultStyleLoader object.
+    """
+    result_style = result_style_loader.model_object
+    assert type(result_style) == ResultStyle
+
     voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
     result_style.voting_group_indexes_by_id = indexes_by_id
 
@@ -666,41 +690,43 @@ BALLOT_ITEM_CLASSES = {
     'ynoffice': ChoiceLoader,
 }
 
-def load_single_choice(contest, data):
+def load_single_choice(contest_loader, data):
     """
     Common processing to enter a candidate or measure choice
 
     Args:
-      choice_cls: the class to use to instantiate the choice.
+      contest_loader: a ContestLoader object.
     """
-    choice_cls = contest.choice_cls
+    choice_cls = contest_loader.choice_cls
     choice_loader = choice_cls()
-    choice = load_object(choice_loader, data)
-    choice.contest = contest     # Add back reference
+    contest = contest_loader.model_object
+    assert type(contest) == Contest
+    cls_info = dict(contest=contest)
+
+    choice = load_object(choice_loader, data, cls_info=cls_info)
 
     return choice
 
 
-def load_choices(contest, choices_data):
+def load_choices(contest_loader, choices_data):
     """
     Scan an input data list of contest choice entries to create.
 
     Args:
-      choice_cls: the class to use to instantiate the choice (e.g.
-        Candidate or Choice).
+      contest_loader: a ContestLoader object.
     """
-    load_data = functools.partial(load_single_choice, contest)
+    load_data = functools.partial(load_single_choice, contest_loader)
     choices_by_id = load_objects_to_mapping(load_data, choices_data, should_index=True)
 
     return choices_by_id
 
 
 # We want a name other than load_result_styles() for uniqueness reasons.
-def load_contest_result_style(contest, value, result_styles_by_id):
+def load_contest_result_style(contest_loader, value, result_styles_by_id):
     return result_styles_by_id[value]
 
 
-def load_voting_district(contest, value, areas_by_id):
+def load_voting_district(contest_loader, value, areas_by_id):
     return areas_by_id[value]
 
 
@@ -731,6 +757,15 @@ class ContestLoader:
         ('writeins_allowed', parse_int),
     ]
 
+    def __init__(self, choice_cls):
+        """
+        Args:
+          choice_cls: the class to use for the contest's choices (can be
+            Choice or Candidate).
+
+        """
+        self.choice_cls = choice_cls
+
 
 def load_single_contest(data, election, context):
     """
@@ -749,11 +784,10 @@ def load_single_contest(data, election, context):
     areas_by_id = context['areas_by_id']
     voting_groups_by_id = context['voting_groups_by_id']
 
-    cls_info = dict(type_name=type_name,
-        choice_cls=choice_cls, election=election, areas_by_id=areas_by_id,
-        voting_groups_by_id=voting_groups_by_id)
+    cls_info = dict(type_name=type_name, election=election,
+        areas_by_id=areas_by_id, voting_groups_by_id=voting_groups_by_id)
 
-    contest_loader = ContestLoader()
+    contest_loader = ContestLoader(choice_cls=choice_cls)
     contest = load_object(contest_loader, data, cls_info=cls_info, context=context)
 
     return contest
@@ -799,16 +833,19 @@ def link_with_header(item, headers_by_id):
     add_child_to_header(header, item)
 
 
-def load_headers(election, headers_data):
+def load_headers(election_loader, headers_data):
     """
     Process the source data representing the header items.
 
     Returns an OrderedDict mapping header id to Header object.
 
     Args:
+      election_loader: an ElectionLoader object.
       headers_data: a list of dicts corresponding to the Header objects.
     """
-    load_data = functools.partial(load_object, HeaderLoader)
+    def load_data(data):
+        return load_object(HeaderLoader(), data)
+
     headers_by_id = load_objects_to_mapping(load_data, headers_data, should_index=True)
 
     for header in headers_by_id.values():
@@ -817,15 +854,19 @@ def load_headers(election, headers_data):
     return headers_by_id
 
 
-def load_contests(election, contests_data, context):
+def load_contests(election_loader, contests_data, context):
     """
     Process the source data representing the contest items.
 
     Returns an OrderedDict mapping contest id to Contest object.
 
     Args:
+      election_loader: an ElectionLoader object.
       contests_data: a list of dicts corresponding to the Contest objects.
     """
+    election = election_loader.model_object
+    assert type(election) == Election
+
     load_data = functools.partial(load_single_contest, election=election, context=context)
     contests_by_id = load_objects_to_mapping(load_data, contests_data, should_index=True)
 
@@ -837,7 +878,7 @@ def load_contests(election, contests_data, context):
 
 class ElectionLoader:
 
-    model_class = datamodel.Election
+    model_class = Election
 
     auto_attrs = [
         ('ballot_title', parse_i18n),
@@ -862,18 +903,15 @@ class ModelRoot:
     Instance attributes:
 
       context:
-      input_dir:
     """
 
-    def __init__(self, context, input_dir):
+    def __init__(self, context):
         """
         Args:
           context: the current Jinja2 context.
-          input_dir: the directory containing the input data, as a Path object.
         """
         name_values = [
             ('context', context),
-            ('input_dir', input_dir),
         ]
         for name, value in name_values:
             # Call super() to bypass our override.
@@ -885,51 +923,59 @@ class ModelRoot:
         self.context[name] = value
 
 
-def load_result_stat_types(root, types_data):
+def load_result_stat_types(root_loader, types_data):
     """
     Args:
-      root: a ModelRoot object.
+      root_loader: a RootLoader object.
     """
-    load_data = functools.partial(load_object, ResultStatTypeLoader)
+    def load_data(data):
+        return load_object(ResultStatTypeLoader(), data)
+
     return load_objects_to_mapping(load_data, types_data)
 
 
-def load_voting_groups(root, groups_data):
+def load_voting_groups(root_loader, groups_data):
     """
     Args:
-      root: a ModelRoot object.
+      root_loader: a RootLoader object.
     """
-    load_data = functools.partial(load_object, VotingGroupLoader)
+    def load_data(data):
+        return load_object(VotingGroupLoader(), data)
+
     return load_objects_to_mapping(load_data, groups_data)
 
 
-def load_result_styles(root, styles_data, context):
+def load_result_styles(root_loader, styles_data, context):
     """
     Args:
-      root: a ModelRoot object.
+      root_loader: a RootLoader object.
     """
-    load_data = functools.partial(load_object, ResultStyleLoader, context=context)
+    def load_data(data):
+        return load_object(ResultStyleLoader(), data, context=context)
+
     return load_objects_to_mapping(load_data, styles_data)
 
 
-def load_areas(root, areas_data):
+def load_areas(root_loader, areas_data):
     """
     Process source data representing an area (e.g. precinct or district).
     """
-    load_data = functools.partial(load_object, AreaLoader)
+    def load_data(data):
+        return load_object(AreaLoader(), data)
+
     areas_by_id = load_objects_to_mapping(load_data, areas_data)
 
     return areas_by_id
 
 
-def load_election(root, election_data, context):
+def load_election(root_loader, election_data, context):
     """
     Args:
-      root: a ModelRoot object.
+      root_loader: a RootLoader object.
     """
-    cls_info = dict(input_dir=root.input_dir)
+    cls_info = dict(input_dir=root_loader.input_dir)
     election_loader = ElectionLoader()
-    return load_object(ElectionLoader, election_data, cls_info=cls_info, context=context)
+    return load_object(election_loader, election_data, cls_info=cls_info, context=context)
 
 
 class RootLoader:
@@ -951,3 +997,9 @@ class RootLoader:
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
 
+    def __init__(self, input_dir):
+        """
+        Args:
+          input_dir: the directory containing the input data, as a Path object.
+        """
+        self.input_dir = input_dir
