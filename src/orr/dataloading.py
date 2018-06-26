@@ -312,11 +312,12 @@ def load_objects_to_mapping(load_data, seq, should_index=False):
     return objects_by_id
 
 
-def process_auto_attr(obj, attr, data, context):
+def process_auto_attr(loader, obj, attr, data, context):
     """
     Process an attribute in obj.auto_attrs.
 
     Args:
+      loader: an instance of a Loader class.
       attr: an element of obj.auto_attrs.
       data: the dict of data containing the key-values to process.
       context: the current Jinja2 context.
@@ -370,7 +371,7 @@ def load_object(loader, data, cls_info=None, context=None):
     # Set all of the (remaining) object attributes -- iterating over all
     # of the auto_attrs and parsing the corresponding JSON key values.
     for attr in auto_attrs:
-        process_auto_attr(obj, attr, data=data, context=context)
+        process_auto_attr(loader, obj, attr, data=data, context=context)
 
     # Check that all keys in the JSON have been processed.
     if data:
