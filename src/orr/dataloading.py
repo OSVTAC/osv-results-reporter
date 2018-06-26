@@ -78,7 +78,8 @@ def load_context(input_dir, build_time):
             'load_contest_status',load_contest_status)
 
     cls_info = dict(context=context, input_dir=input_dir)
-    load_object(RootLoader, data, cls_info=cls_info, context=context)
+    root_loader = RootLoader()
+    load_object(root_loader, data, cls_info=cls_info, context=context)
 
     return context
 
@@ -338,12 +339,13 @@ def process_auto_attr(obj, attr, data, context):
 
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
-def load_object(loader_cls, data, cls_info=None, context=None):
+def load_object(loader, data, cls_info=None, context=None):
     """
     Set the attributes configured in the object's `auto_attrs` class
     attribute, from the given deserialized json data.
 
     Args:
+      loader: an instance of a Loader class.
       data: the dict of data containing the key-values to process.
       cls_info: a dict of keyword arguments to pass to the class constructor
         before processing attributes.
@@ -354,8 +356,8 @@ def load_object(loader_cls, data, cls_info=None, context=None):
     if context is None:
         context = {}
 
-    auto_attrs = loader_cls.auto_attrs
-    model_cls = loader_cls.model_class
+    auto_attrs = loader.auto_attrs
+    model_cls = loader.model_class
 
     try:
         # This is where we use composition over inheritance.
@@ -374,7 +376,7 @@ def load_object(loader_cls, data, cls_info=None, context=None):
     if data:
         raise RuntimeError(f'unrecognized keys for obj {obj!r}: {sorted(data.keys())}')
 
-    if hasattr(loader_cls, 'finalize'):
+    if hasattr(loader, 'finalize'):
         # Perform class-specific init after data is loaded
         obj.finalize()
 
@@ -671,7 +673,8 @@ def load_single_choice(contest, data):
       choice_cls: the class to use to instantiate the choice.
     """
     choice_cls = contest.choice_cls
-    choice = load_object(choice_cls, data)
+    choice_loader = choice_cls()
+    choice = load_object(choice_loader, data)
     choice.contest = contest     # Add back reference
 
     return choice
@@ -749,7 +752,8 @@ def load_single_contest(data, election, context):
         choice_cls=choice_cls, election=election, areas_by_id=areas_by_id,
         voting_groups_by_id=voting_groups_by_id)
 
-    contest = load_object(ContestLoader, data, cls_info=cls_info, context=context)
+    contest_loader = ContestLoader()
+    contest = load_object(contest_loader, data, cls_info=cls_info, context=context)
 
     return contest
 
@@ -923,6 +927,7 @@ def load_election(root, election_data, context):
       root: a ModelRoot object.
     """
     cls_info = dict(input_dir=root.input_dir)
+    election_loader = ElectionLoader()
     return load_object(ElectionLoader, election_data, cls_info=cls_info, context=context)
 
 
