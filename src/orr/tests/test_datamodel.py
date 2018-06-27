@@ -86,7 +86,8 @@ class ChoiceTest(TestCase):
             'en': 'English text ' + 100 * 'a',
             'es': 'Spanish',
         }
-        choice = Choice()
+        contest = None  # The contest isn't important for this test.
+        choice = Choice(contest=contest)
         choice.id = 100
         choice.ballot_title = title
         expected = "<Choice id=100 title=[en]'English text aaaaaaaaaaaaaaaaaaaaaaaaaaa'...>"
