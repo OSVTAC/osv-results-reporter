@@ -118,30 +118,31 @@ class Reader:
         """
 
         self.filename = filename
-        self.f = open(filename, encoding='utf-8')
-        if read_header:
+        self.sep = sep
+        self.read_header = read_header
+
+    def __enter__(self):
+        self.f = open(self.filename, encoding='utf-8')
+        if self.read_header:
             # The first line is a header with field names and column count
             line = self.f.readline()
             self.line_num = 1   # Reset a line counter
-            if sep is None:
+            if self.sep is None:
                 # derive the delimiter from characters in the header
                 for c in '\t|,':
                     if c in line:
-                        sep = c
+                        self.sep = c
                         break
-            if sep is None:
+            if self.sep is None:
                 raise RuntimeError(f'no delimiter found in the header of {self.filename}')
-            self.header = split_line(line,sep)
+            self.header = split_line(line,self.sep)
             self.num_columns = len(self.header)
         else:
-            if sep is None:
-                sep = '\t' # default delimiter is a tab
+            if self.sep is None:
+                self.sep = '\t' # default delimiter is a tab
             self.num_columns = 0    # 0 means no column info
             self.line_num = 0   # Reset a line counter
 
-        self.sep = sep
-
-    def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
@@ -149,6 +150,7 @@ class Reader:
         Defines an context manager exit to so this can be used in a with/as
         """
         self.f.close()
+        self.f = None
 
     def __repr__(self):
         return f'<tsvio.Reader {self.filename}>'
