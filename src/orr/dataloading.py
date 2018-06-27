@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Open Source Voting Results Reporter (ORR) - election results report generator
 # Copyright (C) 2018  Carl Hage
@@ -31,6 +32,7 @@ import functools
 import logging
 
 import orr.datamodel as datamodel
+import orr.tsvio as tsvio
 # TODO: move all but the model classes themselves into this module.
 from orr.datamodel import (parse_int, Candidate, Choice, Contest, Header,
     ResultStatType, VotingGroup)
@@ -65,6 +67,15 @@ def load_context(input_dir, build_time):
 
     path = input_dir / 'election.json'
     data = utils.read_json(path)
+
+    # Inject the Election and Contest data loader methods defined
+    # in this module.
+    setattr(datamodel.Contest,
+            'load_results_details',load_results_details)
+    setattr(datamodel.Election,
+            'load_all_results_details',load_all_results_details)
+    setattr(datamodel.Election,
+            'load_contest_status',load_contest_status)
 
     cls_info = dict(context=context, input_dir=input_dir)
     load_object(RootLoader, data, cls_info=cls_info, context=context)
@@ -128,6 +139,19 @@ def parse_date(obj, value):
     date = datetime.strptime(value, '%Y-%m-%d').date()
 
     return date
+
+
+def parse_date_time(obj, dt_string):
+    """
+    Remove and parse a date time from the given data.
+
+    Args:
+      dt_string: a datetime string in the format "2016-11-08 hh:mm:ss".
+    """
+    _log.debug(f'processing parse_date_time: {dt_string}')
+    dt = utils.parse_datetime(dt_string)
+
+    return dt
 
 
 # TODO: add validation.
@@ -357,6 +381,119 @@ def load_object(loader_cls, data, cls_info=None, context=None):
     return obj
 
 
+#--- Results Data Loading Routines ---
+
+def load_contest_status(election, filename=None):
+    """
+    Loads contest results status from a tsv file. Returns '' so
+    this can be called from templates. No action is taken if
+    the contest status has been loaded.
+
+        Args:
+            filename: The file containing the contest results data,
+                to override the default.
+
+    """
+    # Skip if data has been loaded
+    if hasattr(election,'_contest_status_loaded'):
+        return ''
+
+    if filename:
+        election.result_contest_status_filename = filename
+
+    tsvio.overlay_tsv_data(election.result_contest_status_filename,
+                           election.contests_by_id, 'contest_id',
+                     dict(
+                        reporting_time=parse_date_time,
+                        total_precincts=parse_int,
+                        precincts_reporting=parse_int,
+                        rcv_rounds=parse_int))
+
+    # Use _contest_status_loaded as a marker data has been loaded
+    election._contest_status_loaded = True
+
+    return ''
+
+
+def load_results_details(contest, filename=None):
+    """
+    Load the detailed results for this contest with reporting groups with
+    a breakdown by precinct/district.
+
+    Args:
+        filename: name of a specific result file to load. If not
+                    specified, the name will be composed with the
+                    election.get_result_detail_filename.
+    """
+    if hasattr(contest,'results'):
+        return ''
+
+    if not filename:
+        filename = contest.result_detail_filename
+
+    _log.debug(f'load_results_details({filename})')
+
+    contest.choice_count = len(contest.choices_by_id)
+    contest.reporting_group_count = len(contest.reporting_groups)
+    contest.results = []
+    contest.rcv_results = [ [None] * contest.rcv_rounds ]
+    with tsvio.Reader(filename) as reader:
+        # Simple check, just validate the column count
+        # We could validate the header if we like later
+        if reader.num_columns != 2 + contest.result_stat_count + contest.choice_count:
+            raise RuntimeError(
+                f'Mismatched column heading in {filename}: {reader.line} stats={contest.result_stat_count} choices={contest.choice_count}')
+
+        # RCV rounds are first
+        next_rcv_round = contest.rcv_rounds
+        for cols in reader.readlines():
+            #_log.debug(f'col {cols}')
+            if len(cols) != reader.num_columns:
+                raise RuntimeError(
+                    f'Mismatched columns in {filename}: {reader.line}')
+            if next_rcv_round:
+                # Separate the RCV results array
+                if cols[0] != f'RCV{next_rcv_round}':
+                    raise RuntimeError(
+                        f'Mismatched RCV line {next_rcv_round} in {filename}: {line}')
+                contest.rcv_results[next_rcv_round] = cols[2:]
+                next_rcv_round -= 1
+            else:
+                # We could verify the reporting group but will skip
+                contest.results.append([ int(v) for v in cols[2:]])
+
+        if len(contest.results) != contest.reporting_group_count:
+            raise RuntimeError(
+                f'Mismatched reporting groups in {filename}')
+
+
+    # Return a null string so this can be called in a template
+    return ''
+
+def load_all_results_details(election, filedir=None, filename_format=None):
+    """
+    Loads results details for all contests in the election. If
+    filedir or filename_format is specified, the prior
+    default values are reset.
+
+    Returns '' so this routine can be called from Jinja
+
+    Args:
+        filedir: The directory containing the detailed results data
+        filename_format: Format string with {} for contest id to
+                            create the results source file name.
+    """
+    if filedir:
+        election.result_detail_dir = filedir
+
+    if filename_format:
+        election.result_detail_format_filepath = filename_format
+
+    for c in election.contests:
+        c.load_results_details()
+
+    return ''
+
 # VotingGroup loading
 
 class VotingGroupLoader:
@@ -368,6 +505,8 @@ class VotingGroupLoader:
         ('heading', parse_i18n),
     ]
 
+
+#--- Loaders for datamodel Classes ---
 
 # ResultStatType loading
 
@@ -805,3 +944,4 @@ class RootLoader:
         AutoAttr('election', load_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
+

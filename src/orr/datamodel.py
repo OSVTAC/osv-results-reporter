@@ -35,7 +35,6 @@ import re
 import orr.utils as utils
 from orr.utils import truncate
 
-
 _log = logging.getLogger(__name__)
 
 
@@ -88,19 +87,6 @@ def parse_int(obj, value):
         except ValueError: RuntimeError(
                 f'invalid int value for obj {obj!r}: {value}')
     return value
-
-
-def parse_date_time(obj, dt_string):
-    """
-    Remove and parse a date time from the given data.
-
-    Args:
-      dt_string: a datetime string in the format "2016-11-08 hh:mm:ss".
-    """
-    _log.debug(f'processing parse_date_time: {dt_string}')
-    dt = utils.parse_datetime(dt_string)
-
-    return dt
 
 
 def parse_idlist(idlist):
@@ -465,14 +451,6 @@ def get_path_difference(new_seq, old_seq):
     return list(pair for pair in enumerate(new_seq[index:], start=index+1))
 
 
-# List of results detail headers to copy to the contest
-results_details_headers = dict(
-    reporting_time=parse_date_time,
-    total_precincts=parse_int,
-    precincts_reporting=parse_int,
-    rcv_rounds=parse_int)
-
-
 class Contest:
 
     """
@@ -587,79 +565,6 @@ class Contest:
         my_header_path = self.make_header_path()
         return get_path_difference(my_header_path, header_path)
 
-    def load_results_details(self, filename=None):
-        """
-        Load the detailed results for this contest with reporting groups with
-        a breakdown by precinct/district.
-
-        Args:
-            filename: name of a specific result file to load. If not
-                      specified, the name will be composed with the
-                      election.get_result_detail_filename.
-        """
-        if hasattr(self,'results'):
-            return ''
-
-        if not filename:
-            filename = self.election.get_result_detail_filename(self.id)
-
-        _log.debug(f'load_results_details({filename})')
-
-        with open(filename, encoding='utf-8') as f:
-            for line in f:
-                # Read keyword header lines
-                if line == "---\n":
-                    break
-                m = re.match(r'^(\w+):\s*(.*)',line)
-                if not m:
-                    raise RuntimeError(
-                        f'invalid results line {line} in {filename}')
-                k, v = m.groups()
-                if k in results_details_headers:
-                    _log.debug(f'header {k}:{v}')
-                    setattr(self, k, results_details_headers[k](self, v))
-
-            # TODO: validate the format with contests hash
-            # Copy the number of result stat types in this contest
-
-            self.choice_count = len(self.choices_by_id)
-            self.reporting_group_count = len(self.reporting_groups)
-            self.results = []
-            self.rcv_results = [ [None] * self.rcv_rounds ]
-
-            # Read the column heading definition
-            line = f.readline()
-            ncols = len(line.split(sep='|'))
-            if ncols != 2 + self.result_stat_count + self.choice_count:
-                raise RuntimeError(
-                    f'Mismatched column heading in {filename}: {line} stats={self.result_stat_count} choices={self.choice_count}')
-            # We could verify column headings, but instead validate based
-            # on a hash checksum of contest definitions, so the heading
-            # line becomes a comment for unvalidated input
-
-            # Read the results, RCV first
-            next_rcv_round = self.rcv_rounds
-            for line in f:
-                line = line.strip()
-                cols = line.split(sep='|')
-                _log.debug(f'col {cols}')
-                if len(cols) != ncols:
-                    raise RuntimeError(
-                        f'Mismatched columns in {filename}: {line}')
-                if next_rcv_round:
-                    # Separate the RCV results array
-                    if cols[0] != f'RCV{next_rcv_round}':
-                        raise RuntimeError(
-                            f'Mismatched RCV line {next_rcv_round} in {filename}: {line}')
-                    self.rcv_results[next_rcv_round] = cols[2:]
-                    next_rcv_round -= 1
-                else:
-                    # We could verify the reporting group but will skip
-                    self.results.append([ int(v) for v in cols[2:]])
-            if len(self.results) != self.reporting_group_count:
-                raise RuntimeError(
-                    f'Mismatched reporting groups in {filename}')
-        return ''
 
     def result_stat_indexes_by_id(self, stat_idlist=None):
         """
@@ -745,6 +650,17 @@ class Contest:
         return [ self.results[reporting_index][i]
                  for i in self.result_stat_indexes_by_id(choice_stat_idlist) ]
 
+    @property
+    def result_detail_filename(self):
+        """
+        Returns the file path and name for detailed results source data
+        to be loaded, based on the contest ID. The directory and/or file
+        name formatting can be configured in the election settings.
+        """
+        return self.election.result_detail_format_filepath.format(
+            self.election.result_detail_dir, self.id)
+
+
 
 class Election:
 
@@ -779,7 +695,8 @@ class Election:
         self.ballot_title = None
         self.date = None
 
-        self.result_detail_format_filepath = "{}/results.{}.psv"
+        self.result_detail_format_filepath = "{}/results-{}.tsv"
+        self.result_contest_status_filename = input_dir / "resultdata/contest-status.tsv"
 
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
@@ -821,31 +738,20 @@ class Election:
 
             yield headers, contest
 
-    def get_result_detail_filename(self,contest_id):
+    def load_contest_status(self, filename=None):
         """
-        Returns the file path and name for detailed results source data
-        to be loaded, based on the contest ID. The directory and/or file
-        name formatting can be configured in the election settings.
-        """
-        return self.result_detail_format_filepath.format(
-            self.result_detail_dir, contest_id)
-
-    def load_results_details(self, filedir=None, filename_format=None):
-        """
-        Loads results details for all contests in the election. If
-        filedir or filename_format is specified, the prior
-        default values are reset.
-
+        Loads the contest results status data into each contest.
         Args:
-            filedir: The directory containing the detailed results data
-            filename_format: Format string with {} for contest id to
-                             create the results source file name.
+            filename: The file containing the contest results data
         """
-        if filedir:
-            self.result_detail_dir = filedir
+        if hasattr(self,'_contest_status_loaded'):
+            return ''
 
-        if filename_format:
-            self.result_detail_format_filepath = filename_format
+        if filename:
+            self.result_contest_status_filename = filename
 
-        for c in self.contests:
-            c.load_results_details()
+        dataloading.load_contest_status(self)
+        self._contest_status_loaded = True
+        return ''
+
+

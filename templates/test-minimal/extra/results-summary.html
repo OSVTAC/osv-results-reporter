@@ -5,7 +5,7 @@
     {{ election.ballot_title|translate }} {# This is the wrong title, should say results #}
   </title>
 </head>
-<body>
+<body>{{ election.load_contest_status() }}
   <h1>{{ election.ballot_title|translate }}</h1>{# This is the wrong title, should say results #}
   <h2>{{ election.date|format_date }} -
     {{ election.election_area|translate }}</h2>
@@ -31,7 +31,7 @@
         {{ contest.vote_for_msg|translate }}
       </p>
     {% endif %}
-    <p>{{ contest.load_results_details() }}{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})</p>
+    <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})</p>
     <table>
       <thead><tr><th>&nbsp;</th>
       {% for vg in contest.voting_groups_from_idlist() %}
