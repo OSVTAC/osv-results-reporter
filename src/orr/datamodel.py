@@ -756,5 +756,3 @@ class Election:
         dataloading.load_contest_status(self)
         self._contest_status_loaded = True
         return ''
-
-

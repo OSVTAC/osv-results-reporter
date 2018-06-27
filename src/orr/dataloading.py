@@ -690,20 +690,16 @@ CONTEST_TO_CHOICE_LOADER = {
     'ynoffice': ChoiceLoader,
 }
 
-def load_single_choice(contest_loader, data):
+def load_single_choice(data, choice_loader_cls, cls_info):
     """
     Common processing to enter a candidate or measure choice
 
     Args:
-      contest_loader: a ContestLoader object.
+      choice_loader_cls: the loader class to use to load the contest's
+        choices (can be ChoiceLoader or CandidateLoader).
+      cls_info: the dict of kwargs to pass to the Choice constructor.
     """
-    choice_loader_cls = contest_loader.choice_loader_cls
     choice_loader = choice_loader_cls()
-
-    contest = contest_loader.model_object
-    assert type(contest) == Contest
-    cls_info = dict(contest=contest)
-
     choice = load_object(choice_loader, data, cls_info=cls_info)
 
     return choice
@@ -716,7 +712,20 @@ def load_choices(contest_loader, choices_data):
     Args:
       contest_loader: a ContestLoader object.
     """
-    load_data = functools.partial(load_single_choice, contest_loader)
+    # First determine the loader class to use to load the contest's
+    # choices (can be ChoiceLoader or CandidateLoader).
+    contest = contest_loader.model_object
+    assert type(contest) == Contest
+    type_name = contest.type_name
+
+    try:
+        choice_loader_cls = CONTEST_TO_CHOICE_LOADER[type_name]
+    except KeyError:
+        raise RuntimeError(f'invalid contest type name: {type_name!r}')
+
+    cls_info = dict(contest=contest)
+    load_data = functools.partial(load_single_choice, choice_loader_cls=choice_loader_cls,
+                                  cls_info=cls_info)
     choices_by_id = load_objects_to_mapping(load_data, choices_data, should_index=True)
 
     return choices_by_id
@@ -758,14 +767,6 @@ class ContestLoader:
         ('writeins_allowed', parse_int),
     ]
 
-    def __init__(self, choice_loader_cls):
-        """
-        Args:
-          choice_loader_cls: the loader class to use to load the contest's
-            choices (can be ChoiceLoader or CandidateLoader).
-        """
-        self.choice_loader_cls = choice_loader_cls
-
 
 def load_single_contest(data, election, context):
     """
@@ -776,18 +777,13 @@ def load_single_contest(data, election, context):
     except KeyError:
         raise RuntimeError(f"key '_type' missing from data: {data}")
 
-    try:
-        choice_loader_cls = CONTEST_TO_CHOICE_LOADER[type_name]
-    except KeyError:
-        raise RuntimeError(f'invalid ballot item type: {type_name!r}')
-
     areas_by_id = context['areas_by_id']
     voting_groups_by_id = context['voting_groups_by_id']
 
     cls_info = dict(type_name=type_name, election=election,
         areas_by_id=areas_by_id, voting_groups_by_id=voting_groups_by_id)
 
-    contest_loader = ContestLoader(choice_loader_cls=choice_loader_cls)
+    contest_loader = ContestLoader()
     contest = load_object(contest_loader, data, cls_info=cls_info, context=context)
 
     return contest
