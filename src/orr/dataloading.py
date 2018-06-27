@@ -167,25 +167,28 @@ def parse_i18n(obj, value):
 class AutoAttr:
 
     """
-    Defines an attribute to set when loading JSON data, and how to load it.
+    Defines a key-value to read when loading JSON data, and how to load it.
     """
 
-    def __init__(self, attr_name, load_value, data_key=None, context_keys=None,
+    # TODO: allow attr_name to be False to indicate that no attribute
+    #  should be set.
+    def __init__(self, data_key, load_value, attr_name=None, context_keys=None,
         unpack_context=False):
         """
         Args:
-          attr_name: the name of the attribute.
-          load_value: the function to call when loading.  The function
-            should have the signature load_value(obj, value, ...).
           data_key: the name of the key to access from the JSON to obtain
             the data value to pass to load_value().  Defaults to attr_name.
+          load_value: the function to call when loading.  The function
+            should have the signature load_value(loader, data, ...),
+            where loader is a Loader object.
+          attr_name: the name of the attribute to set.
           context_keys: the name of the context keys that processing this
             attribute depends on.  Defaults to not depending on the context.
           unpack_context: whether to unpack the context argument into
             kwargs when calling the load_value() function.
         """
-        if data_key is None:
-            data_key = attr_name
+        if attr_name is None:
+            attr_name = data_key
         if context_keys is None:
             context_keys = []
 
@@ -203,7 +206,7 @@ class AutoAttr:
         except AttributeError:
             func_name = repr(self.load_value)
 
-        return f'<AutoAttr {self.attr_name!r}: data_key={self.data_key!r}, load_value={func_name}>'
+        return f'<AutoAttr {self.data_key!r}: attr_name={self.attr_name!r}, load_value={func_name}>'
 
     def make_load_value_kwargs(self, context):
         """
@@ -514,7 +517,7 @@ class VotingGroupLoader:
     model_class = datamodel.ResultStatType
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('heading', parse_i18n),
     ]
 
@@ -528,7 +531,7 @@ class ResultStatTypeLoader:
     model_class = datamodel.ResultStatType
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('heading', parse_i18n),
         ('is_percent', parse_bool),
     ]
@@ -610,14 +613,14 @@ class ResultStyleLoader:
     model_class = datamodel.ResultStyle
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('description', parse_i18n),
         ('is_rcv', parse_bool),
-        AutoAttr('voting_groups', load_result_voting_groups,
-            data_key='voting_group_ids', context_keys=('voting_groups_by_id',),
+        AutoAttr('voting_group_ids', load_result_voting_groups,
+            attr_name='voting_groups', context_keys=('voting_groups_by_id',),
             unpack_context=True),
-        AutoAttr('result_stat_types', load_stat_types,
-            data_key='result_stat_type_ids', context_keys=('result_stat_types_by_id',),
+        AutoAttr('result_stat_type_ids', load_stat_types,
+            attr_name='result_stat_types', context_keys=('result_stat_types_by_id',),
             unpack_context=True),
     ]
 
@@ -629,7 +632,7 @@ class AreaLoader:
     model_class = datamodel.Area
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('classification', parse_as_is),
         ('name', parse_i18n),
         ('short_name', parse_i18n),
@@ -646,12 +649,12 @@ class HeaderLoader:
     model_class = Header
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('ballot_title', parse_i18n),
         ('classification', parse_as_is),
         # This is needed only while loading.
         # TODO: can we eliminate having to store this as an attribute?
-        AutoAttr('_header_id', parse_as_is, data_key='header_id'),
+        AutoAttr('header_id', parse_as_is, attr_name='_header_id'),
     ]
 
 
@@ -662,7 +665,7 @@ class ChoiceLoader:
     model_class = Choice
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('ballot_title', parse_i18n),
     ]
 
@@ -674,7 +677,7 @@ class CandidateLoader:
     model_class = Candidate
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
         ('candidate_party', parse_i18n),
@@ -745,15 +748,15 @@ class ContestLoader:
     model_class = Contest
 
     auto_attrs = [
-        ('id', parse_id, '_id'),
+        ('_id', parse_id, 'id'),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
         # TODO: this should be parsed out.
         ('choice_names', parse_as_is),
-        ('choices_by_id', load_choices, 'choices'),
+        ('choices', load_choices, 'choices_by_id'),
         # This is needed only while loading.
         # TODO: can we eliminate having to store this as an attribute?
-        AutoAttr('_header_id', parse_as_is, data_key='header_id'),
+        AutoAttr('header_id', parse_as_is, attr_name='_header_id'),
         ('instructions_text', parse_as_is),
         ('is_partisan', parse_as_is),
         ('number_elected', parse_as_is),
@@ -878,12 +881,12 @@ class ElectionLoader:
 
     auto_attrs = [
         ('ballot_title', parse_i18n),
-        ('date', parse_date, 'election_date'),
+        ('election_date', parse_date, 'date'),
         ('election_area', parse_i18n),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
-        ('headers_by_id', load_headers, 'headers'),
-        AutoAttr('contests_by_id', load_contests, data_key='contests',
+        ('headers', load_headers, 'headers_by_id'),
+        AutoAttr('contests', load_contests, attr_name='contests_by_id',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
 
@@ -983,12 +986,12 @@ class RootLoader:
         ('translations', parse_as_is),
         # Set "result_stat_types_by_id" and "voting_groups_by_id" now since
         # processing "election" depends on them.
-        ('result_stat_types_by_id', load_result_stat_types, 'result_stat_types'),
-        ('voting_groups_by_id', load_voting_groups, 'voting_groups'),
+        ('result_stat_types', load_result_stat_types, 'result_stat_types_by_id'),
+        ('voting_groups', load_voting_groups, 'voting_groups_by_id'),
         # Processing result_styles requires result_stat_types and voting_groups.
-        AutoAttr('result_styles_by_id', load_result_styles, data_key='result_styles',
+        AutoAttr('result_styles', load_result_styles, attr_name='result_styles_by_id',
             context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
-        ('areas_by_id', load_areas, 'areas'),
+        ('areas', load_areas, 'areas_by_id'),
         AutoAttr('election', load_election,
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
