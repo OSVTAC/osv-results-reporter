@@ -75,20 +75,6 @@ VOTING_GROUPS = OrderedDict([
     ])
 
 
-def parse_int(obj, value):
-    """
-    Remove and parse an int string from the given data.
-    """
-    _log.debug(f'parsing int: {value}')
-    if value is None or value == '':
-        value = None
-    else:
-        try: value = int(value)
-        except ValueError: RuntimeError(
-                f'invalid int value for obj {obj!r}: {value}')
-    return value
-
-
 def parse_idlist(idlist):
     """
     Args:

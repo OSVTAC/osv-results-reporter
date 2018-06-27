@@ -33,8 +33,7 @@ import logging
 
 import orr.datamodel as datamodel
 import orr.tsvio as tsvio
-# TODO: move all but the model classes themselves into this module.
-from orr.datamodel import (parse_int, Candidate, Choice, Contest, Election,
+from orr.datamodel import (Candidate, Choice, Contest, Election,
     Header, ResultStatType, ResultStyle, VotingGroup)
 import orr.utils as utils
 from orr.utils import truncate
@@ -98,6 +97,20 @@ def parse_id(obj, value):
     Remove and parse an id string from the given data.
     """
     _log.debug(f'parsing id: {value}')
+    return value
+
+
+def parse_int(obj, value):
+    """
+    Remove and parse an int string from the given data.
+    """
+    _log.debug(f'parsing int: {value}')
+    if value is None or value == '':
+        value = None
+    else:
+        try: value = int(value)
+        except ValueError: RuntimeError(
+                f'invalid int value for obj {obj!r}: {value}')
     return value
 
 
