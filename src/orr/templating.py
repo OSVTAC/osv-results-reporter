@@ -23,9 +23,12 @@
 Includes custom template filters and context functions.
 """
 
+import datetime
 import functools
+import json
 import logging
 from pathlib import Path
+import re
 
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Environment)
@@ -341,3 +344,133 @@ def create_pdf(env, rel_path, contests, title=None):
                         type_name='PDF', ext='.pdf', env=env)
 
     return rel_path
+
+#--- Functions to simplify generation of json or xml ---
+
+def split_attr_list(attr_list):
+    """
+    Splits a comma separated list of attribute names to be formatted
+    in json/xml/etc. The name can be of the form from_name=to_name,
+    where from_name is the attribute within an object, and to_name
+    is the attribute written in json/xml/...
+
+    This is an iterator returning (from_name, to_name)
+    """
+    for name in attr_list.split(','):
+        n = name.split('=')
+        if len(n) == 2:
+            yield n
+        else:
+            yield name, name
+
+def map_attr_value(valuemaps, from_name, v):
+    """
+    Converts the value v using a dictionary based on
+    valuemaps a dictionary by attribute name with value
+    mapping dictionaries or mapping functions.
+
+    Returns the mapped value of v if valuemaps is not None
+    and a dictionary is found for from_name and a value is
+    found, otherwise return v
+
+    The valuemaps[from_name] can be a dictionary or callable
+    function to map the value.
+    """
+    if valuemaps is not None and from_name in valuemaps:
+        m = valuemaps[from_name]
+        if callable(m):
+            return m(v)
+        if v in m:
+            v = m[v]
+
+    # Perform standard mappings here
+    if type(v) is datetime.date:
+        v = v.isoformat()
+    elif type(v) is datetime.datetime:
+        v = v.isoformat(sep=' ')
+    return v
+
+
+def get_attrs_by_name_list(obj, attr_list, valuemaps=None, expand_list=False):
+    """
+    Helper iterator that returns a (name, value) for each
+    attribute within obj specified by the attr_list.
+
+    Values of None or a null string are omitted.
+
+    Args:
+        attr_list is a comma separated list of attribute names,
+        or a from_name=to_name pair, where from_name is the attribute
+        in the object, and to_name is the name string returned.
+
+        valuemaps is a dictionary with keys corresponding to a
+        from_name that references a dictionary of value maps. The
+        valuemap can be used to change enumerated types, or convert
+        boolean values to strings for xml.
+
+        expand_list if true will emit a repeated set of (name, value)
+        pairs for each member of a list attribute.
+
+    """
+    for from_name, to_name in split_attr_list(attr_list):
+        if type(obj) is dict:
+            if from_name not in obj:
+                continue
+            v = obj[from_name]
+        else:
+            v = getattr(obj, from_name, None)
+
+        if v is None or v == '':
+            continue;
+
+        if expand_list and isinstance(v,(list,tuple)):
+            # A list can be expanded into repeated attributes (xml)
+            for vi in v:
+                yield to_name, map_attr_value(valuemaps, from_name, vi)
+        else:
+            yield to_name, map_attr_value(valuemaps, from_name, v)
+
+def to_json(obj, attr_list, valuemaps=None):
+    """
+    This is a helper function that retrieves attributes from an object
+    and returns a formatted json string. See get_attrs_by_name_list
+    for the definition of attr_list and valuemaps
+    """
+    j = json.JSONEncoder(ensure_ascii=False)
+    return ','.join([ '"{}":{}'.format(k, j.encode(v))
+                     for k, v in get_attrs_by_name_list(obj, attr_list, valuemaps)])
+
+def format_xml_value(v):
+    """
+    Converts a value to an escaped xml string.
+    """
+    v = str(v)
+    # Replaces are copied here in lieu of importing massive software
+    v = v.replace("&", "&amp;")
+    v = v.replace("<", "&lt;")
+    v = v.replace(">", "&gt;")
+    v = v.replace("\"", "&quot;")
+    return(v)
+
+def to_xml(obj, attr_list, valuemaps=None, expand_list=True):
+    """
+    This is a helper function that retrieves attributes from an object
+    and returns a formatted xml elements.  See get_attrs_by_name_list
+    for the definition of attr_list and valuemaps.
+
+    Returns <name>value<name> for each attribute
+    """
+    return "".join(["<{}>{}</{}>".format(k, format_xml_value(v), k)
+                    for k, v in get_attrs_by_name_list(obj, attr_list, valuemaps, expand_list)])
+
+def to_xml_attr(obj, attr_list, valuemaps=None):
+    """
+    This is a helper function that retrieves attributes from an object
+    and returns a formatted xml attributes.  See get_attrs_by_name_list
+    for the definition of attr_list and valuemaps.
+
+    Returns space separated name="value" for each attribute
+    """
+    return " ".join(['{}="{}"'.format(k, format_xml_value(v))
+                    for k, v in get_attrs_by_name_list(obj, attr_list, valuemaps)])
+
