@@ -1,0 +1,350 @@
+[
+   {
+      "_contest_id" : "403",
+      "total_precincts" : 346,
+      "reporting_time" : "2016-11-09 00:00:35",
+      "rcv_rounds" : 0,
+      "choices" : [
+         {
+            "results" : [
+               18471,
+               8437,
+               10034
+            ],
+            "_id" : "4812",
+            "ballot_title" : "DAVID CHIU"
+         },
+         {
+            "_id" : "4813",
+            "results" : [
+               115997,
+               52699,
+               63298
+            ],
+            "ballot_title" : "ALEJANDRO FERNANDEZ"
+         }
+      ],
+      "precincts_reporting" : 346,
+      "result_stats" : [
+         {
+            "results" : [
+               298938,
+               298938,
+               298938
+            ],
+            "heading" : "Registered Voters",
+            "_id" : "RSReg"
+         },
+         {
+            "_id" : "RSCst",
+            "heading" : "Ballots Cast",
+            "results" : [
+               158051,
+               74785,
+               83266
+            ]
+         },
+         {
+            "results" : [
+               158051,
+               74785,
+               83266
+            ],
+            "_id" : "RSTot",
+            "heading" : "Ballots Counted"
+         },
+         {
+            "results" : [
+               0,
+               0,
+               0
+            ],
+            "heading" : "Ballots Rejected",
+            "_id" : "RSRej"
+         },
+         {
+            "_id" : "RSUnc",
+            "heading" : "Ballots Uncounted",
+            "results" : [
+               0,
+               0,
+               0
+            ]
+         },
+         {
+            "results" : [
+               23539,
+               13631,
+               9908
+            ],
+            "heading" : "Undervotes",
+            "_id" : "RSUnd"
+         },
+         {
+            "_id" : "RSOvr",
+            "heading" : "Overvotes",
+            "results" : [
+               44,
+               18,
+               26
+            ]
+         }
+      ]
+   },
+   {
+      "result_stats" : [
+         {
+            "heading" : "Registered Voters",
+            "_id" : "RSReg",
+            "results" : [
+               43818,
+               43818,
+               43818
+            ]
+         },
+         {
+            "results" : [
+               23686,
+               12211,
+               11475
+            ],
+            "heading" : "Ballots Cast",
+            "_id" : "RSCst"
+         },
+         {
+            "results" : [
+               22184,
+               11760,
+               10424
+            ],
+            "_id" : "RSTot",
+            "heading" : "Ballots Counted"
+         },
+         {
+            "results" : [
+               1502,
+               451,
+               1051
+            ],
+            "_id" : "RSRej",
+            "heading" : "Ballots Rejected"
+         },
+         {
+            "results" : [
+               0,
+               0,
+               0
+            ],
+            "heading" : "Ballots Uncounted",
+            "_id" : "RSUnc"
+         },
+         {
+            "_id" : "RSWri",
+            "heading" : "Writein Votes",
+            "results" : [
+               0,
+               0,
+               0
+            ]
+         },
+         {
+            "results" : [
+               1605,
+               1100,
+               505
+            ],
+            "_id" : "RSUnd",
+            "heading" : "Undervotes"
+         },
+         {
+            "_id" : "RSOvr",
+            "heading" : "Overvotes",
+            "results" : [
+               116,
+               56,
+               60
+            ]
+         },
+         {
+            "results" : [
+               0,
+               0,
+               0
+            ],
+            "heading" : "Exhausted Ballots",
+            "_id" : "RSExh"
+         }
+      ],
+      "choices" : [
+         {
+            "ballot_title" : "AMY FARAH WEISS",
+            "results" : [
+               497,
+               220,
+               277
+            ],
+            "_id" : "3790"
+         },
+         {
+            "ballot_title" : "ELLEN LEE ZHOU",
+            "results" : [
+               377,
+               172,
+               205
+            ],
+            "_id" : "3789"
+         },
+         {
+            "ballot_title" : "MICHELLE BRAVO",
+            "_id" : "4969",
+            "results" : [
+               7504,
+               3781,
+               3723
+            ]
+         },
+         {
+            "ballot_title" : "LONDON BREED",
+            "results" : [
+               707,
+               355,
+               352
+            ],
+            "_id" : "4970"
+         },
+         {
+            "ballot_title" : "MARK LENO",
+            "results" : [
+               2298,
+               996,
+               1302
+            ],
+            "_id" : "3786"
+         },
+         {
+            "ballot_title" : "JANE KIM",
+            "_id" : "3788",
+            "results" : [
+               517,
+               245,
+               272
+            ]
+         },
+         {
+            "_id" : "3785",
+            "results" : [
+               408,
+               235,
+               173
+            ],
+            "ballot_title" : "RICHIE GREENBERG"
+         },
+         {
+            "ballot_title" : "ANGELA ALIOTO",
+            "results" : [
+               8155,
+               4600,
+               3555
+            ],
+            "_id" : "3787"
+         }
+      ],
+      "precincts_reporting" : 48,
+      "rcv_rounds" : 0,
+      "reporting_time" : "2016-11-09 00:00:35",
+      "total_precincts" : 48,
+      "_contest_id" : "598"
+   },
+   {
+      "_contest_id" : "617",
+      "total_precincts" : 597,
+      "reporting_time" : "2016-11-09 00:00:35",
+      "rcv_rounds" : 0,
+      "choices" : [
+         {
+            "ballot_title" : "YES",
+            "results" : [
+               180002,
+               89356,
+               90646
+            ],
+            "_id" : "3767"
+         },
+         {
+            "ballot_title" : "NO",
+            "results" : [
+               57054,
+               24012,
+               33042
+            ],
+            "_id" : "3768"
+         }
+      ],
+      "result_stats" : [
+         {
+            "results" : [
+               513573,
+               513573,
+               513573
+            ],
+            "_id" : "RSReg",
+            "heading" : "Registered Voters"
+         },
+         {
+            "_id" : "RSCst",
+            "heading" : "Ballots Cast",
+            "results" : [
+               274207,
+               131900,
+               142307
+            ]
+         },
+         {
+            "results" : [
+               272618,
+               131676,
+               140942
+            ],
+            "_id" : "RSTot",
+            "heading" : "Ballots Counted"
+         },
+         {
+            "results" : [
+               1589,
+               224,
+               1365
+            ],
+            "heading" : "Ballots Rejected",
+            "_id" : "RSRej"
+         },
+         {
+            "results" : [
+               0,
+               0,
+               0
+            ],
+            "_id" : "RSUnc",
+            "heading" : "Ballots Uncounted"
+         },
+         {
+            "_id" : "RSUnd",
+            "heading" : "Undervotes",
+            "results" : [
+               35462,
+               18253,
+               17209
+            ]
+         },
+         {
+            "_id" : "RSOvr",
+            "heading" : "Overvotes",
+            "results" : [
+               100,
+               55,
+               45
+            ]
+         }
+      ],
+      "precincts_reporting" : 597
+   }
+]
