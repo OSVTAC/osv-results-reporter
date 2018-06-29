@@ -1,0 +1,36 @@
+[{ "contest_id":"403","reporting_time":"2016-11-09 00:00:35","total_precincts":346,"precincts_reporting":346,"rcv_rounds":0, "result_stats": [{ "id":"RSReg","heading":"Registered Voters","results":[298938, 298938, 298938] },
+{ "id":"RSCst","heading":"Ballots Cast","results":[158051, 74785, 83266] },
+{ "id":"RSTot","heading":"Ballots Counted","results":[158051, 74785, 83266] },
+{ "id":"RSRej","heading":"Ballots Rejected","results":[0, 0, 0] },
+{ "id":"RSUnc","heading":"Ballots Uncounted","results":[0, 0, 0] },
+{ "id":"RSUnd","heading":"Undervotes","results":[23539, 13631, 9908] },
+{ "id":"RSOvr","heading":"Overvotes","results":[44, 18, 26] }
+], "choices":[ { "id":"4812","ballot_title":"DAVID CHIU","results":[18471, 8437, 10034] },
+{ "id":"4813","ballot_title":"ALEJANDRO FERNANDEZ","results":[115997, 52699, 63298] }
+]},{ "contest_id":"598","reporting_time":"2016-11-09 00:00:35","total_precincts":48,"precincts_reporting":48,"rcv_rounds":0, "result_stats": [{ "id":"RSReg","heading":"Registered Voters","results":[43818, 43818, 43818] },
+{ "id":"RSCst","heading":"Ballots Cast","results":[23686, 12211, 11475] },
+{ "id":"RSTot","heading":"Ballots Counted","results":[22184, 11760, 10424] },
+{ "id":"RSRej","heading":"Ballots Rejected","results":[1502, 451, 1051] },
+{ "id":"RSUnc","heading":"Ballots Uncounted","results":[0, 0, 0] },
+{ "id":"RSWri","heading":"Writein Votes","results":[0, 0, 0] },
+{ "id":"RSUnd","heading":"Undervotes","results":[1605, 1100, 505] },
+{ "id":"RSOvr","heading":"Overvotes","results":[116, 56, 60] },
+{ "id":"RSExh","heading":"Exhausted Ballots","results":[0, 0, 0] }
+], "choices":[ { "id":"3790","ballot_title":"AMY FARAH WEISS","results":[497, 220, 277] },
+{ "id":"3789","ballot_title":"ELLEN LEE ZHOU","results":[377, 172, 205] },
+{ "id":"4969","ballot_title":"MICHELLE BRAVO","results":[7504, 3781, 3723] },
+{ "id":"4970","ballot_title":"LONDON BREED","results":[707, 355, 352] },
+{ "id":"3786","ballot_title":"MARK LENO","results":[2298, 996, 1302] },
+{ "id":"3788","ballot_title":"JANE KIM","results":[517, 245, 272] },
+{ "id":"3785","ballot_title":"RICHIE GREENBERG","results":[408, 235, 173] },
+{ "id":"3787","ballot_title":"ANGELA ALIOTO","results":[8155, 4600, 3555] }
+]},{ "contest_id":"617","reporting_time":"2016-11-09 00:00:35","total_precincts":597,"precincts_reporting":597,"rcv_rounds":0, "result_stats": [{ "id":"RSReg","heading":"Registered Voters","results":[513573, 513573, 513573] },
+{ "id":"RSCst","heading":"Ballots Cast","results":[274207, 131900, 142307] },
+{ "id":"RSTot","heading":"Ballots Counted","results":[272618, 131676, 140942] },
+{ "id":"RSRej","heading":"Ballots Rejected","results":[1589, 224, 1365] },
+{ "id":"RSUnc","heading":"Ballots Uncounted","results":[0, 0, 0] },
+{ "id":"RSUnd","heading":"Undervotes","results":[35462, 18253, 17209] },
+{ "id":"RSOvr","heading":"Overvotes","results":[100, 55, 45] }
+], "choices":[ { "id":"3767","ballot_title":"YES","results":[180002, 89356, 90646] },
+{ "id":"3768","ballot_title":"NO","results":[57054, 24012, 33042] }
+]}]
