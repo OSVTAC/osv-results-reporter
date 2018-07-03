@@ -1,4 +1,4 @@
-[{ "_contest_id":"403","reporting_time":"2016-11-09 00:00:35","total_precincts":346,"precincts_reporting":346,"rcv_rounds":0, "result_stats": [{ "_id":"RSReg","heading":"Registered Voters","results":[298938, 298938, 298938] },
+[{ "_id":"403","reporting_time":"2016-11-09 00:00:35","total_precincts":346,"precincts_reporting":346,"rcv_rounds":0, "result_stats": [{ "_id":"RSReg","heading":"Registered Voters","results":[298938, 298938, 298938] },
 { "_id":"RSCst","heading":"Ballots Cast","results":[158051, 74785, 83266] },
 { "_id":"RSTot","heading":"Ballots Counted","results":[158051, 74785, 83266] },
 { "_id":"RSRej","heading":"Ballots Rejected","results":[0, 0, 0] },
@@ -7,7 +7,7 @@
 { "_id":"RSOvr","heading":"Overvotes","results":[44, 18, 26] }
 ], "choices":[ { "_id":"4812","ballot_title":"DAVID CHIU","results":[18471, 8437, 10034] },
 { "_id":"4813","ballot_title":"ALEJANDRO FERNANDEZ","results":[115997, 52699, 63298] }
-]},{ "_contest_id":"598","reporting_time":"2016-11-09 00:00:35","total_precincts":48,"precincts_reporting":48,"rcv_rounds":0, "result_stats": [{ "_id":"RSReg","heading":"Registered Voters","results":[43818, 43818, 43818] },
+]},{ "_id":"598","reporting_time":"2016-11-09 00:00:35","total_precincts":48,"precincts_reporting":48,"rcv_rounds":0, "result_stats": [{ "_id":"RSReg","heading":"Registered Voters","results":[43818, 43818, 43818] },
 { "_id":"RSCst","heading":"Ballots Cast","results":[23686, 12211, 11475] },
 { "_id":"RSTot","heading":"Ballots Counted","results":[22184, 11760, 10424] },
 { "_id":"RSRej","heading":"Ballots Rejected","results":[1502, 451, 1051] },
@@ -24,7 +24,7 @@
 { "_id":"3788","ballot_title":"JANE KIM","results":[517, 245, 272] },
 { "_id":"3785","ballot_title":"RICHIE GREENBERG","results":[408, 235, 173] },
 { "_id":"3787","ballot_title":"ANGELA ALIOTO","results":[8155, 4600, 3555] }
-]},{ "_contest_id":"617","reporting_time":"2016-11-09 00:00:35","total_precincts":597,"precincts_reporting":597,"rcv_rounds":0, "result_stats": [{ "_id":"RSReg","heading":"Registered Voters","results":[513573, 513573, 513573] },
+]},{ "_id":"617","reporting_time":"2016-11-09 00:00:35","total_precincts":597,"precincts_reporting":597,"rcv_rounds":0, "result_stats": [{ "_id":"RSReg","heading":"Registered Voters","results":[513573, 513573, 513573] },
 { "_id":"RSCst","heading":"Ballots Cast","results":[274207, 131900, 142307] },
 { "_id":"RSTot","heading":"Ballots Counted","results":[272618, 131676, 140942] },
 { "_id":"RSRej","heading":"Ballots Rejected","results":[1589, 224, 1365] },
