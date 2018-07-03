@@ -167,11 +167,7 @@ class Config(dict):
           filepath: Full file path to load
         """
         _log.info(f'Loading config data from {filepath}')
-        if filepath=='-':
-            config = yaml.safe_load(sys,stdin)
-        else:
-            with open(filepath) as f:
-                config = yaml.safe_load(f)
+        config = utils.read_yaml(filepath)
         # Verify the returned data is a dict
         #[TODO]
         return config
@@ -233,52 +229,28 @@ class Config(dict):
 # included in the template file documentation.
 # [TODO: Allow data loaders to be invoked in templates as function call]
 
-def load_json(data, filepath):
-    """
-    Data Loader: The json data loader will read arbitrary
-    json-formatted data from the named file
-    and update/replace data to be processed with templates.
-    The json content must be a dictionary (set of named values).
-    """
-    _log.debug(f'load_json({filepath})')
-    with open(filepath) as f:
-        newdata = json.load(f)
-    if not isinstance(newdata, dict):
-        _log.error(f'Invalid data in json file {filepath}');
-        return
-    data.update(newdata)
-    _log.info(f'loaded json data from {filepath}')
-    #_log.debug(str(data.keys()))
-
-
-def load_yaml(data, filepath):
-    """
-    Data Loader: The yaml data loader will read arbitrary
-    yaml-formatted data from the named file
-    and update/replace data to be processed with templates.
-    The yaml content must be a dictionary (set of named values).
-    """
-    _log.debug(f'load_yaml({filepath})')
-    with open(filepath) as f:
-        newdata = yaml.safe_load(f)
-    if not isinstance(newdata, dict):
-        _log.error(f'Invalid data in yaml file {filepath}');
-        return
-    data.update(newdata)
-    _log.info(f'loaded yaml data from {filepath}')
-    #_log.debug(str(data.keys()))
-
 
 def load_input(data, path):
+    """
+    Data Loader: The data loader will read arbitrary
+    json or yaml formatted data from the named file
+    and update/replace data to be processed with templates.
+    The parsed content must be a dictionary (set of named values).
+    """
     path = Path(path)
     suffix = path.suffix
     if suffix == '.json':
-        load_json(data, path)
+        newdata = utils.read_json(path)
     elif suffix == '.yaml':
-        load_yaml(data, path)
+        newdata = utils.read_yaml(path)
     else:
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
+    if not isinstance(newdata, dict):
+        _log.error(f'Invalid data in file {filepath}');
+        return
+    data.update(newdata)
+    _log.info(f'loaded data from {filepath}')
 
 #--- Top level processing: ---
 

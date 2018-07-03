@@ -136,12 +136,28 @@ def format_percent2(num,denom):
     else:
         return(format_percent(100*num/denom))
 
-def read_json(path):
-    with open(path) as f:
+def read_json(filepath):
+    """
+    Data Loader: Reads the specified json file into a python data structure
+    """
+    _log.debug(f'load_json({filepath})')
+    with open(filepath) as f:
         data = json.load(f)
 
     return data
 
+def read_yaml(filepath):
+    """
+    Data Loader: Reads the specified yaml file into a python data structure
+    """
+    _log.debug(f'load_yaml({filepath})')
+    if filepath=='-':
+        data = yaml.safe_load(sys,stdin)
+    else:
+        with open(filepath) as f:
+            data = yaml.safe_load(f)
+
+    return data
 
 def strip_trailing_whitespace(text):
     """
