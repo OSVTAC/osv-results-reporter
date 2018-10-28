@@ -78,6 +78,10 @@ def load_context(input_dir, build_time):
 
     cls_info = dict(context=context)
     root_loader = RootLoader(input_dir=input_dir)
+
+    # This load_object() call returns a ModelRoot object, but we don't need
+    # or use that object.  Instead, the context is the entry way we provide
+    # for access to the election data from the top level.
     load_object(root_loader, data, cls_info=cls_info, context=context)
 
     return context
@@ -329,13 +333,15 @@ def load_objects_to_mapping(load_data, seq, should_index=False):
     return objects_by_id
 
 
-def process_auto_attr(loader, obj, attr, data, context):
+def process_auto_attr(loader, model_obj, attr, data, context):
     """
-    Process an attribute in obj.auto_attrs.
+    Process an attribute in a Loader's auto_attrs list.
 
     Args:
       loader: an instance of a Loader class.
-      attr: an element of obj.auto_attrs.
+      model_obj: the data model object on which to set an attribute.
+      attr: an element of loader.auto_attrs, which can be a tuple or
+        AutoAttr object.
       data: the dict of data containing the key-values to process.
       context: the current Jinja2 context.
     """
@@ -343,24 +349,28 @@ def process_auto_attr(loader, obj, attr, data, context):
         assert type(attr) == tuple
         attr = AutoAttr(*attr)
 
-    _log.debug(f'processing auto_attr {attr!r} for: {obj!r}')
+    _log.debug(f'processing auto_attr {attr!r} for: {model_obj!r}')
     try:
         value = attr.process_key(loader, data=data, context=context)
     except Exception:
-        raise RuntimeError(f'while processing auto_attr {attr!r} for: {obj!r}')
+        raise RuntimeError(f'while processing auto_attr {attr!r} for: {model_obj!r}')
 
     try:
-        setattr(obj, attr.attr_name, value)
+        setattr(model_obj, attr.attr_name, value)
     except Exception:
-        raise RuntimeError(f"couldn't set {attr_name!r} on {obj!r}")
+        raise RuntimeError(f"couldn't set {attr_name!r} on {model_obj!r}")
 
 
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
 def load_object(loader, data, cls_info=None, context=None):
     """
-    Set the attributes configured in the object's `auto_attrs` class
-    attribute, from the given deserialized json data.
+    Load and return an object in our data model.
+
+    This function instantiates an instance of the data model class
+    associated with the given loader (`loader.model_class`).  It then
+    sets attributes on the instance using the loader's `auto_attrs` class
+    attribute and the given deserialized json data.
 
     Args:
       loader: an instance of a Loader class.
