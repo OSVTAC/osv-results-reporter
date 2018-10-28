@@ -247,10 +247,11 @@ def load_input(data, path):
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
     if not isinstance(newdata, dict):
-        _log.error(f'Invalid data in file {filepath}');
+        _log.error(f'Invalid data in file {path}');
         return
     data.update(newdata)
-    _log.info(f'loaded data from {filepath}')
+    _log.info(f'loaded data from {path}')
+
 
 #--- Top level processing: ---
 
