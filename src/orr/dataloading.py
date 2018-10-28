@@ -412,31 +412,35 @@ def load_object(loader, data, cls_info=None, context=None):
 
 #--- Results Data Loading Routines ---
 
-def load_contest_status(election, filename=None):
+def load_contest_status(election, path=None):
     """
     Loads contest results status from a tsv file. Returns '' so
     this can be called from templates. No action is taken if
     the contest status has been loaded.
 
-        Args:
-            filename: The file containing the contest results data,
-                to override the default.
-
+    Args:
+      election: an Election object.
+      path: the path to the contest results data, as a path-like object,
+        to override the default.  Defaults to whatever is set on the
+        Election object.
     """
     # Skip if data has been loaded
     if hasattr(election,'_contest_status_loaded'):
         return ''
 
-    if filename:
-        election.result_contest_status_filename = filename
+    if path is None:
+        path = election.result_contest_status_path
+    else:
+        # TODO: don't set the attribute as a side effect?
+        election.result_contest_status_path = path
 
-    tsvio.overlay_tsv_data(election.result_contest_status_filename,
-                           election.contests_by_id, 'contest_id',
-                     dict(
-                        reporting_time=parse_date_time,
-                        total_precincts=parse_int,
-                        precincts_reporting=parse_int,
-                        rcv_rounds=parse_int))
+    process_attrs = dict(reporting_time=parse_date_time,
+        total_precincts=parse_int,
+        precincts_reporting=parse_int,
+        rcv_rounds=parse_int)
+    tsvio.overlay_tsv_data(path, obj_by_id=election.contests_by_id,
+                           id_attr='contest_id',
+                           process_attrs=process_attrs)
 
     # Use _contest_status_loaded as a marker data has been loaded
     election._contest_status_loaded = True
@@ -450,6 +454,7 @@ def load_results_details(contest, filename=None):
     a breakdown by precinct/district.
 
     Args:
+        contest: a Contest object.
         filename: name of a specific result file to load. If not
                     specified, the name will be composed with the
                     election.get_result_detail_filename.

@@ -43,6 +43,9 @@ TSV writing capability will be added later.
 
 from typing import Dict, Tuple, List, TextIO
 
+from orr.utils import UTF8_ENCODING
+
+
 #--- Constants to map characters
 
 TSV_SOURCE_CHAR_MAP = '\n\t'
@@ -67,7 +70,7 @@ unmap_csv_data = str.maketrans(CSV_FILE_CHAR_MAP,CSV_SOURCE_CHAR_MAP)
 
 def split_line(
         line:str,       # line to be split into fields
-        sep:str='\t',   # delimeter separating fields
+        sep:str='\t',   # delimiter separating fields
         trim:str=''     # end characters to strip, default is whitespace
         ) -> List[str]:  # Returns mapped field list
     """
@@ -105,8 +108,8 @@ class Reader:
     """
 
     def __init__(self,
-                 filename:str,       # File to open
-                 sep:str=None,      # delimeter separating fields
+                 path:str,
+                 sep:str=None,      # delimiter separating fields
                  read_header:bool=True ):# Read and save the header
         """
         Creates a tsv reader object. The opened file is passed in as f
@@ -115,14 +118,16 @@ class Reader:
         header. If the sep column separating character is not supplied,
         the characters '\t|,' will be searched in the header line (if
         read) to automatically set the separator, otherwise tab is assumed.
-        """
 
-        self.filename = filename
+        Args:
+          path: the path to open, as a path-like object.
+        """
+        self.path = path
         self.sep = sep
         self.read_header = read_header
 
     def __enter__(self):
-        self.f = open(self.filename, encoding='utf-8')
+        self.f = open(self.path, encoding=UTF8_ENCODING)
         if self.read_header:
             # The first line is a header with field names and column count
             line = self.f.readline()
@@ -134,7 +139,7 @@ class Reader:
                         self.sep = c
                         break
             if self.sep is None:
-                raise RuntimeError(f'no delimiter found in the header of {self.filename}')
+                raise RuntimeError(f'no delimiter found in the header of {self.path}')
             self.header = split_line(line,self.sep)
             self.num_columns = len(self.header)
         else:
@@ -153,7 +158,7 @@ class Reader:
         self.f = None
 
     def __repr__(self):
-        return f'<tsvio.Reader {self.filename}>'
+        return f'<tsvio.Reader {self.path}>'
 
     def convline(self,line:str) -> List[str]:
         """
@@ -192,8 +197,9 @@ class Reader:
         for l in self.readlines():
             yield zip(self.header,l)
 
+
 def overlay_tsv_data(
-    filename:str,       # File to open
+    path:str,
     obj_by_id:dict,     # Dict of objects to overlay by id
     id_attr:str,        # Name of the id attribute in the data file
     process_attrs:dict, # Dict of processing routines by source attr
@@ -201,20 +207,23 @@ def overlay_tsv_data(
     """
     The overlay_tsv_data routine can open and load a TSV file,
     inserting attributes into an object identified by the id_attr.
+
+    Args:
+      path: the path to the contest results data, as a path-like object.
     """
-    with Reader(filename) as reader:
+    with Reader(path) as reader:
         # Compute the index of the id_attr
         try:
             id_attr_index = reader.header.index(id_attr)
         except ValueError:
-            raise RuntimeError(f'id attribute {id_attr} not found in {filename}')
+            raise RuntimeError(f'id attribute {id_attr} not found in {path}')
         # Loop over all rows in the file
         for cols in reader.readlines():
             # Retrieve the object to set from the id_attr_index column
             try:
                 obj = obj_by_id[cols[id_attr_index]]
             except KeyError:
-                raise RuntimeError(f"object with id {cols[id_attr_index]} not found in {filename}:{reader.line_num}")
+                raise RuntimeError(f"object with id {cols[id_attr_index]} not found in {path}:{reader.line_num}")
 
             # For each column, set an attribute in the obj
             for i in range(reader.num_columns):

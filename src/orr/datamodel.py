@@ -665,6 +665,7 @@ class Election:
 
       input_dir: the directory containing the input data, as a Path object.
       result_detail_format_filepath:
+      result_contest_status_path: a path-like object.
 
       ballot_title:
       date:
@@ -684,8 +685,8 @@ class Election:
         self.ballot_title = None
         self.date = None
 
-        self.result_detail_format_filepath = "{}/results-{}.tsv"
-        self.result_contest_status_filename = input_dir / "resultdata/contest-status.tsv"
+        self.result_detail_format_filepath = '{}/results-{}.tsv'
+        self.result_contest_status_path = input_dir / 'resultdata/contest-status.tsv'
 
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
@@ -737,7 +738,7 @@ class Election:
             return ''
 
         if filename:
-            self.result_contest_status_filename = filename
+            self.result_contest_status_path = filename
 
         dataloading.load_contest_status(self)
         self._contest_status_loaded = True
