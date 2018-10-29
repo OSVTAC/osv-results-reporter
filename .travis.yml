@@ -1,0 +1,10 @@
+language: python
+python:
+  - "3.6"
+# Install dependencies.
+install:
+  - pip install -r src/requirements.txt
+  - pip install -e ./src
+# Run unit tests and an "end-to-end" test.
+script:
+  - python -m unittest discover orr
