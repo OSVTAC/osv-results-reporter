@@ -93,10 +93,10 @@ def split_line(
     return [f.translate(mapdata) if mapdata else f for f in line.split(sep)]
 
 
-class Reader:
+class TSVReader:
 
     """
-    The Reader class maintains header, delimiter, linecount and
+    The TSVReader class maintains header, delimiter, linecount and
     routines to read and convert delimited text lines.
 
     Attributes:
@@ -158,7 +158,7 @@ class Reader:
         self.f = None
 
     def __repr__(self):
-        return f'<tsvio.Reader {self.path}>'
+        return f'<TSVReader {self.path}>'
 
     def convline(self,line:str) -> List[str]:
         """
@@ -196,47 +196,3 @@ class Reader:
         """
         for l in self.readlines():
             yield zip(self.header,l)
-
-
-def overlay_tsv_data(
-    path:str,
-    obj_by_id:dict,     # Dict of objects to overlay by id
-    id_attr:str,        # Name of the id attribute in the data file
-    process_attrs:dict, # Dict of processing routines by source attr
-    map_attrs:dict=None): # Optional dictionary mapping source->target attrs
-    """
-    The overlay_tsv_data routine can open and load a TSV file,
-    inserting attributes into an object identified by the id_attr.
-
-    Args:
-      path: the path to the contest results data, as a path-like object.
-    """
-    with Reader(path) as reader:
-        # Compute the index of the id_attr
-        try:
-            id_attr_index = reader.header.index(id_attr)
-        except ValueError:
-            raise RuntimeError(f'id attribute {id_attr} not found in {path}')
-        # Loop over all rows in the file
-        for cols in reader.readlines():
-            # Retrieve the object to set from the id_attr_index column
-            try:
-                obj = obj_by_id[cols[id_attr_index]]
-            except KeyError:
-                raise RuntimeError(f"object with id {cols[id_attr_index]} not found in {path}:{reader.line_num}")
-
-            # For each column, set an attribute in the obj
-            for i in range(reader.num_columns):
-                attr_name = reader.header[i]
-                # Skip if we do not have a processing routine for this attr
-                if attr_name not in process_attrs: continue
-
-                # Invoke the processing routine to convert the string
-                v = process_attrs[attr_name](obj,cols[i])
-
-                # The attribute name can be changed from the input file
-                if map_attrs and attr_name in map_attrs:
-                    attr_name = map_attrs[attr_name]
-                setattr(obj, attr_name, v)
-
-

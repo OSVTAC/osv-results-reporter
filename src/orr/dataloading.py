@@ -32,7 +32,7 @@ import functools
 import logging
 
 import orr.datamodel as datamodel
-import orr.tsvio as tsvio
+from orr.tsvio import TSVReader
 from orr.datamodel import (Candidate, Choice, Contest, Election,
     Header, ResultStatType, ResultStyle, VotingGroup)
 import orr.utils as utils
@@ -42,8 +42,8 @@ from orr.utils import truncate
 _log = logging.getLogger(__name__)
 
 
-# The path to the contest status file, relative to the input directory.
-CONTEST_STATUS_PATH = 'resultdata/contest-status.tsv'
+# The path to the JSON contest status file, relative to the input directory.
+CONTEST_STATUS_PATH = 'resultdata/contest-status.json'
 
 
 def load_context(input_dir, build_time):
@@ -429,6 +429,52 @@ def load_object(loader, data, cls_info=None, context=None):
 
 #--- Results Data Loading Routines ---
 
+def _set_attributes(
+    objects_data:list,
+    objects_by_id:dict,     # Dict of objects to overlay by id
+    id_key:str,
+    process_attrs:dict, # Dict of processing routines by source attr
+    map_attrs:dict=None): # Optional dictionary mapping source->target attrs
+    """
+    Set attributes on objects identified by id, using the given data.
+
+    This method mutates the given objects_data.
+
+    Args:
+      objects_data: a list of contest data (one for each contest)
+        deserialized from a json contest status file.
+      id_key: the key for the contest id in the given data.
+    """
+    if map_attrs is None:
+        map_attrs = {}
+
+    for data in objects_data:
+        try:
+            object_id = data.pop(id_key)
+        except KeyError:
+            raise RuntimeError(f'object data does not contain id key {id_key!r}: {data}')
+
+        # Retrieve the object on which to set attributes.
+        try:
+            obj = objects_by_id[object_id]
+        except KeyError:
+            msg = f'object with id {object_id!r} not among: {sorted(objects_by_id)}'
+            raise RuntimeError(msg)
+
+        # For each key-value, set an attribute in the obj
+        for attr_name, raw_value in data.items():
+            # Skip if we do not have a processing routine for this attr
+            if attr_name not in process_attrs: continue
+
+            # Invoke the processing routine to convert the raw string.
+            value = process_attrs[attr_name](obj, raw_value)
+
+            # The attribute name can be changed from the input file.
+            attr_name = map_attrs.get(attr_name, attr_name)
+
+            setattr(obj, attr_name, value)
+
+
 def load_contest_status(election):
     """
     Loads contest results status from a tsv file. Returns '' so
@@ -439,16 +485,17 @@ def load_contest_status(election):
       election: an Election object.
     """
     input_dir = election.input_dir
-    status_path = input_dir / CONTEST_STATUS_PATH
+    path = input_dir / CONTEST_STATUS_PATH
+
+    contests_data = utils.read_json(path)
 
     process_attrs = dict(reporting_time=parse_date_time,
         total_precincts=parse_int,
         precincts_reporting=parse_int,
         rcv_rounds=parse_int)
 
-    tsvio.overlay_tsv_data(status_path, obj_by_id=election.contests_by_id,
-                           id_attr='contest_id',
-                           process_attrs=process_attrs)
+    _set_attributes(contests_data, objects_by_id=election.contests_by_id,
+                     id_key='_id', process_attrs=process_attrs)
 
 
 def load_results_details(contest, filename=None):
@@ -474,7 +521,7 @@ def load_results_details(contest, filename=None):
     contest.reporting_group_count = len(contest.reporting_groups)
     contest.results = []
     contest.rcv_results = [ [None] * contest.rcv_rounds ]
-    with tsvio.Reader(filename) as reader:
+    with TSVReader(filename) as reader:
         # Simple check, just validate the column count
         # We could validate the header if we like later
         if reader.num_columns != 2 + contest.result_stat_count + contest.choice_count:
