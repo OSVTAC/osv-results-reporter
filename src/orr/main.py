@@ -274,7 +274,7 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
             continue
 
         file_name = template_path.name
-        templating.process_template(env, template_name=file_name, rel_output_path=file_name,
+        utils.process_template(env, template_name=file_name, rel_output_path=file_name,
             context=context, test_mode=test_mode)
 
 

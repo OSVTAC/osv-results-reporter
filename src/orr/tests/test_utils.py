@@ -30,6 +30,7 @@ from textwrap import dedent
 import unittest
 from unittest import TestCase
 
+import orr.tests.testhelpers as testhelpers
 import orr.utils as utils
 from orr.utils import IN_DOCKER, US_LOCALE
 
@@ -39,6 +40,12 @@ class UtilsModuleTest(TestCase):
     """
     Test the functions in orr.utils.
     """
+
+    def test_get_output_path(self):
+        output_dir = 'my/path'
+        env = testhelpers.make_test_env(output_dir=output_dir)
+        actual = utils.get_output_path(env, rel_path='html/index.html')
+        self.assertEqual(actual, Path('my/path/html/index.html'))
 
     def test_truncate(self):
         # Create a string that exceeds the truncation length.

@@ -28,8 +28,8 @@ from unittest import TestCase
 
 from jinja2.utils import Namespace
 
-import orr.configlib as configlib
 import orr.templating as templating
+import orr.tests.testhelpers as testhelpers
 
 
 class TemplatingModuleTest(TestCase):
@@ -37,18 +37,6 @@ class TemplatingModuleTest(TestCase):
     """
     Test the functions in orr.templating.
     """
-
-    def make_test_env(self, output_dir):
-        """
-        Return a Jinja2 Environment object for testing.
-        """
-        return configlib.create_jinja_env(output_dir)
-
-    def test_get_output_path(self):
-        output_dir = 'my/path'
-        env = self.make_test_env(output_dir=output_dir)
-        actual = templating.get_output_path(env, rel_path='html/index.html')
-        self.assertEqual(actual, Path('my/path/html/index.html'))
 
     def test_output_file_uri(self):
         # Use an absolute path for this test so we can know the complete
@@ -62,7 +50,7 @@ class TemplatingModuleTest(TestCase):
             ('Vice President.tsv', 'file:///my/path/Vice%20President.tsv'),
         ]
 
-        env = self.make_test_env(output_dir=output_dir)
+        env = testhelpers.make_test_env(output_dir=output_dir)
         for rel_path, expected in cases:
             with self.subTest(rel_path=rel_path):
                 actual = templating.output_file_uri(env, rel_path=rel_path)

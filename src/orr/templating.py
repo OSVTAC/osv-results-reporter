@@ -30,8 +30,7 @@ import logging
 from pathlib import Path
 import re
 
-from jinja2 import (contextfilter, contextfunction, environmentfilter,
-    environmentfunction, Environment)
+from jinja2 import contextfilter, contextfunction, environmentfilter, environmentfunction
 
 import orr.utils as utils
 import orr.writers.pdfwriting.pdfwriter as pdfwriter
@@ -42,78 +41,6 @@ from orr.writers.xlsxwriting import XLSXBook
 _log = logging.getLogger(__name__)
 
 ENGLISH_LANG = 'en'
-
-
-def get_output_dir(env):
-    """
-    Return the output directory, as a Path object.
-
-    Args:
-      env: a Jinja2 Environment object.
-    """
-    options = env.globals['options']
-    output_dir = options.output_dir
-
-    return output_dir
-
-
-def get_output_path(env, rel_path):
-    """
-    Return the output path, as a Path object.
-
-    Args:
-      env: a Jinja2 Environment object.
-      rel_path: a path relative to the output directory configured in the
-        Jinja2 Environment object. This can be any path-like object.
-    """
-    output_dir = get_output_dir(env)
-    path = output_dir / rel_path
-
-    return path
-
-
-# TODO: move this function to a different module.
-def process_template(env:Environment, template_name:str, rel_output_path:Path,
-    context:dict=None, test_mode:bool=False):
-    """
-    Creates the specified output file using the named template,
-    where `data` provides the template context. The template
-    and included templates will be located within the template
-    search path, already setup via configuration data.
-
-    Args:
-      env: a Jinja2 Environment object.
-      template_name: template to expand.
-      rel_output_path: the output path (relative to the output directory
-        configured in the Jinja2 Environment object), or else '-'.
-      context: optional context data.
-    """
-    if context is None:
-        context = {}
-
-    if test_mode:
-        print(
-            f'Will process_template {template_name} to create {output_path})')
-        return
-
-    output_path = get_output_path(env, rel_output_path)
-
-    _log.debug(f'process_template: {template_name} -> {output_path}')
-
-    template = env.get_template(template_name)
-
-    output_dir = output_path.parent
-    if not output_dir.exists():
-        output_dir.mkdir()
-
-    rendered = template.render(context)
-
-    # Strip trailing whitespace as a normalization step to simplify
-    # testing.  For example, this way we don't have to check files in
-    # to our repository that have trailing whitespace.
-    rendered = utils.strip_trailing_whitespace(rendered)
-    output_path.write_text(rendered)
-    _log.info(f'Created {output_path} from template {template_name}')
 
 
 @environmentfilter
@@ -129,7 +56,7 @@ def output_file_uri(env, rel_path):
       rel_path: a path relative to the output directory configured in the
         Jinja2 Environment object. This can be any path-like object.
     """
-    output_path = get_output_path(env, rel_path)
+    output_path = utils.get_output_path(env, rel_path)
     output_path = output_path.resolve()
     uri = output_path.as_uri()
 
@@ -149,7 +76,7 @@ def secure_hash(env, rel_path):
       rel_path: a path relative to the output directory configured in the
         Jinja2 Environment object. This can be any path-like object.
     """
-    path = get_output_path(env, rel_path)
+    path = utils.get_output_path(env, rel_path)
     sha = utils.hash_file(path)
 
     return sha
@@ -225,10 +152,13 @@ def translate(context, value):
 def subtemplate(context, template_name, file_name):
     """
     Render a template.
+
+    Args:
+
     """
     env = context.environment
 
-    process_template(env, template_name=template_name, rel_output_path=file_name,
+    utils.process_template(env, template_name=template_name, rel_output_path=file_name,
         context=context)
 
 
@@ -252,7 +182,7 @@ def create_tsv_files(env, rel_dir, contests):
       rel_dir: a directory relative to the output path configured in the
         given Jinja2 environment.
     """
-    output_dir = get_output_dir(env)
+    output_dir = utils.get_output_dir(env)
     contests = make_contest_pairs(contests)
 
     yield from tsvwriting.make_tsv_directory(output_dir, rel_dir, contests)
@@ -277,7 +207,7 @@ def create_file(do_create, rel_path, contests, type_name, ext, env):
     rel_path = Path(rel_path)
     # Add the suffix.
     rel_path = rel_path.with_suffix(ext)
-    output_path = get_output_path(env, rel_path)
+    output_path = utils.get_output_path(env, rel_path)
 
     contests = make_contest_pairs(contests)
 

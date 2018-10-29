@@ -34,6 +34,7 @@ import subprocess
 import sys
 
 import babel.dates
+from jinja2 import Environment
 
 
 _log = logging.getLogger(__name__)
@@ -57,6 +58,34 @@ HASH_BYTES = 2 ** 12  # 4K
 DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
 
 SHA256SUMS_FILENAME = 'SHA256SUMS'
+
+
+def get_output_dir(env):
+    """
+    Return the output directory, as a Path object.
+
+    Args:
+      env: a Jinja2 Environment object.
+    """
+    options = env.globals['options']
+    output_dir = options.output_dir
+
+    return output_dir
+
+
+def get_output_path(env, rel_path):
+    """
+    Return the output path, as a Path object.
+
+    Args:
+      env: a Jinja2 Environment object.
+      rel_path: a path relative to the output directory configured in the
+        Jinja2 Environment object. This can be any path-like object.
+    """
+    output_dir = get_output_dir(env)
+    path = output_dir / rel_path
+
+    return path
 
 
 def truncate(obj):
@@ -280,3 +309,46 @@ def directory_sha256sum(dir_path, exclude_paths=None):
     text = proc.stdout
 
     return text
+
+
+def process_template(env:Environment, template_name:str, rel_output_path:Path,
+    context:dict=None, test_mode:bool=False):
+    """
+    Creates the specified output file using the named template,
+    where `data` provides the template context. The template
+    and included templates will be located within the template
+    search path, already setup via configuration data.
+
+    Args:
+      env: a Jinja2 Environment object.
+      template_name: template to expand.
+      rel_output_path: the output path (relative to the output directory
+        configured in the Jinja2 Environment object), or else '-'.
+      context: optional context data.
+    """
+    if context is None:
+        context = {}
+
+    if test_mode:
+        print(
+            f'Will process_template {template_name} to create {output_path})')
+        return
+
+    output_path = get_output_path(env, rel_output_path)
+
+    _log.debug(f'process_template: {template_name} -> {output_path}')
+
+    template = env.get_template(template_name)
+
+    output_dir = output_path.parent
+    if not output_dir.exists():
+        output_dir.mkdir()
+
+    rendered = template.render(context)
+
+    # Strip trailing whitespace as a normalization step to simplify
+    # testing.  For example, this way we don't have to check files in
+    # to our repository that have trailing whitespace.
+    rendered = strip_trailing_whitespace(rendered)
+    output_path.write_text(rendered)
+    _log.info(f'Created {output_path} from template {template_name}')
