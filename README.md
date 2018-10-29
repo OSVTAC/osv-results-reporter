@@ -1,5 +1,7 @@
 # Open Source Voting Results Reporter (ORR)
 
+[![Build Status](https://travis-ci.org/OSVTAC/osv-results-reporter.svg?branch=master)](https://travis-ci.org/OSVTAC/osv-results-reporter)
+
 ## Election results report generator (HTML/PDF/XLS)
 
 See [`doc/orr.md`](doc/orr.md) for a description of the orr application
