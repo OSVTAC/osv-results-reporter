@@ -30,6 +30,7 @@ from collections import OrderedDict
 from datetime import datetime
 import functools
 import logging
+from pathlib import Path
 
 import orr.datamodel as datamodel
 from orr.tsvio import TSVReader
@@ -42,8 +43,16 @@ from orr.utils import truncate
 _log = logging.getLogger(__name__)
 
 
+# The directory, relative to the input directory, containing the
+# results-related input files.
+RESULTS_DIR = Path('resultdata')
+
 # The path to the JSON contest status file, relative to the input directory.
-CONTEST_STATUS_PATH = 'resultdata/contest-status.json'
+CONTEST_STATUS_PATH = RESULTS_DIR / 'contest-status.json'
+
+# The format string for the name of the file in the results directory
+# containing the detailed results for a contest.
+CONTEST_RESULTS_FILE_NAME_FORMAT = 'results-{}.tsv'
 
 
 def load_context(input_dir, build_time):
@@ -70,13 +79,6 @@ def load_context(input_dir, build_time):
 
     path = input_dir / 'election.json'
     data = utils.read_json(path)
-
-    # Inject the Election and Contest data loader methods defined
-    # in this module.
-    setattr(datamodel.Contest,
-            'load_results_details',load_results_details)
-    setattr(datamodel.Election,
-            'load_all_results_details',load_all_results_details)
 
     cls_info = dict(context=context)
     root_loader = RootLoader(input_dir=input_dir)
@@ -477,9 +479,7 @@ def _set_attributes(
 
 def load_contest_status(election):
     """
-    Loads contest results status from a tsv file. Returns '' so
-    this can be called from templates. No action is taken if
-    the contest status has been loaded.
+    Load contest results statuses from the contest status file.
 
     Args:
       election: an Election object.
@@ -498,35 +498,43 @@ def load_contest_status(election):
                      id_key='_id', process_attrs=process_attrs)
 
 
-def load_results_details(contest, filename=None):
+def get_contest_results_path(contest):
+    """
+    Return the path to the input file containing the detailed results for
+    a contest.
+    """
+    election = contest.election
+    input_dir = election.input_dir
+    results_dir = input_dir / RESULTS_DIR
+
+    file_name = CONTEST_RESULTS_FILE_NAME_FORMAT.format(contest.id)
+    path = results_dir / file_name
+
+    return path
+
+
+def load_contest_results(contest):
     """
     Load the detailed results for this contest with reporting groups with
     a breakdown by precinct/district.
 
     Args:
-        contest: a Contest object.
-        filename: name of a specific result file to load. If not
-                    specified, the name will be composed with the
-                    election.get_result_detail_filename.
+      contest: a Contest object.
     """
-    if hasattr(contest,'results'):
-        return ''
+    path = get_contest_results_path(contest)
 
-    if not filename:
-        filename = contest.result_detail_filename
-
-    _log.debug(f'load_results_details({filename})')
+    _log.debug(f'load_results_details({path})')
 
     contest.choice_count = len(contest.choices_by_id)
     contest.reporting_group_count = len(contest.reporting_groups)
     contest.results = []
     contest.rcv_results = [ [None] * contest.rcv_rounds ]
-    with TSVReader(filename) as reader:
+    with TSVReader(path) as reader:
         # Simple check, just validate the column count
         # We could validate the header if we like later
         if reader.num_columns != 2 + contest.result_stat_count + contest.choice_count:
             raise RuntimeError(
-                f'Mismatched column heading in {filename}: {reader.line} stats={contest.result_stat_count} choices={contest.choice_count}')
+                f'Mismatched column heading in {path}: {reader.line} stats={contest.result_stat_count} choices={contest.choice_count}')
 
         # RCV rounds are first
         next_rcv_round = contest.rcv_rounds
@@ -534,12 +542,12 @@ def load_results_details(contest, filename=None):
             #_log.debug(f'col {cols}')
             if len(cols) != reader.num_columns:
                 raise RuntimeError(
-                    f'Mismatched columns in {filename}: {reader.line}')
+                    f'Mismatched columns in {path}: {reader.line}')
             if next_rcv_round:
                 # Separate the RCV results array
                 if cols[0] != f'RCV{next_rcv_round}':
                     raise RuntimeError(
-                        f'Mismatched RCV line {next_rcv_round} in {filename}: {line}')
+                        f'Mismatched RCV line {next_rcv_round} in {path}: {line}')
                 contest.rcv_results[next_rcv_round] = cols[2:]
                 next_rcv_round -= 1
             else:
@@ -548,11 +556,8 @@ def load_results_details(contest, filename=None):
 
         if len(contest.results) != contest.reporting_group_count:
             raise RuntimeError(
-                f'Mismatched reporting groups in {filename}')
+                f'Mismatched reporting groups in {path}')
 
-
-    # Return a null string so this can be called in a template
-    return ''
 
 def load_all_results_details(election, filedir=None, filename_format=None):
     """
@@ -811,6 +816,13 @@ def load_voting_district(contest_loader, value, areas_by_id):
     return areas_by_id[value]
 
 
+def make_contest_results_loader(contest_loader, data):
+    """
+    Return the function to set as contest._load_contest_results_data.
+    """
+    return load_contest_results
+
+
 class ContestLoader:
 
     model_class = Contest
@@ -836,6 +848,8 @@ class ContestLoader:
         ('type', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
+        # Pass data_key=False since this does not read from the json data.
+        AutoAttr('_load_contest_results_data', make_contest_results_loader, data_key=False),
     ]
 
 
@@ -963,6 +977,7 @@ class ElectionLoader:
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+        # Pass data_key=False since this does not read from the json data.
         AutoAttr('_load_contest_status_data', make_contest_status_loader, data_key=False),
     ]
 

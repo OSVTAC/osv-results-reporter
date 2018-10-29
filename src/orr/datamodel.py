@@ -462,6 +462,10 @@ class Contest:
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
 
+    Private attributes:
+      _load_contest_results_data: a function that loads the results details
+        for the contest.  The function should have signature: load(contest).
+
     A Contest with type_name "office" represents an elected office where
     choices are a set of candidates.
 
@@ -604,6 +608,20 @@ class Contest:
         """
         return self.result_style.voting_groups_from_idlist(group_idlist)
 
+    def load_results_details(self):
+        """
+        Loads the results details for the contest.
+
+        Returns '' so this can be called from templates. No action is taken
+        if the details have already been loaded.
+        """
+        # We use the results attribute as a marker to tell if the data
+        # has already been loaded.  Skip if already loaded.
+        if not hasattr(self, 'results'):
+            self._load_contest_results_data(self)
+
+        return ''
+
     def summary_results(self, choice_stat_index, group_idlist=None):
         """
         Returns a list of vote summary values (total votes for each
@@ -632,23 +650,12 @@ class Contest:
     def detail_results(self, reporting_index, choice_stat_idlist=None):
         """
         Returns a list of vote stat and choice values for the reporting
-        group correspinding to the reporting_index value. Reporting
+        group corresponding to the reporting_index value. Reporting
         """
         self.load_results_details()
 
         return [ self.results[reporting_index][i]
                  for i in self.result_stat_indexes_by_id(choice_stat_idlist) ]
-
-    @property
-    def result_detail_filename(self):
-        """
-        Returns the file path and name for detailed results source data
-        to be loaded, based on the contest ID. The directory and/or file
-        name formatting can be configured in the election settings.
-        """
-        return self.election.result_detail_format_filepath.format(
-            self.election.result_detail_dir, self.id)
-
 
 
 class Election:
@@ -664,7 +671,6 @@ class Election:
     Instance attributes:
 
       input_dir: the directory containing the input data, as a Path object.
-      result_detail_format_filepath:
 
       ballot_title:
       date:
@@ -673,8 +679,9 @@ class Election:
       contests_by_id:
 
     Private attributes:
-      _load_contest_status_data: a function that accepts the Election object
-        and loads the contest results status data into each contest.
+      _load_contest_status_data: a function that loads the contest results
+        status data into each contest.  The function should have signature:
+          load(election).
     """
 
     def __init__(self, input_dir):
@@ -688,14 +695,8 @@ class Election:
         self.ballot_title = None
         self.date = None
 
-        self.result_detail_format_filepath = '{}/results-{}.tsv'
-
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
-
-    @property
-    def result_detail_dir(self):
-        return self.input_dir / 'resultdata'
 
     # Also expose the dict values as an (ordered) list, for convenience.
     @property
@@ -733,14 +734,17 @@ class Election:
     def load_contest_statuses(self):
         """
         Loads the contest results status data into each contest.
+
+        Returns '' so this can be called from templates. No action is taken
+        if the contest status has been loaded.
         """
-        # Skip if data has been loaded
-        if hasattr(self,'_contest_status_loaded'):
+        # We use _contest_status_loaded as a marker to indicate that the
+        # data has already been loaded.  Skip if already loaded.
+        if hasattr(self, '_contest_status_loaded'):
             return ''
 
         self._load_contest_status_data(self)
 
-        # Use _contest_status_loaded as a marker data has been loaded
         self._contest_status_loaded = True
 
         return ''
