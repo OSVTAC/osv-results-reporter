@@ -665,13 +665,16 @@ class Election:
 
       input_dir: the directory containing the input data, as a Path object.
       result_detail_format_filepath:
-      result_contest_status_path: a path-like object.
 
       ballot_title:
       date:
       election_area:
       headers_by_id:
       contests_by_id:
+
+    Private attributes:
+      _load_contest_status_data: a function that accepts the Election object
+        and loads the contest results status data into each contest.
     """
 
     def __init__(self, input_dir):
@@ -686,7 +689,6 @@ class Election:
         self.date = None
 
         self.result_detail_format_filepath = '{}/results-{}.tsv'
-        self.result_contest_status_path = input_dir / 'resultdata/contest-status.tsv'
 
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
@@ -728,18 +730,17 @@ class Election:
 
             yield headers, contest
 
-    def load_contest_status(self, filename=None):
+    def load_contest_statuses(self):
         """
         Loads the contest results status data into each contest.
-        Args:
-            filename: The file containing the contest results data
         """
+        # Skip if data has been loaded
         if hasattr(self,'_contest_status_loaded'):
             return ''
 
-        if filename:
-            self.result_contest_status_path = filename
+        self._load_contest_status_data(self)
 
-        dataloading.load_contest_status(self)
+        # Use _contest_status_loaded as a marker data has been loaded
         self._contest_status_loaded = True
+
         return ''

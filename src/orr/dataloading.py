@@ -42,6 +42,10 @@ from orr.utils import truncate
 _log = logging.getLogger(__name__)
 
 
+# The path to the contest status file, relative to the input directory.
+CONTEST_STATUS_PATH = 'resultdata/contest-status.tsv'
+
+
 def load_context(input_dir, build_time):
     """
     Read the input data, and return the context to use for Jinja2.
@@ -73,8 +77,6 @@ def load_context(input_dir, build_time):
             'load_results_details',load_results_details)
     setattr(datamodel.Election,
             'load_all_results_details',load_all_results_details)
-    setattr(datamodel.Election,
-            'load_contest_status',load_contest_status)
 
     cls_info = dict(context=context)
     root_loader = RootLoader(input_dir=input_dir)
@@ -198,7 +200,8 @@ class AutoAttr:
             should have the signature load_value(loader, data, ...),
             where loader is a Loader object.
           data_key: the name of the key to access from the JSON to obtain
-            the data value to pass to load_value().  Defaults to attr_name.
+            the data value to pass to load_value(), or False if no data
+            is needed.  If None (the default), defaults to attr_name.
           context_keys: the name of the context keys that processing this
             attribute depends on.  Defaults to not depending on the context.
           unpack_context: whether to unpack the context argument into
@@ -263,9 +266,13 @@ class AutoAttr:
           data: the dict of data containing the key-value to process.
           context: the current Jinja2 context.
         """
-        value = data.pop(self.data_key, None)
-        if value is None:
-            return
+        if self.data_key is False:
+            # Then no data is required.
+            value = None
+        else:
+            value = data.pop(self.data_key, None)
+            if value is None:
+                return
 
         kwargs = self.make_load_value_kwargs(context)
 
@@ -422,7 +429,7 @@ def load_object(loader, data, cls_info=None, context=None):
 
 #--- Results Data Loading Routines ---
 
-def load_contest_status(election, path=None):
+def load_contest_status(election):
     """
     Loads contest results status from a tsv file. Returns '' so
     this can be called from templates. No action is taken if
@@ -430,32 +437,18 @@ def load_contest_status(election, path=None):
 
     Args:
       election: an Election object.
-      path: the path to the contest results data, as a path-like object,
-        to override the default.  Defaults to whatever is set on the
-        Election object.
     """
-    # Skip if data has been loaded
-    if hasattr(election,'_contest_status_loaded'):
-        return ''
-
-    if path is None:
-        path = election.result_contest_status_path
-    else:
-        # TODO: don't set the attribute as a side effect?
-        election.result_contest_status_path = path
+    input_dir = election.input_dir
+    status_path = input_dir / CONTEST_STATUS_PATH
 
     process_attrs = dict(reporting_time=parse_date_time,
         total_precincts=parse_int,
         precincts_reporting=parse_int,
         rcv_rounds=parse_int)
-    tsvio.overlay_tsv_data(path, obj_by_id=election.contests_by_id,
+
+    tsvio.overlay_tsv_data(status_path, obj_by_id=election.contests_by_id,
                            id_attr='contest_id',
                            process_attrs=process_attrs)
-
-    # Use _contest_status_loaded as a marker data has been loaded
-    election._contest_status_loaded = True
-
-    return ''
 
 
 def load_results_details(contest, filename=None):
@@ -903,6 +896,13 @@ def load_contests(election_loader, contests_data, context):
     return contests_by_id
 
 
+def make_contest_status_loader(election_loader, data):
+    """
+    Return the function to set as election._load_contest_status_data.
+    """
+    return load_contest_status
+
+
 class ElectionLoader:
 
     model_class = Election
@@ -916,6 +916,7 @@ class ElectionLoader:
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+        AutoAttr('_load_contest_status_data', make_contest_status_loader, data_key=False),
     ]
 
 
