@@ -526,7 +526,6 @@ def load_contest_results(contest):
     _log.debug(f'load_results_details({path})')
 
     contest.choice_count = len(contest.choices_by_id)
-    contest.reporting_group_count = len(contest.reporting_groups)
     contest.results = []
     contest.rcv_results = [ [None] * contest.rcv_rounds ]
     with TSVReader(path) as reader:

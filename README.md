@@ -72,6 +72,12 @@ $ orr --debug --use-data-model --input sampledata/test-minimal \
 $ python -m unittest discover orr
 ```
 
+For available options for running tests:
+
+```
+$ python -m unittest -h
+```
+
 To regenerate the end-to-end test expectation:
 
 ```

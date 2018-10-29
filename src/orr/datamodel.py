@@ -522,6 +522,10 @@ class Contest:
         return list(iterator)
 
     @property
+    def reporting_group_count(self):
+        return len(self.reporting_groups)
+
+    @property
     def result_stat_count(self):
         """
         Helper function to get the number of result stats

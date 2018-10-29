@@ -32,12 +32,14 @@ import orr.main as main
 from orr.utils import SHA256SUMS_FILENAME
 
 
-# TODO: check recursively.
-def get_file_names(dir_path):
+def get_paths_inside(dir_path):
     """
-    Return the names of the files in the given directory.
+    Return the paths to all files in the given directory, recursively.
+
+    The paths returned are relative to the given directory, and sorted.
     """
-    return sorted(path.name for path in dir_path.iterdir())
+    return sorted(str(path.relative_to(dir_path)) for path in dir_path.glob('**/*')
+                  if not path.is_dir())
 
 
 # TODO: also do an end-to-end test through the CLI and using subprocess?
@@ -62,20 +64,20 @@ class EndToEndTest(TestCase):
     def check_directories(self, actual_dir, expected_dir):
         dirs = (actual_dir, expected_dir)
         # First check the file names.
-        actual_names, expected_names = (get_file_names(dir_path) for dir_path in dirs)
-        self.assertEqual(actual_names, expected_names)
+        actual_rel_paths, expected_rel_paths = (get_paths_inside(dir_path) for dir_path in dirs)
+        self.assertEqual(actual_rel_paths, expected_rel_paths)
 
         # Move the files that contain secure file hashes to the end of the
         # list so that the file diff we see is more informative (i.e.
         # not just a difference in hash values).
-        # Also, make SHA256SUMS_FILENAME the very last file checked.
+        # In particular, make SHA256SUMS_FILENAME the very last file checked.
         for name in ('index.html', SHA256SUMS_FILENAME):
-            if name in actual_names:
-                actual_names.remove(name)
-                actual_names.append(name)
+            if name in actual_rel_paths:
+                actual_rel_paths.remove(name)
+                actual_rel_paths.append(name)
 
-        for file_name in actual_names:
-            actual_path, expected_path = (dir_path / file_name for dir_path in dirs)
+        for rel_path in actual_rel_paths:
+            actual_path, expected_path = (dir_path / rel_path for dir_path in dirs)
             self.assert_files_equal(actual_path, expected_path)
 
     def render(self, input_dir, template_dir, extra_template_dirs, output_parent,
