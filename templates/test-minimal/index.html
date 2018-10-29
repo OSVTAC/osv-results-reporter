@@ -13,10 +13,10 @@
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
-    {% set src = "results-summary-{}.html".format(lang) %}
-    {% do subtemplate('results-summary.html', src) %}
-    <li><a href="{{ src }}">{{ src }}</a>
-      (<code>{{ src|secure_hash }}</code>)</li>
+    {% set output_path = "results-summary-{}.html".format(lang) %}
+    {% do subtemplate('results-summary.html', output_path) %}
+    <li><a href="{{ output_path }}">{{ output_path }}</a>
+      (<code>{{ output_path|secure_hash }}</code>)</li>
   {% endwith %}
 
 {% endfor %}

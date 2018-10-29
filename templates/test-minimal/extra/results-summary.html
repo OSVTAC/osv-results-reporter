@@ -53,10 +53,10 @@
         </tr>
       {% endfor %}
     </table>
-        {% set src = "results-{}-{}.html".format(contest.id,options.lang) %}
+        {% set output_path = "results-{}-{}.html".format(contest.id,options.lang) %}
         {% set options.contest = contest %}
         {% set options.headers = headers %}
-        {% do subtemplate('results-detail.html', src) %}
+        {% do subtemplate('results-detail.html', output_path) %}
     {% endfor %}
   {% endwith %}
 

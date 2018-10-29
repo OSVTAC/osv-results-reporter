@@ -149,16 +149,17 @@ def translate(context, value):
 
 
 @contextfunction
-def subtemplate(context, template_name, file_name):
+def subtemplate(context, template_name, output_path):
     """
     Render a template.
 
     Args:
-
+      output_path: the output path (relative to the output directory
+        configured in the Jinja2 Environment object).
     """
     env = context.environment
 
-    utils.process_template(env, template_name=template_name, rel_output_path=file_name,
+    utils.process_template(env, template_name=template_name, rel_output_path=output_path,
         context=context)
 
 
