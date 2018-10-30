@@ -63,6 +63,9 @@ See the `doc` directory for more info.
 
 ### To run tests
 
+The following runs the test suite, including an "end-to-end" test of a
+non-trivial template directory (the "test-minimal" one):
+
 ```
 $ python -m unittest discover orr
 ```
@@ -73,13 +76,36 @@ For available options for running tests:
 $ python -m unittest -h
 ```
 
-To regenerate the end-to-end test expectation:
+
+### To update the end-to-end test
+
+To regenerate the test expectation for the end-to-end test, first remove
+the files in the existing expectation directory:
+
+```
+git rm -r src/orr/tests/end2end/expected_minimal/
+```
+
+Then generate the new expected result:
 
 ```
 $ orr --debug --input sampledata/test-minimal \
       --build-time "2018-06-01 20:48:12" --template templates/test-minimal \
       --extra templates/test-minimal/extra \
       --output-parent src/orr/tests/end2end --output-dir expected_minimal
+```
+
+Add the new files using Git:
+
+```
+git add src/orr/tests/end2end/expected_minimal/
+```
+
+And then before committing, you can inspect the differences by hand to make
+sure the new test expectation is correct:
+
+```
+git diff --cached
 ```
 
 
