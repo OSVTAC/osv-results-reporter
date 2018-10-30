@@ -83,7 +83,7 @@ To regenerate the test expectation for the end-to-end test, first remove
 the files in the existing expectation directory:
 
 ```
-git rm -r src/orr/tests/end2end/expected_minimal/
+$ git rm -r src/orr/tests/end2end/expected_minimal/
 ```
 
 Then generate the new expected result:
@@ -98,14 +98,14 @@ $ orr --debug --input sampledata/test-minimal \
 Add the new files using Git:
 
 ```
-git add src/orr/tests/end2end/expected_minimal/
+$ git add src/orr/tests/end2end/expected_minimal/
 ```
 
 And then before committing, you can inspect the differences by hand to make
 sure the new test expectation is correct:
 
 ```
-git diff --cached
+$ git diff --cached
 ```
 
 
