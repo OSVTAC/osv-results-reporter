@@ -89,8 +89,6 @@ def parse_args():
                         help=('the datetime to use as the build time, '
                               'in the format "2018-06-01 20:48:12". '
                               'Defaults to the current datetime.'))
-    parser.add_argument('--use-data-model', action='store_true',
-                        help='use datamodel.py (experimental / still in progress).')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
@@ -291,8 +289,7 @@ def make_sha256sums_file(dir_path):
 
 def run(config_path=None, input_paths=None, template_dir=None,
     extra_template_dirs=None, output_parent=None, output_dir_name=None,
-    fresh_output=False, test_mode=False, use_data_model=False,
-    build_time=None):
+    fresh_output=False, test_mode=False, build_time=None):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -344,17 +341,12 @@ def run(config_path=None, input_paths=None, template_dir=None,
     template_dirs = [template_dir] + extra_template_dirs
     env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs)
 
-    if use_data_model:
-        if len(input_paths) != 1:
-            raise RuntimeError(f'only one input path can be provided: {input_paths}')
-        input_dir = Path(input_paths[0])
-        if not input_dir.is_dir():
-            raise RuntimeError(f'input path is not a directory: {input_path}')
-        context = dataloading.load_context(input_dir, build_time=build_time)
-    else:
-        context = {}
-        for input_path in input_paths:
-            load_input(context, input_path)
+    if len(input_paths) != 1:
+        raise RuntimeError(f'only one input path can be provided: {input_paths}')
+    input_dir = Path(input_paths[0])
+    if not input_dir.is_dir():
+        raise RuntimeError(f'input path is not a directory: {input_path}')
+    context = dataloading.load_context(input_dir, build_time=build_time)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -397,7 +389,6 @@ def main():
     extra_template_dirs = ns.extra_template_dirs
     input_paths = ns.input_paths
     build_time = ns.build_time
-    use_data_model = ns.use_data_model
 
     output_parent = ns.output_parent
     output_dir_name = ns.output_dir_name
@@ -411,5 +402,4 @@ def main():
     run(config_path=config_path, input_paths=input_paths,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
-        fresh_output=fresh_output, test_mode=test_mode,
-        use_data_model=use_data_model, build_time=build_time)
+        fresh_output=fresh_output, test_mode=test_mode, build_time=build_time)

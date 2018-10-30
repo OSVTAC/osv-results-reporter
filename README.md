@@ -33,16 +33,19 @@ For command-line help:
 $ orr -h
 ```
 
-For an HTML example:
+For a small, but rich HTML example with 3 contests, 4 languages, and
+sample results details for each contest:
 
 ```
-$ orr -v --input sampledata/sv-testing/election.json \
-      --template templates/sv-testing --output-dir html
+$ orr -v --input sampledata/test-minimal \
+      --extra templates/test-minimal/extra \
+      --template templates/test-minimal --output-dir minimal
 ```
 
-Then open `_build/html/index.html` in a browser.
+Then open `_build/minimal/index.html` in a browser.
 
-Or for an example that creates TSV, XLSX, and PDF files:
+Or for an example that creates TSV, XLSX, and PDF files (not currently
+working):
 
 ```
 $ orr -v --input sampledata/contest-totals.json \
@@ -56,16 +59,6 @@ directory `_build`.  The `templates` directory contains more sample
 Jinja2 templates.
 
 See the `doc` directory for more info.
-
-#### Using data model (experimental / in progress)
-
-This is still being worked on:
-
-```
-$ orr --debug --use-data-model --input sampledata/test-minimal \
-      --extra templates/test-minimal/extra \
-      --template templates/test-minimal --output-dir minimal
-```
 
 
 ### To run tests
@@ -83,7 +76,7 @@ $ python -m unittest -h
 To regenerate the end-to-end test expectation:
 
 ```
-$ orr --debug --input sampledata/test-minimal --use-data-model \
+$ orr --debug --input sampledata/test-minimal \
       --build-time "2018-06-01 20:48:12" --template templates/test-minimal \
       --extra templates/test-minimal/extra \
       --output-parent src/orr/tests/end2end --output-dir expected_minimal

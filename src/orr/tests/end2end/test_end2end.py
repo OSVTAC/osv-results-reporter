@@ -88,7 +88,7 @@ class EndToEndTest(TestCase):
         output_data = main.run(input_paths=input_paths,
             template_dir=template_dir, extra_template_dirs=extra_template_dirs,
             output_parent=output_parent, output_dir_name=output_dir_name,
-            use_data_model=True, build_time=build_time)
+            build_time=build_time)
 
         output_dir = Path(output_data['output_dir'])
 
