@@ -150,6 +150,11 @@ def translate(context, value):
 
 
 @contextfunction
+def make_translator(context):
+    return functools.partial(translate, context)
+
+
+@contextfunction
 def subtemplate(context, template_name, output_path):
     """
     Render a template.
@@ -166,17 +171,21 @@ def subtemplate(context, template_name, output_path):
 
 # TODO: turn this into a generator-iterator so not all data needs to be
 #  loaded into memory at once.
-def make_contest_pairs(contests):
+def make_contest_pairs(contests, translate=None):
     """
     Return an iterable of pairs (contest_name, rows).
 
     Args:
       contests: an iterable of Contest objects.
+      translate: a function that has the same signature as our
+        translate() contextfilter.
     """
     pairs = []
     for contest in contests:
-        names = contest.ballot_title
-        rows = list(contest.detail_rows('CHOICES *'))
+        names = translate(contest.ballot_title)
+        headings = contest.detail_headings(translate=translate)
+        rows = [headings]
+        rows.extend(contest.detail_rows('CHOICES *'))
         pair = (names, rows)
         pairs.append(pair)
 
@@ -198,7 +207,7 @@ def create_tsv_files(env, rel_dir, contests):
     yield from tsvwriting.make_tsv_directory(output_dir, rel_dir, contests)
 
 
-def create_file(do_create, rel_path, contests, type_name, ext, env):
+def create_file(do_create, rel_path, contests, type_name, ext, env, translate=None):
     """
     Create a file of contest data using the given function, and return
     a Path object.
@@ -219,7 +228,7 @@ def create_file(do_create, rel_path, contests, type_name, ext, env):
     rel_path = rel_path.with_suffix(ext)
     output_path = utils.get_output_path(env, rel_path)
 
-    contests = make_contest_pairs(contests)
+    contests = make_contest_pairs(contests, translate=translate)
 
     do_create(output_path, contests=contests)
 
@@ -260,7 +269,7 @@ def create_xlsx(env, rel_path, contests):
 
 
 @environmentfunction
-def create_pdf(env, rel_path, contests, title=None):
+def create_pdf(env, rel_path, contests, title=None, translate=None):
     """
     Create a PDF of contest data, and return a path to the file relative
     to the output directory, as a Path object.
@@ -273,6 +282,8 @@ def create_pdf(env, rel_path, contests, title=None):
         will add it).
       contests: an iterable of Contest objects.
       title: an optional title to set on the PDF's properties.
+      translate: a function that has the same signature as our
+        translate() contextfilter.
 
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
@@ -283,7 +294,7 @@ def create_pdf(env, rel_path, contests, title=None):
     do_create = functools.partial(pdfwriter.make_pdf, title=title)
 
     rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
-                        type_name='PDF', ext='.pdf', env=env)
+                        type_name='PDF', ext='.pdf', env=env, translate=translate)
 
     return rel_path
 

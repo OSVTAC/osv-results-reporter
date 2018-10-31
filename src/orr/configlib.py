@@ -71,6 +71,7 @@ def create_jinja_env(output_dir, template_dirs=None):
         create_pdf=templating.create_pdf,
         create_tsv_files=templating.create_tsv_files,
         create_xlsx=templating.create_xlsx,
+        make_translator=templating.make_translator,
         subtemplate=templating.subtemplate,
         SHASUMS_PATH=SHA256SUMS_FILENAME,
     )

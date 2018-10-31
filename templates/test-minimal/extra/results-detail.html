@@ -13,6 +13,7 @@
   {% with %}
     {% set contest = options.contest %}
     {% set headers = options.headers %}
+    {% set translator = make_translator() %}
       {# First display any headers, if there are new headers. #}
       {% for level, header in headers %}
         {% if level == 1 %}
@@ -33,13 +34,11 @@
     {% endif %}
     <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})</p>
     <table>
-      <thead><tr><th>Subtotal Area</th>
-      {% for choice in contest.choices %}
-        <th class="choice">{{ choice.ballot_title|translate }}</th>
+      <thead><tr>{% with headings=contest.detail_headings(translate=translator) %}<th>{{ headings|first }}</th>
+      {% for heading in headings[1:] %}
+        <th class="choice">{{ heading }}</th>
       {% endfor %}
-      {% for stat in contest.result_stats_by_id() %}
-        <th class="choice">{{ stat.heading }}</th>
-      {% endfor %}
+      {% endwith %}
       </tr></thead>
       {% for row in contest.detail_rows('CHOICES *') %}
         <tr><td>{{ row|first }}</td>

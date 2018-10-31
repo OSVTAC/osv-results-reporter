@@ -621,13 +621,31 @@ class Contest:
 
         return l
 
-    def result_stats_by_id(self, stat_idlist=None):
+    def _result_stats_by_id(self, stat_idlist=None):
         """
         Returns a list of ResultStatType, either all or the list
         matching the space separated IDs.
         """
-        return [ self.result_style.result_stat_types[i]
-                for i in self.result_stat_indexes_by_id(stat_idlist) ]
+        indices = self.result_stat_indexes_by_id(stat_idlist)
+        stat_types = self.result_style.result_stat_types
+        return [stat_types[i] for i in indices]
+
+    def detail_headings(self, stat_idlist=None, translate=None):
+        """
+        Args:
+          translate: a function that has the same signature as our
+            translate() contextfilter.
+        """
+        headings = ['Subtotal Area']
+
+        for choice in self.choices:
+            heading = translate(choice.ballot_title)
+            headings.append(heading)
+
+        stats = self._result_stats_by_id(stat_idlist)
+        headings.extend(stat.heading for stat in stats)
+
+        return headings
 
     def voting_groups_from_idlist(self, group_idlist=None):
         """
