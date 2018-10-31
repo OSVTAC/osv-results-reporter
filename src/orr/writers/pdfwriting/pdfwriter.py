@@ -584,7 +584,7 @@ def make_pdf(path, contests, title=None):
     """
     Args:
       path: a path-like object.
-      contests: an iterable of pairs (contest_name, rows).
+      contests: an iterator of pairs (contest_name, rows).
       title: an optional title to set on the PDF's properties.
     """
     _log.info(f'writing PDF to: {path}')

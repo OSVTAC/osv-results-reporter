@@ -694,7 +694,7 @@ class Contest:
         for rg in reporting_groups:
             results_row = results[rg.index]
             row = [rg.display()]
-            row.extend(results_row[i] for i in indices)
+            row.extend(utils.format_number(results_row[i]) for i in indices)
 
             yield row
 

@@ -30,7 +30,8 @@ import logging
 from pathlib import Path
 import re
 
-from jinja2 import contextfilter, contextfunction, environmentfilter, environmentfunction
+from jinja2 import (contextfilter, contextfunction, environmentfilter,
+    environmentfunction, Undefined)
 
 import orr.utils as utils
 import orr.writers.pdfwriting.pdfwriter as pdfwriter
@@ -163,15 +164,23 @@ def subtemplate(context, template_name, output_path):
         context=context)
 
 
+# TODO: turn this into a generator-iterator so not all data needs to be
+#  loaded into memory at once.
 def make_contest_pairs(contests):
     """
     Return an iterable of pairs (contest_name, rows).
 
     Args:
-      contests: an iterable of contest data, where each element is a dict
-        with keys "name" and "rows".
+      contests: an iterable of Contest objects.
     """
-    return [(contest['name'], contest['rows']) for contest in contests]
+    pairs = []
+    for contest in contests:
+        names = contest.ballot_title
+        rows = list(contest.detail_rows('CHOICES *'))
+        pair = (names, rows)
+        pairs.append(pair)
+
+    return pairs
 
 
 @environmentfunction
@@ -262,13 +271,15 @@ def create_pdf(env, rel_path, contests, title=None):
         Jinja2 Environment object. This can be any path-like object
         and should **not** have the file extension added (the function
         will add it).
-      contests: an iterable of contest data, where each element is a dict
-        with keys "name" and "rows".
+      contests: an iterable of Contest objects.
       title: an optional title to set on the PDF's properties.
 
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
     """
+    if type(contests) == Undefined:
+        raise RuntimeError('contests argument is undefined')
+
     do_create = functools.partial(pdfwriter.make_pdf, title=title)
 
     rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
