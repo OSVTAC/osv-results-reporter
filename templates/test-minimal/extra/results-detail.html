@@ -41,10 +41,9 @@
         <th class="choice">{{ stat.heading }}</th>
       {% endfor %}
       </tr></thead>
-      {% for i in range(contest.reporting_group_count) %}
-        {% set rg = contest.reporting_groups[i] %}
+      {% for rg in contest.reporting_groups %}
         <tr><td>{{ rg.area.short_name }}{% if rg.voting_group.id != 'TO' or rg.area.id == '*' %} - {{ rg.voting_group.heading }}{% endif %}</td>
-        {% for v in contest.detail_results(i, 'CHOICES *') %}
+        {% for v in contest.detail_results(rg, 'CHOICES *') %}
         <td>{{ v|format_number }}</td>
         {% endfor %}
         </tr>
