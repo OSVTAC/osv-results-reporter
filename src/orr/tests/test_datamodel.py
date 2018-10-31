@@ -26,7 +26,7 @@ import datetime
 from unittest import TestCase
 
 import orr.datamodel as datamodel
-from orr.datamodel import Choice, Contest
+from orr.datamodel import Area, Choice, Contest, ReportingGroup, VotingGroup
 
 
 class DataModelModuleTest(TestCase):
@@ -77,6 +77,35 @@ class DataModelModuleTest(TestCase):
         ]
         actual = datamodel.get_path_difference(new_seq, old_seq)
         self.assertEqual(actual, expected)
+
+
+class ReportingGroupTest(TestCase):
+
+
+    def test_display(self):
+        cases = [
+            # Test the common case.
+            (('PCT1141', 'Precinct 1141', 'EV', 'Early Voting'),
+             'Precinct 1141 - Early Voting'),
+            # Test with Area id equal to "*".
+            (('*', 'All Precincts', 'EV', 'Early Voting'),
+             'All Precincts - Early Voting'),
+            # Test with VotingGroup id equal to "TO".
+            (('PCT1141', 'Precinct 1141', 'TO', 'Total'),
+             'Precinct 1141'),
+            # Test with Area id equal to "*" **and** VotingGroup id equal to "TO".
+            (('*', 'All Precincts', 'TO', 'Total'),
+             'All Precincts - Total'),
+        ]
+        for args, expected in cases:
+            with self.subTest(args=args):
+                area_id, area_short_name, voting_id, voting_heading = args
+                area = Area(id_=area_id, short_name=area_short_name)
+                voting_group = VotingGroup(id_=voting_id, heading=voting_heading)
+
+                rg = ReportingGroup(area, voting_group)
+                actual = rg.display()
+                self.assertEqual(actual, expected)
 
 
 class ChoiceTest(TestCase):

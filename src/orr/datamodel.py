@@ -38,6 +38,9 @@ from orr.utils import truncate
 _log = logging.getLogger(__name__)
 
 
+AREA_ID_ALL = '*'
+VOTING_GROUP_ID_ALL = 'TO'
+
 # Besides the votes for candidates and measure choices counted, there
 # are a set of summary results with ballots not counted by category,
 # and a summary result for totals. These have a set of IDs and a generic title.
@@ -118,9 +121,9 @@ class VotingGroup:
       heading:
     """
 
-    def __init__(self):
-        self.id = None
-        self.heading = None
+    def __init__(self, id_=None, heading=None):
+        self.id = id_
+        self.heading = heading
 
 
 class ResultStatType:
@@ -211,22 +214,6 @@ class ResultStyle:
         return voting_groups
 
 
-class ReportingGroup:
-    """
-    The reporting group defines an (Area, VotingGroup) tuple for
-    results subtotals. The Area ID '*' is a special placeholder meaning
-    all precincts (in a contest), and VotingGroup 'TO' is used for
-    all voters. Each voting district active in an election should have
-    a reporting_group_ids string that is a space-separated list of
-    area_id~voting_group_id ID pairs that reference a list of (area,group)
-    tuples.
-    """
-    def __init__(self, area, voting_group, index):
-        self.area = area
-        self.voting_group = voting_group
-        self.index = index
-
-
 class Area:
 
     """
@@ -295,11 +282,12 @@ class Area:
 
     reporting_group_pattern = re.compile(r'(.*)~(.*)')
 
-    def __init__(self):
-        self.id = None
+    def __init__(self, id_=None, short_name=None):
+        self.id = id_
+        self.short_name = short_name
+
         self.classification = None
         self.name = None
-        self.short_name = None
         self.is_vbm = False
 
     def __repr__(self):
@@ -324,6 +312,41 @@ class Area:
                 raise RuntimeError(f"error handling ReportingGroup id {s!r} for area {self.id!r}")
 
             yield group
+
+
+class ReportingGroup:
+
+    """
+    The reporting group defines an (Area, VotingGroup) tuple for
+    results subtotals. The Area ID '*' is a special placeholder meaning
+    all precincts (in a contest), and VotingGroup 'TO' is used for
+    all voters. Each voting district active in an election should have
+    a reporting_group_ids string that is a space-separated list of
+    area_id~voting_group_id ID pairs that reference a list of (area,group)
+    tuples.
+    """
+
+    def __init__(self, area, voting_group, index=None):
+        """
+        Args:
+          area: an Area object.
+          voting_group: a VotingGroup object.
+        """
+        self.area = area
+        self.voting_group = voting_group
+        self.index = index
+
+    def display(self):
+        """
+        Return the display format for use in a template.
+
+        An example return value is -- "Precinct 1141 - Early Voting".
+        """
+        text = self.area.short_name
+        if self.area.id == AREA_ID_ALL or self.voting_group.id != VOTING_GROUP_ID_ALL:
+            text += f' - {self.voting_group.heading}'
+
+        return text
 
 
 # --- Ballot Item definitions
