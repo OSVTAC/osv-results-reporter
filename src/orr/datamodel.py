@@ -674,19 +674,29 @@ class Contest:
                  for i in
                  self.result_style.voting_group_indexes_from_idlist(group_idlist) ]
 
-    # TODO: pass indices instead of choice_stat_idlist?
-    def detail_results(self, reporting_group, choice_stat_idlist=None):
+    def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """
-        Return a list of vote stat and choice values for the given reporting
-        group.
+        Yield rows of vote stat and choice values for the given reporting
+        groups.
 
         Args:
-          reporting_group: a ReportingGroup object.
+          reporting_groups: an iterable of ReportingGroup objects.  Defaults
+            to all of the contest's reporting groups.
         """
+        if reporting_groups is None:
+            reporting_groups = self.reporting_groups
+
         self.load_results_details()
 
-        rg_index = reporting_group.index
-        return [self.results[rg_index][i] for i in self.result_stat_indexes_by_id(choice_stat_idlist)]
+        results = self.results
+        indices = self.result_stat_indexes_by_id(choice_stat_idlist)
+
+        for rg in reporting_groups:
+            results_row = results[rg.index]
+            row = [rg.display()]
+            row.extend(results_row[i] for i in indices)
+
+            yield row
 
 
 class Election:

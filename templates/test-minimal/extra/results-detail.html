@@ -41,10 +41,10 @@
         <th class="choice">{{ stat.heading }}</th>
       {% endfor %}
       </tr></thead>
-      {% for rg in contest.reporting_groups %}
-        <tr><td>{{ rg.display() }}</td>
-        {% for v in contest.detail_results(rg, 'CHOICES *') %}
-        <td>{{ v|format_number }}</td>
+      {% for row in contest.detail_rows('CHOICES *') %}
+        <tr><td>{{ row|first }}</td>
+        {% for value in row[1:] %}
+        <td>{{ value|format_number }}</td>
         {% endfor %}
         </tr>
       {% endfor %}
