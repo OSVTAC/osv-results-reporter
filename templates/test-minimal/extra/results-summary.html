@@ -5,7 +5,7 @@
     {{ election.ballot_title|translate }} {# This is the wrong title, should say results #}
   </title>
 </head>
-<body>{{ election.load_contest_statuses() }}
+<body>
   <h1>{{ election.ballot_title|translate }}</h1>{# This is the wrong title, should say results #}
   <h2>{{ election.date|format_date }} -
     {{ election.election_area|translate }}</h2>

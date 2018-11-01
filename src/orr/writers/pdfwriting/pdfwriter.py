@@ -502,23 +502,6 @@ def make_orr_table(data, canvas_state=None, table_props=None, **kwargs):
     return table
 
 
-def make_orr_doc_template(path, page_size, title=None, canvas_state=None):
-    """
-    Return a concrete BaseDocTemplate object.
-
-    Args:
-      canvas_state: a CanvasState object.
-    """
-    # Add a little margin cushion to prevent overflow.
-    margin = 0.9 * inch
-    margins = {key: margin for key in MARGIN_NAMES}
-
-    doc_template = DocumentTemplate(path, pagesize=page_size, title=title,
-                                canvas_state=canvas_state, **margins)
-
-    return doc_template
-
-
 class DocumentTemplate(SimpleDocTemplate):
 
     """
@@ -580,12 +563,32 @@ class DocumentTemplate(SimpleDocTemplate):
         self.canvas_state.write_page_header_footer(canvas)
 
 
-def make_pdf(path, contests, title=None):
+def make_orr_doc_template(path, page_size, title=None, canvas_state=None,
+    deterministic=None):
+    """
+    Return a concrete BaseDocTemplate object.
+
+    Args:
+      canvas_state: a CanvasState object.
+      deterministic: for deterministic PDF generation.  Defaults to False.
+    """
+    # Add a little margin cushion to prevent overflow.
+    margin = 0.9 * inch
+    margins = {key: margin for key in MARGIN_NAMES}
+
+    doc_template = DocumentTemplate(path, pagesize=page_size, title=title,
+                                canvas_state=canvas_state, invariant=deterministic, **margins)
+
+    return doc_template
+
+
+def make_pdf(path, contests, title=None, deterministic=None):
     """
     Args:
       path: a path-like object.
       contests: an iterator of pairs (contest_name, rows).
       title: an optional title to set on the PDF's properties.
+      deterministic: for deterministic PDF generation.  Defaults to False.
     """
     _log.info(f'writing PDF to: {path}')
 
@@ -601,6 +604,6 @@ def make_pdf(path, contests, title=None):
     flowables = []
     canvas_state = CanvasState(contests, flowables=flowables)
     document = make_orr_doc_template(path, page_size=page_size, title=title,
-                                canvas_state=canvas_state)
+                        canvas_state=canvas_state, deterministic=deterministic)
 
     document.build(flowables)

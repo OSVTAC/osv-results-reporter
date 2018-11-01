@@ -89,6 +89,8 @@ def parse_args():
                         help=('the datetime to use as the build time, '
                               'in the format "2018-06-01 20:48:12". '
                               'Defaults to the current datetime.'))
+    parser.add_argument('--deterministic', action='store_true',
+                        help='make PDF generation deterministic.')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
                               f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
@@ -289,7 +291,7 @@ def make_sha256sums_file(dir_path):
 
 def run(config_path=None, input_paths=None, template_dir=None,
     extra_template_dirs=None, output_parent=None, output_dir_name=None,
-    fresh_output=False, test_mode=False, build_time=None):
+    fresh_output=False, test_mode=False, build_time=None, deterministic=None):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -303,6 +305,7 @@ def run(config_path=None, input_paths=None, template_dir=None,
         output parent.  Defaults to a name generated using the current
         datetime.
       build_time: this is exposed to permit reproducible builds more easily.
+      deterministic: for deterministic PDF generation.  Defaults to False.
     """
     if input_paths is None:
         input_paths = []
@@ -339,7 +342,8 @@ def run(config_path=None, input_paths=None, template_dir=None,
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir] + extra_template_dirs
-    env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs)
+    env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs,
+                                     deterministic=deterministic)
 
     if len(input_paths) != 1:
         raise RuntimeError(f'only one input path can be provided: {input_paths}')
@@ -385,6 +389,7 @@ def main():
     logging.basicConfig(level=level)
 
     config_path = ns.config_path
+    deterministic = ns.deterministic
     template_dir = ns.template_dir
     extra_template_dirs = ns.extra_template_dirs
     input_paths = ns.input_paths
@@ -402,4 +407,5 @@ def main():
     run(config_path=config_path, input_paths=input_paths,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
-        fresh_output=fresh_output, test_mode=test_mode, build_time=build_time)
+        fresh_output=fresh_output, test_mode=test_mode, build_time=build_time,
+        deterministic=deterministic)

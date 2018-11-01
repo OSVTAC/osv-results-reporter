@@ -42,21 +42,15 @@ $ orr -v --input sampledata/test-minimal \
       --template templates/test-minimal --output-dir minimal
 ```
 
-Then open `_build/minimal/index.html` in a browser.
+Then open `_build/minimal/index.html` in a browser. The example above
+includes:
 
-Or for an example that creates TSV, XLSX, and PDF files (not currently
-working):
+* 3 contests
+* 4 languages
+* a details page for each contest
+* a PDF "Statement of Vote"
 
-```
-$ orr -v --input sampledata/contest-totals.json \
-      --template templates/grid-testing --output-dir grid
-```
-
-Then open `_build/grid/index.html`.
-
-Both of the above write the output files to a subdirectory of the
-directory `_build`.  The `templates` directory contains more sample
-Jinja2 templates.
+The `templates` directory contains more sample Jinja2 templates.
 
 See the `doc` directory for more info.
 
@@ -79,33 +73,11 @@ $ python -m unittest -h
 
 ### To update the end-to-end test
 
-To regenerate the test expectation for the end-to-end test, first remove
-the files in the existing expectation directory:
+To regenerate the test expectation for the end-to-end test and see
+a diff with what is currently in source control:
 
 ```
-$ git rm -r src/orr/tests/end2end/expected_minimal/
-```
-
-Then generate the new expected result:
-
-```
-$ orr --debug --input sampledata/test-minimal \
-      --build-time "2018-06-01 20:48:12" --template templates/test-minimal \
-      --extra templates/test-minimal/extra \
-      --output-parent src/orr/tests/end2end --output-dir expected_minimal
-```
-
-Add the new files using Git:
-
-```
-$ git add src/orr/tests/end2end/expected_minimal/
-```
-
-And then before committing, you can inspect the differences by hand to make
-sure the new test expectation is correct:
-
-```
-$ git diff --cached
+$ ./scripts/update-test-expectation.sh
 ```
 
 

@@ -32,14 +32,21 @@ import orr.main as main
 from orr.utils import SHA256SUMS_FILENAME
 
 
-def get_paths_inside(dir_path):
+def get_paths_inside(dir_path, exclude_exts=None):
     """
     Return the paths to all files in the given directory, recursively.
 
     The paths returned are relative to the given directory, and sorted.
+
+    Args:
+      exclude_exts: an iterable of extensions to exclude (where the leading
+        dot **is** included).
     """
+    if exclude_exts is None:
+        exclude_exts = []
+
     return sorted(str(path.relative_to(dir_path)) for path in dir_path.glob('**/*')
-                  if not path.is_dir())
+                  if not path.is_dir() and path.suffix not in exclude_exts)
 
 
 # TODO: also do an end-to-end test through the CLI and using subprocess?
@@ -55,16 +62,23 @@ class EndToEndTest(TestCase):
         """
         Check that two files have matching content.
         """
-        actual_text, expected_text = (path.read_text() for path in (actual_path, expected_path))
         try:
+            actual_text, expected_text = (path.read_text() for path in (actual_path, expected_path))
             self.assertEqual(actual_text, expected_text)
         except Exception:
             raise RuntimeError(f'expected path at: {expected_path}')
 
     def check_directories(self, actual_dir, expected_dir):
         dirs = (actual_dir, expected_dir)
+
         # First check the file names.
-        actual_rel_paths, expected_rel_paths = (get_paths_inside(dir_path) for dir_path in dirs)
+        # Exclude generated PDF files so we don't have to store binary
+        # files in source control.  The file's contents are already being
+        # checked by virtue of the path being listed in the SHA256SUMS file.)
+        actual_rel_paths, expected_rel_paths = (
+            get_paths_inside(dir_path, exclude_exts=['.pdf']) for dir_path in dirs
+        )
+
         self.assertEqual(actual_rel_paths, expected_rel_paths)
 
         # Move the files that contain secure file hashes to the end of the
@@ -88,7 +102,7 @@ class EndToEndTest(TestCase):
         output_data = main.run(input_paths=input_paths,
             template_dir=template_dir, extra_template_dirs=extra_template_dirs,
             output_parent=output_parent, output_dir_name=output_dir_name,
-            build_time=build_time)
+            build_time=build_time, deterministic=True)
 
         output_dir = Path(output_data['output_dir'])
 

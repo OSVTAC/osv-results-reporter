@@ -4,7 +4,9 @@
   <title>TEST-MINIMAL</title>
 </head>
 <body>
-<h1>Minimal Test</h1>
+{{ election.load_contest_statuses() }}
+{% with report_title="Minimal Test" %}
+<h1>{{ report_title }}</h1>
 <p>
   Build time: {{ build_time }}
 <p>
@@ -18,9 +20,17 @@
     <li><a href="{{ output_path }}">{{ output_path }}</a>
       (<code>{{ output_path|secure_hash }}</code>)</li>
   {% endwith %}
-
 {% endfor %}
+{% with base_name='sov' %}
+  {% set options.lang = "en" %}
+  {% set translator = make_translator() %}
+  {% with output_path=create_pdf(base_name, election.contests, title=report_title, translate=translator) %}
+    <li><a href="{{ output_path }}">{{ output_path }}</a></li>
+  {% endwith %}
+{% endwith %}
+
   <li><a href="{{ SHASUMS_PATH }}"><code>{{ SHASUMS_PATH }}</code></a></li>
 </ul>
+{% endwith %}
 </body>
 </html>

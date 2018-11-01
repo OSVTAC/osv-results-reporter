@@ -291,7 +291,9 @@ def create_pdf(env, rel_path, contests, title=None, translate=None):
     if type(contests) == Undefined:
         raise RuntimeError('contests argument is undefined')
 
-    do_create = functools.partial(pdfwriter.make_pdf, title=title)
+    deterministic = env.globals['options'].deterministic
+
+    do_create = functools.partial(pdfwriter.make_pdf, title=title, deterministic=deterministic)
 
     rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
                         type_name='PDF', ext='.pdf', env=env, translate=translate)
