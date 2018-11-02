@@ -33,8 +33,7 @@ For command-line help:
 $ orr -h
 ```
 
-For a small, but rich HTML example with 3 contests, 4 languages, and
-sample results details for each contest:
+For a small HTML example demonstrating much of the functionality:
 
 ```
 $ orr -v --input sampledata/test-minimal \
@@ -49,6 +48,9 @@ includes:
 * 4 languages
 * a details page for each contest
 * a PDF "Statement of Vote"
+
+This example can also be seen published on the web here:
+https://osvtac.github.io/osv-results-demo/
 
 The `templates` directory contains more sample Jinja2 templates.
 
