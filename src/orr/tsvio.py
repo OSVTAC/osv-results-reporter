@@ -71,15 +71,13 @@ unmap_csv_data = str.maketrans(CSV_FILE_CHAR_MAP,CSV_SOURCE_CHAR_MAP)
 def split_line(
         line:str,       # line to be split into fields
         sep:str='\t',   # delimiter separating fields
-        trim:str=''     # end characters to strip, default is whitespace
         ) -> List[str]:  # Returns mapped field list
     """
     Removes trailing whitespace, splits fields by the delimiter character,
     then returns a list of strings with unmapped line end and delimiter
     character translations.
     """
-    # Optional end of line strip
-    if trim != None: line = line.rstrip(trim)
+    line = line.rstrip()
 
     if sep == '\t':
         mapdata = unmap_tsv_data

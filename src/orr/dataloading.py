@@ -29,6 +29,7 @@ The main function this module exposes is load_context().
 from collections import OrderedDict
 from datetime import datetime
 import functools
+import itertools
 import logging
 from pathlib import Path
 
@@ -527,7 +528,7 @@ def load_contest_results(contest):
 
     contest.choice_count = len(contest.choices_by_id)
     contest.results = []
-    contest.rcv_results = [ [None] * contest.rcv_rounds ]
+    contest.rcv_results = []
     with TSVReader(path) as reader:
         # Simple check, just validate the column count
         # We could validate the header if we like later
@@ -535,23 +536,23 @@ def load_contest_results(contest):
             raise RuntimeError(
                 f'Mismatched column heading in {path}: {reader.line} stats={contest.result_stat_count} choices={contest.choice_count}')
 
+        iter_rows = reader.readlines()
+
         # RCV rounds are first
-        next_rcv_round = contest.rcv_rounds
-        for cols in reader.readlines():
-            #_log.debug(f'col {cols}')
-            if len(cols) != reader.num_columns:
+        for i, row in enumerate(itertools.islice(iter_rows, contest.rcv_rounds)):
+            rcv_round = contest.rcv_rounds - i
+            if row[0] != f'RCV{rcv_round}':
+                msg = (f'Mismatched RCV row start in {path} '
+                       '(line={reader.line_num}, round={rcv_round}):\n{reader.line!r}')
+                raise RuntimeError(msg)
+            contest.rcv_results.append(row[2:])
+
+        for row in iter_rows:
+            if len(row) != reader.num_columns:
                 raise RuntimeError(
                     f'Mismatched columns in {path}: {reader.line}')
-            if next_rcv_round:
-                # Separate the RCV results array
-                if cols[0] != f'RCV{next_rcv_round}':
-                    raise RuntimeError(
-                        f'Mismatched RCV line {next_rcv_round} in {path}: {line}')
-                contest.rcv_results[next_rcv_round] = cols[2:]
-                next_rcv_round -= 1
-            else:
-                # We could verify the reporting group but will skip
-                contest.results.append([ int(v) for v in cols[2:]])
+            # We could verify the reporting group but will skip
+            contest.results.append([ int(v) for v in row[2:]])
 
         if len(contest.results) != contest.reporting_group_count:
             raise RuntimeError(
