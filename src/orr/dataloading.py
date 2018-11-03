@@ -538,8 +538,10 @@ def load_contest_results(contest):
 
         iter_rows = reader.readlines()
 
-        # RCV rounds are first
+        # RCV rounds are first, starting with the last round and ending
+        # with round 1.
         for i, row in enumerate(itertools.islice(iter_rows, contest.rcv_rounds)):
+            # The index i ranges from 0 to (contest.rcv_rounds - 1).
             rcv_round = contest.rcv_rounds - i
             if row[0] != f'RCV{rcv_round}':
                 msg = (f'Mismatched RCV row start in {path} '
