@@ -514,9 +514,23 @@ def get_contest_results_path(contest):
     return path
 
 
-# TODO
-def load_rcv_results():
-    pass
+# TODO: eliminate the need to pass both tsv_stream and iter_rows.
+def read_rcv_results(tsv_stream, iter_rows, rounds):
+    """
+    Args:
+      tsv_stream: a TSVStream object.
+      rounds: the number of RCV rounds.
+    """
+    # The rounds start with the last round and end with round 1.
+    for i, row in enumerate(itertools.islice(iter_rows, rounds)):
+        # The index i ranges from 0 to (rounds - 1).
+        rcv_round = rounds - i
+        if row[0] != f'RCV{rcv_round}':
+            msg = (f'Mismatched RCV row start in {tsv_stream} '
+                   f'(line={tsv_stream.line_num}, round={rcv_round}):\n{tsv_stream.line!r}')
+            raise RuntimeError(msg)
+
+        yield tuple(None if x == '' else int(x) for x in row[2:])
 
 
 def load_contest_results(contest):
@@ -544,16 +558,9 @@ def load_contest_results(contest):
             raise RuntimeError(
                 f'Mismatched column heading in {path}: {tsv_stream.line} stats={contest.result_stat_count} choices={contest.choice_count}')
 
-        # RCV rounds are first, starting with the last round and ending
-        # with round 1.
-        for i, row in enumerate(itertools.islice(iter_rows, contest.rcv_rounds)):
-            # The index i ranges from 0 to (contest.rcv_rounds - 1).
-            rcv_round = contest.rcv_rounds - i
-            if row[0] != f'RCV{rcv_round}':
-                msg = (f'Mismatched RCV row start in {path} '
-                       '(line={tsv_stream.line_num}, round={rcv_round}):\n{tsv_stream.line!r}')
-                raise RuntimeError(msg)
-            contest.rcv_results.append(row[2:])
+        # The RCV rounds are first.
+        rcv_results = list(read_rcv_results(tsv_stream, iter_rows, rounds=contest.rcv_rounds))
+        contest.rcv_results.extend(rcv_results)
 
         for row in iter_rows:
             if len(row) != tsv_stream.num_columns:

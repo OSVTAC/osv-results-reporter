@@ -110,14 +110,18 @@ class TSVStream:
         self.read_header = read_header
         self.sep = sep
 
+    def _store_line(self, line):
+        self.line_num += 1
+        self.line = line
+
     def __iter__(self):
         stream = self.stream
 
         # First read the header line if configured to do so.
         if self.read_header:
-            self.line_num += 1
             # The first line is a header with field names and column count
             line = stream.readline()
+            self._store_line(line)
             if self.sep is None:
                 # derive the delimiter from characters in the header
                 for c in '\t|,':
@@ -136,8 +140,7 @@ class TSVStream:
 
         # Read the remaining lines.
         for line in stream:
-            self.line_num += 1
-            self.line = line
+            self._store_line(line)
             yield self.convline(line)
 
     def convline(self,line:str) -> List[str]:
