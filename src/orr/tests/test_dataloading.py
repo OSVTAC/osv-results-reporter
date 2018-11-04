@@ -19,7 +19,7 @@
 #
 
 """
-Test the orr.datamodel module.
+Test the orr.dataloading module.
 """
 
 import datetime
@@ -31,10 +31,10 @@ import orr.dataloading as dataloading
 from orr.tsvio import TSVStream
 
 
-class DataModelModuleTest(TestCase):
+class DataLoadingModuleTest(TestCase):
 
     """
-    Test the functions in orr.datamodel.
+    Test the functions in orr.dataloading.
     """
 
     def test_parse_date(self):
