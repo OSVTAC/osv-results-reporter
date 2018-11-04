@@ -5,7 +5,16 @@
 
 {% block content %}
   <p>
-    TODO
+  {% with %}
+    {% set contest = options.contest %}
+    <table>
+      <thead><tr><th>&nbsp;</th>
+      {% for round in range(1, contest.rcv_rounds + 1) %}
+      <th>Round {{ round }}</th>
+      {% endfor %}
+      </tr></thead>
+    </table>
+  {% endwith %}
 {% endblock %}
 </body>
 </html>
