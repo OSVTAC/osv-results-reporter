@@ -1,14 +1,9 @@
-<html lang="{{ options.lang }}">
-<head>
-  <meta charset="utf-8">
-  <title>{{ election.date|format_date_medium }} -
-    {{ election.ballot_title|translate }}
-  </title>
-</head>
-<body>
-  <h1>{{ election.ballot_title|translate }}</h1>
-  <h2>{{ election.date|format_date }} -
-    {{ election.election_area|translate }}</h2>
+{% extends "base.html" %}
+
+{% block title %}Detailed Results -
+{{ options.contest.ballot_title|translate}}{% endblock %}
+
+{% block content %}
   <p>
   {% with %}
     {% set contest = options.contest %}
@@ -49,6 +44,6 @@
       {% endfor %}
     </table>
   {% endwith %}
-
+{% endblock %}
 </body>
 </html>

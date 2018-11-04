@@ -1,14 +1,8 @@
-<html lang="{{ options.lang }}">
-<head>
-  <meta charset="utf-8">
-  <title>{{ election.date|format_date_medium }} -
-    {{ election.ballot_title|translate }} {# This is the wrong title, should say results #}
-  </title>
-</head>
-<body>
-  <h1>{{ election.ballot_title|translate }}</h1>{# This is the wrong title, should say results #}
-  <h2>{{ election.date|format_date }} -
-    {{ election.election_area|translate }}</h2>
+{% extends "base.html" %}
+
+{% block title %}Summary Results{% endblock %}
+
+{% block content %}
   <p>
   {% with %}
     {% for headers, contest in election.contests_with_headers() %}
@@ -66,6 +60,6 @@
     </table>
     {% endfor %}
   {% endwith %}
-
+{% endblock %}
 </body>
 </html>
