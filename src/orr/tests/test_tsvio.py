@@ -43,14 +43,14 @@ class TSVReaderTest(TestCase):
         row2\t200\t201\t202
         """)
         expected = [
+            ['header1', 'header2', 'header3'],
             ['row1', '100', '101', '102'],
             ['row2', '200', '201', '202'],
         ]
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / 'temp.tsv'
             path.write_text(text)
-            with TSVReader(path) as reader:
-                iterator = reader.readlines()
-                actual = list(iterator)
+            with TSVReader(path) as tsv_stream:
+                actual = list(tsv_stream)
 
         self.assertEqual(actual, expected)

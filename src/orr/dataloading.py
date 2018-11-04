@@ -514,6 +514,11 @@ def get_contest_results_path(contest):
     return path
 
 
+# TODO
+def load_rcv_results():
+    pass
+
+
 def load_contest_results(contest):
     """
     Load the detailed results for this contest with reporting groups with
@@ -529,14 +534,15 @@ def load_contest_results(contest):
     contest.choice_count = len(contest.choices_by_id)
     contest.results = []
     contest.rcv_results = []
-    with TSVReader(path) as reader:
+    with TSVReader(path) as tsv_stream:
+        iter_rows = iter(tsv_stream)
+        headers = next(iter_rows)
+
         # Simple check, just validate the column count
         # We could validate the header if we like later
-        if reader.num_columns != 2 + contest.result_stat_count + contest.choice_count:
+        if tsv_stream.num_columns != 2 + contest.result_stat_count + contest.choice_count:
             raise RuntimeError(
-                f'Mismatched column heading in {path}: {reader.line} stats={contest.result_stat_count} choices={contest.choice_count}')
-
-        iter_rows = reader.readlines()
+                f'Mismatched column heading in {path}: {tsv_stream.line} stats={contest.result_stat_count} choices={contest.choice_count}')
 
         # RCV rounds are first, starting with the last round and ending
         # with round 1.
@@ -545,14 +551,14 @@ def load_contest_results(contest):
             rcv_round = contest.rcv_rounds - i
             if row[0] != f'RCV{rcv_round}':
                 msg = (f'Mismatched RCV row start in {path} '
-                       '(line={reader.line_num}, round={rcv_round}):\n{reader.line!r}')
+                       '(line={tsv_stream.line_num}, round={rcv_round}):\n{tsv_stream.line!r}')
                 raise RuntimeError(msg)
             contest.rcv_results.append(row[2:])
 
         for row in iter_rows:
-            if len(row) != reader.num_columns:
+            if len(row) != tsv_stream.num_columns:
                 raise RuntimeError(
-                    f'Mismatched columns in {path}: {reader.line}')
+                    f'Mismatched columns in {path}: {tsv_stream.line}')
             # We could verify the reporting group but will skip
             contest.results.append([ int(v) for v in row[2:]])
 

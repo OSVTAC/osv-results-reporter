@@ -91,6 +91,70 @@ def split_line(
     return [f.translate(mapdata) if mapdata else f for f in line.split(sep)]
 
 
+class TSVStream:
+
+    def __init__(self, stream, sep=None, read_header=True):
+        """
+        Args:
+          stream: a file-like object.
+        """
+        if sep is None:
+            sep = '\t'
+
+        self.stream = stream
+
+        self.header = None
+        self.num_columns = 0    # 0 means no column info
+        self.line_num = 0
+        self.line = None
+        self.read_header = read_header
+        self.sep = sep
+
+    def __iter__(self):
+        stream = self.stream
+
+        # First read the header line if configured to do so.
+        if self.read_header:
+            self.line_num += 1
+            # The first line is a header with field names and column count
+            line = stream.readline()
+            if self.sep is None:
+                # derive the delimiter from characters in the header
+                for c in '\t|,':
+                    if c in line:
+                        self.sep = c
+                        break
+            if self.sep is None:
+                raise RuntimeError(f'no delimiter found in the header of {self.path}')
+            self.header = split_line(line,self.sep)
+            self.num_columns = len(self.header)
+        else:
+            if self.sep is None:
+                self.sep = '\t' # default delimiter is a tab
+
+        yield self.header
+
+        # Read the remaining lines.
+        for line in stream:
+            self.line_num += 1
+            self.line = line
+            yield self.convline(line)
+
+    def convline(self,line:str) -> List[str]:
+        """
+        Convert a line and return a list of strings for each
+        field. If fewer columns are found than defined in the header,
+        the list is extended with null strings. (If whitespace is trimmed
+        from a line, the missing \t get mapped to null strings.)
+        """
+        parts = split_line(line, self.sep)
+        if len(parts) < self.num_columns:
+            # Extend the list with null strings to match header count
+            parts.extend([''] * (self.num_columns - len(parts)))
+
+        return parts
+
+
 class TSVReader:
 
     """
@@ -125,72 +189,17 @@ class TSVReader:
         self.read_header = read_header
 
     def __enter__(self):
-        self.f = open(self.path, encoding=UTF8_ENCODING)
-        if self.read_header:
-            # The first line is a header with field names and column count
-            line = self.f.readline()
-            self.line_num = 1   # Reset a line counter
-            if self.sep is None:
-                # derive the delimiter from characters in the header
-                for c in '\t|,':
-                    if c in line:
-                        self.sep = c
-                        break
-            if self.sep is None:
-                raise RuntimeError(f'no delimiter found in the header of {self.path}')
-            self.header = split_line(line,self.sep)
-            self.num_columns = len(self.header)
-        else:
-            if self.sep is None:
-                self.sep = '\t' # default delimiter is a tab
-            self.num_columns = 0    # 0 means no column info
-            self.line_num = 0   # Reset a line counter
+        stream = open(self.path, encoding=UTF8_ENCODING)
+        self.stream = stream
 
-        return self
+        return TSVStream(stream)
 
     def __exit__(self, type, value, traceback):
         """
         Defines an context manager exit to so this can be used in a with/as
         """
-        self.f.close()
-        self.f = None
+        self.stream.close()
+        self.stream = None
 
     def __repr__(self):
         return f'<TSVReader {self.path}>'
-
-    def convline(self,line:str) -> List[str]:
-        """
-        Convert a line and return a list of strings for each
-        field. If fewer columns are found than defined in the header,
-        the list is extended with null strings. (If whitespace is trimmed
-        from a line, the missing \t get mapped to null strings.)
-        """
-        l = split_line(line,self.sep)
-        if len(l) < self.num_columns:
-            # Extend the list with null strings to match header count
-            l.extend([ '' ] * (self.num_columns - len(l)))
-        return l
-
-    def readline(self):
-        """
-        read a line and return the split line list.
-        """
-        self.line = self.f.readline()
-        self.line_num += 1
-        return self.convline(self.line)
-
-    def readlines(self):
-        """
-        Interator to read a file and return the split line lists.
-        """
-        for line in self.f:
-            self.line = line
-            self.line_num += 1
-            yield self.convline(line)
-
-    def readdict(self):
-        """
-        Iterator to return a dict of values by header field name
-        """
-        for l in self.readlines():
-            yield zip(self.header,l)
