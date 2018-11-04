@@ -528,6 +528,13 @@ class Contest:
     def __repr__(self):
         return f'<Contest {self.type_name!r}: id={self.id!r}>'
 
+    @property
+    def is_rcv(self):
+        """
+        Return whether the contest is an RCV contest.
+        """
+        return bool(self.rcv_rounds)
+
     # Also expose the dict values as an ordered list, for convenience.
     @property
     def choices(self):

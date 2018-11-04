@@ -35,6 +35,11 @@
       </p>
     {% endif %}
     <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
+    {% if contest.is_rcv %}
+      {% set rcv_path = contest|contest_path("results-rcv") %}
+      {% do subtemplate('results-rcv.html', rcv_path) %}
+      <a href="{{ rcv_path }}">[RCV rounds]</a>
+    {% endif %}
     <a href="{{ output_path }}">[Detailed results]</a>
     </p>
     <table>
