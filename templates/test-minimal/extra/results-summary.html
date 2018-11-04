@@ -17,7 +17,7 @@
       {% endfor %}
 
       {# Compute detailed results now so we can link to the results file below. #}
-      {% set output_path = "results-detail/contest-{}-{}.html".format(contest.id, options.lang) %}
+      {% set output_path = contest|contest_path("results-detail") %}
 
       {# Set options so the objects are available within the subtemplate. #}
       {% set options.contest = contest %}

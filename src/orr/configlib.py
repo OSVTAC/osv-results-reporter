@@ -84,6 +84,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
         format_date_medium=templating.format_date_medium,
         secure_hash=templating.secure_hash,
         translate=templating.translate,
+        contest_path=templating.contest_path,
         to_json=templating.to_json,
         to_xml=templating.to_xml,
         to_xml_attr=templating.to_xml_attr,

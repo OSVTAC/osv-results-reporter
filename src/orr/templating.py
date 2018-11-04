@@ -149,6 +149,22 @@ def translate(context, value):
     return text
 
 
+@contextfilter
+def contest_path(context, contest, dirpath=None):
+    """
+    Create and return a path for a contest.
+
+    The path returned has the form: "results-detail/contest-403-en.html".
+    """
+    if dirpath is None:
+        dirpath = ''
+
+    options = context['options']
+    lang = options.lang
+
+    return str(Path(dirpath) / f'contest-{contest.id}-{lang}.html')
+
+
 @contextfunction
 def make_translator(context):
     return functools.partial(translate, context)
