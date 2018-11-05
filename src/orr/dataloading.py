@@ -36,7 +36,7 @@ from pathlib import Path
 import orr.datamodel as datamodel
 from orr.tsvio import TSVReader
 from orr.datamodel import (Candidate, Choice, Contest, Election,
-    Header, ResultStatType, ResultStyle, VotingGroup)
+    Header, ResultStatType, ResultStyle, ResultsMapping, VotingGroup)
 import orr.utils as utils
 from orr.utils import truncate
 
@@ -545,6 +545,7 @@ def load_contest_results(contest):
 
     _log.debug(f'load_results_details({path})')
 
+    # TODO: set this as an auto_attr?
     contest.choice_count = len(contest.choices_by_id)
     contest.results = []
     contest.rcv_results = []
@@ -830,6 +831,12 @@ def load_contest_result_style(contest_loader, value, result_styles_by_id):
     return result_styles_by_id[value]
 
 
+def load_results_mapping(contest_loader, data):
+    contest = contest_loader.model_object
+    choice_count = len(contest.choices_by_id)
+    return ResultsMapping(contest.result_style, choice_count=choice_count)
+
+
 def load_voting_district(contest_loader, value, areas_by_id):
     return areas_by_id[value]
 
@@ -861,6 +868,7 @@ class ContestLoader:
         ('question_text', parse_as_is),
         AutoAttr('result_style', load_contest_result_style,
             context_keys=('result_styles_by_id',), unpack_context=True),
+        AutoAttr('results_mapping', load_results_mapping, data_key=False),
         AutoAttr('voting_district', load_voting_district,
             context_keys=('areas_by_id',), unpack_context=True),
         ('type', parse_as_is),

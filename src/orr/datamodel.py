@@ -543,6 +543,7 @@ class Contest:
       header_id: id of the parent header object containing this item
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
+      results_mapping: a ResultsMapping object.
       rcv_results: a list of tuples, one for each round, starting with the
         last round.
 
@@ -584,7 +585,7 @@ class Contest:
 
         self.parent_header = None
 
-        self.results_mapping = None   # a ResultsMapping object
+        self.results_mapping = None
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
     def __repr__(self):
@@ -689,7 +690,6 @@ class Contest:
         # has already been loaded.  Skip if already loaded.
         if not hasattr(self, 'results'):
             self._load_contest_results_data(self)
-            self.results_mapping = ResultsMapping(self.result_style, choice_count=self.choice_count)
 
         return ''
 
