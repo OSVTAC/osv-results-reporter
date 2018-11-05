@@ -670,6 +670,8 @@ def process_index_idlist(objects_by_id, idlist):
 # We want a name other than load_result_stat_types() for uniqueness reasons.
 def load_stat_types(result_style_loader, value, result_stat_types_by_id):
     """
+    Return the list of ResultStatType objects for a ResultStyle.
+
     Args:
       result_style_loader: a ResultStyleLoader object.
     """

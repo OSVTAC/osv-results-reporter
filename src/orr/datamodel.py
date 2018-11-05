@@ -463,11 +463,13 @@ class ResultsMapping:
           result_style: a ResultStyle object.
           candidate_index: the first candidate index for the rows in the table.
         """
-        stat_index_by_id = result_style.result_stat_type_index_by_id
-
         self.choice_count = choice_count
-        self.stat_index_by_id = stat_index_by_id
-        self.result_stat_count = len(self.stat_index_by_id)
+        self.result_style = result_style
+        self.result_stat_count = len(result_style.result_stat_type_index_by_id)
+
+    @property
+    def stat_index_by_id(self):
+        return self.result_style.result_stat_type_index_by_id
 
     def get_stat_index(self, stat_type):
         return self.stat_index_by_id[stat_type.id]
@@ -484,6 +486,43 @@ class ResultsMapping:
                               self.result_stat_count + self.choice_count))
 
         return [self.stat_index_by_id[label_or_id]]
+
+    def get_indexes_by_id_list(self, stat_idlist=None):
+        """
+        Convert a space-separated list of ids into a list of indices.
+
+        Map a space-separated ID list into a set of result type index values.
+        The index can be used to access the result_stat_types[].header or
+        results[] value. If the id is not available, it will be skipped. The
+        value '*' will return 0..result_stat_count-1. The value 'CHOICES'
+        will insert the index values for all choices,
+        result_stat_count..result_stat_count+choice_count-1
+
+        This routine allows an API to access the heading and result value
+        for a specific set of result stat types in set order. When the
+        CHOICES id is included, the stat values can be reordered before and
+        after choices.
+        """
+        if stat_idlist is None:
+            stat_idlist = '*'
+
+        stat_ids = parse_idlist(stat_idlist)
+
+        indices = []
+        for label_or_id in stat_ids:
+            new_indices = self.get_indices_by_id(label_or_id)
+            indices.extend(new_indices)
+
+        return indices
+
+    def result_stats_by_id(self, stat_idlist=None):
+        """
+        Return a list of ResultStatType objects, either all or the list
+        matching the space separated IDs.
+        """
+        indices = self.get_indexes_by_id_list(stat_idlist)
+        stat_types = self.result_style.result_stat_types
+        return [stat_types[i] for i in indices]
 
 
 class Contest:
@@ -615,45 +654,6 @@ class Contest:
         my_header_path = self.make_header_path()
         return get_path_difference(my_header_path, header_path)
 
-    # TODO: move this method to ResultsMapping?
-    def result_stat_indexes_by_id(self, stat_idlist=None):
-        """
-        Maps a space separated ID list into a set of result type
-        index values. The index can be used to access the
-        result_stat_types[].header or results[] value.
-        If the id is not available, then it will be skipped.
-        The special id value '*' will return 0..result_stat_count-1.
-        The id value 'CHOICES' will insert the index values
-        for all choices, result_stat_count..result_stat_count+choice_count-1
-
-        This routine allows an API to access the heading and result
-        value for a specific set of result stat types in set order.
-        When the CHOICES id is included, the stat values can be
-        reordered before and after choices.
-        """
-        if stat_idlist is None:
-            stat_idlist = '*'
-
-        stat_ids = parse_idlist(stat_idlist)
-
-        indices = []
-        table = self.results_mapping
-        for label_or_id in stat_ids:
-            new_indices = table.get_indices_by_id(label_or_id)
-            indices.extend(new_indices)
-
-        return indices
-
-    # TODO: move this method to ResultsMapping?
-    def _result_stats_by_id(self, stat_idlist=None):
-        """
-        Returns a list of ResultStatType, either all or the list
-        matching the space separated IDs.
-        """
-        indices = self.result_stat_indexes_by_id(stat_idlist)
-        stat_types = self.result_style.result_stat_types
-        return [stat_types[i] for i in indices]
-
     def detail_headings(self, stat_idlist=None, translate=None):
         """
         Args:
@@ -666,7 +666,8 @@ class Contest:
             heading = translate(choice.ballot_title)
             headings.append(heading)
 
-        stats = self._result_stats_by_id(stat_idlist)
+        results_mapping = self.results_mapping
+        stats = results_mapping.result_stats_by_id(stat_idlist)
         headings.extend(stat.heading for stat in stats)
 
         return headings
@@ -729,9 +730,10 @@ class Contest:
 
         self.load_results_details()
 
-        results = self.results
-        indices = self.result_stat_indexes_by_id(choice_stat_idlist)
+        results_mapping = self.results_mapping
+        indices = results_mapping.get_indexes_by_id_list(choice_stat_idlist)
 
+        results = self.results
         for rg in reporting_groups:
             results_row = results[rg.index]
             row = [rg.display()]
