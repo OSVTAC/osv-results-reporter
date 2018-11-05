@@ -548,6 +548,7 @@ def load_contest_results(contest):
     contest.choice_count = len(contest.choices_by_id)
     contest.results = []
     contest.rcv_results = []
+
     with TSVReader(path) as tsv_stream:
         iter_rows = iter(tsv_stream)
         headers = next(iter_rows)

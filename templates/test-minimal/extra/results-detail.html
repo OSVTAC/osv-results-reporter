@@ -4,11 +4,11 @@
 {{ options.contest.ballot_title|translate}}{% endblock %}
 
 {% block content %}
-  <p>
   {% with %}
     {% set contest = options.contest %}
     {% set headers = options.headers %}
     {% set translator = make_translator() %}
+  <p>{{ contest.load_results_details() }}
       {# First display any headers, if there are new headers. #}
       {% for level, header in headers %}
         {% if level == 1 %}

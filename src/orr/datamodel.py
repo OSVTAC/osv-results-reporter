@@ -404,22 +404,6 @@ class Choice:
     def __repr__(self):
         return f'<Choice id={self.id!r} title={i18n_repr(self.ballot_title)}>'
 
-    @property
-    def result_index(self):
-        """
-        Returns the column index into result values corresponding
-        to this choice.
-        """
-        return self.index + self.contest.result_stat_count
-
-    def summary_results(self, group_idlist=None):
-        """
-        Returns the contest.summary_results with the choice_stat_index
-        computed for this choice.
-        """
-
-        return self.contest.summary_results(self.result_index, group_idlist)
-
 
 class Candidate(Choice):
 
@@ -466,6 +450,36 @@ def get_path_difference(new_seq, old_seq):
     return list(pair for pair in enumerate(new_seq[index:], start=index+1))
 
 
+class ResultsMapping:
+
+    """
+    Encapsulates the association between (1) result stat types and choices,
+    and (2) numeric stats / totals.
+    """
+
+    def __init__(self, result_stat_type_index_by_id, choice_count):
+        """
+        Args:
+          candidate_index: the first candidate index for the rows in the table.
+        """
+        self.choice_count = choice_count
+        self.result_stat_count = len(result_stat_type_index_by_id)
+        self.result_stat_type_index_by_id = result_stat_type_index_by_id
+
+    def get_candidate_index(self, candidate):
+        return self.result_stat_count + candidate.index
+
+    def get_indices_by_id(self, label_or_id):
+        if label_or_id == '*':
+            return list(range(self.result_stat_count))
+
+        if label_or_id == 'CHOICES':
+            return list(range(self.result_stat_count,
+                              self.result_stat_count + self.choice_count))
+
+        return [self.result_stat_type_index_by_id[label_or_id]]
+
+
 class Contest:
 
     """
@@ -484,6 +498,8 @@ class Contest:
       header_id: id of the parent header object containing this item
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
+      rcv_results: a list of tuples, one for each round, starting with the
+        last round.
 
     Private attributes:
       _load_contest_results_data: a function that loads the results details
@@ -522,7 +538,8 @@ class Contest:
         self.all_voting_groups_by_id = voting_groups_by_id
 
         self.parent_header = None
-        self.result_details = []    # result detail definitions
+
+        self.results_mapping = None   # a ResultsMapping object
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
     def __repr__(self):
@@ -592,7 +609,7 @@ class Contest:
         my_header_path = self.make_header_path()
         return get_path_difference(my_header_path, header_path)
 
-
+    # TODO: move this method to ResultsMapping?
     def result_stat_indexes_by_id(self, stat_idlist=None):
         """
         Maps a space separated ID list into a set of result type
@@ -608,25 +625,18 @@ class Contest:
         When the CHOICES id is included, the stat values can be
         reordered before and after choices.
         """
-        # An empty
-        if not stat_idlist:
-            return range(self.result_stat_count)
+        if stat_idlist is None:
+            stat_idlist = '*'
 
-        # A list comprehension is not easy due to python limitations
-        l = []
-        mapping = self.result_style.result_stat_type_index_by_id
         stat_ids = parse_idlist(stat_idlist)
 
-        for k in stat_ids:
-            if k == '*':
-                l.extend(range(self.result_stat_count))
-            elif k == 'CHOICES':
-                l.extend(range(self.result_stat_count,
-                               self.result_stat_count+self.choice_count))
-            elif k in mapping:
-                l.append(mapping[k])
+        indices = []
+        table = self.results_mapping
+        for label_or_id in stat_ids:
+            new_indices = table.get_indices_by_id(label_or_id)
+            indices.extend(new_indices)
 
-        return l
+        return indices
 
     def _result_stats_by_id(self, stat_idlist=None):
         """
@@ -671,33 +681,36 @@ class Contest:
         # has already been loaded.  Skip if already loaded.
         if not hasattr(self, 'results'):
             self._load_contest_results_data(self)
+            result_stat_type_index_by_id = self.result_style.result_stat_type_index_by_id
+            self.results_mapping = ResultsMapping(result_stat_type_index_by_id,
+                                                  choice_count=self.choice_count)
 
         return ''
 
-    def summary_results(self, choice_stat_index, group_idlist=None):
+    def summary_results(self, stat_index, group_idlist=None):
         """
         Returns a list of vote summary values (total votes for each
         VotingGroup defined. If group_idlist is defined it will be
         interpreted as a space separated list of VotingGroup IDs.
 
-        The choice_stat_index may be an integer, 0..result_stat_count
+        The stat_index may be an integer, 0..result_stat_count
         for stats, or ..result_stat_count+choice_count for an index
         representing a choice, or alternatively can be a choice object,
         where the index is computed from the choice.
         """
         # Load the results if not already loaded
         self.load_results_details()
+        table = self.results_mapping
 
-        if isinstance(choice_stat_index, Choice):
-            choice_stat_index = choice_stat_index.index + self.result_stat_count
+        if isinstance(stat_index, Choice):
+            stat_index = table.get_candidate_index(stat_index)
         else:
-            if (not type(choice_stat_index) is int) or choice_stat_index<0 or choice_stat_index >= self.result_stat_count + self.choice_count:
-                raise RuntimeError(f'Invalid choice_stat_index {choice_stat_index} in contest {self.id}')
+            if (not type(stat_index) is int) or stat_index<0 or stat_index >= self.result_stat_count + self.choice_count:
+                raise RuntimeError(f'Invalid stat_index {stat_index} in contest {self.id}')
 
-        # TODO: check choice_stat_index
-        return [ self.results[i][choice_stat_index]
-                 for i in
-                 self.result_style.voting_group_indexes_from_idlist(group_idlist) ]
+        # TODO: check stat_index
+        return [self.results[i][stat_index] for i in
+                self.result_style.voting_group_indexes_from_idlist(group_idlist)]
 
     def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """
