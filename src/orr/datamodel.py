@@ -454,20 +454,23 @@ class ResultsMapping:
 
     """
     Encapsulates the association between (1) result stat types and choices,
-    and (2) numeric stats / totals.
+    and (2) index in the results row.
     """
 
-    def __init__(self, result_stat_type_index_by_id, choice_count):
+    def __init__(self, result_style, choice_count):
         """
         Args:
+          result_style: a ResultStyle object.
           candidate_index: the first candidate index for the rows in the table.
         """
+        stat_index_by_id = result_style.result_stat_type_index_by_id
+
         self.choice_count = choice_count
-        self.result_stat_count = len(result_stat_type_index_by_id)
-        self.result_stat_type_index_by_id = result_stat_type_index_by_id
+        self.stat_index_by_id = stat_index_by_id
+        self.result_stat_count = len(self.stat_index_by_id)
 
     def get_stat_index(self, stat_type):
-        return self.result_stat_type_index_by_id[stat_type.id]
+        return self.stat_index_by_id[stat_type.id]
 
     def get_candidate_index(self, candidate):
         return self.result_stat_count + candidate.index
@@ -480,7 +483,7 @@ class ResultsMapping:
             return list(range(self.result_stat_count,
                               self.result_stat_count + self.choice_count))
 
-        return [self.result_stat_type_index_by_id[label_or_id]]
+        return [self.stat_index_by_id[label_or_id]]
 
 
 class Contest:
@@ -641,6 +644,7 @@ class Contest:
 
         return indices
 
+    # TODO: move this method to ResultsMapping?
     def _result_stats_by_id(self, stat_idlist=None):
         """
         Returns a list of ResultStatType, either all or the list
@@ -684,9 +688,7 @@ class Contest:
         # has already been loaded.  Skip if already loaded.
         if not hasattr(self, 'results'):
             self._load_contest_results_data(self)
-            result_stat_type_index_by_id = self.result_style.result_stat_type_index_by_id
-            self.results_mapping = ResultsMapping(result_stat_type_index_by_id,
-                                                  choice_count=self.choice_count)
+            self.results_mapping = ResultsMapping(self.result_style, choice_count=self.choice_count)
 
         return ''
 
