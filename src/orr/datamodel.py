@@ -466,6 +466,9 @@ class ResultsMapping:
         self.result_stat_count = len(result_stat_type_index_by_id)
         self.result_stat_type_index_by_id = result_stat_type_index_by_id
 
+    def get_stat_index(self, stat_type):
+        return self.result_stat_type_index_by_id[stat_type.id]
+
     def get_candidate_index(self, candidate):
         return self.result_stat_count + candidate.index
 
@@ -687,26 +690,24 @@ class Contest:
 
         return ''
 
-    def summary_results(self, stat_index, group_idlist=None):
+    def summary_results(self, stat_type, group_idlist=None):
         """
         Returns a list of vote summary values (total votes for each
         VotingGroup defined. If group_idlist is defined it will be
         interpreted as a space separated list of VotingGroup IDs.
 
-        The stat_index may be an integer, 0..result_stat_count
-        for stats, or ..result_stat_count+choice_count for an index
-        representing a choice, or alternatively can be a choice object,
-        where the index is computed from the choice.
+        The stat_type may be a ResultStatType or Choice object.
         """
         # Load the results if not already loaded
         self.load_results_details()
         table = self.results_mapping
 
-        if isinstance(stat_index, Choice):
-            stat_index = table.get_candidate_index(stat_index)
+        if type(stat_type) == ResultStatType:
+            stat_index = table.get_stat_index(stat_type)
         else:
-            if (not type(stat_index) is int) or stat_index<0 or stat_index >= self.result_stat_count + self.choice_count:
-                raise RuntimeError(f'Invalid stat_index {stat_index} in contest {self.id}')
+            # TODO: provide a good error message if this assertion fails.
+            assert isinstance(stat_type, Choice)
+            stat_index = table.get_candidate_index(stat_type)
 
         # TODO: check stat_index
         return [self.results[i][stat_index] for i in

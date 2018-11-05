@@ -55,9 +55,9 @@
         {% endfor %}
         </tr>
       {% endfor %}
-      {% for i in contest.result_stat_indexes_by_id() %}
-        <tr><td>{{ contest.result_stats[i].heading }}</td>
-        {% for v in contest.summary_results(i) %}
+      {% for result_stat in contest.result_stats %}
+        <tr><td>{{ result_stat.heading }}</td>
+        {% for v in contest.summary_results(result_stat) %}
         <td>{{ v|format_number}}</td>
         {% endfor %}
         </tr>
