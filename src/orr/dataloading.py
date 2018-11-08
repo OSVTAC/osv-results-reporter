@@ -560,9 +560,10 @@ def load_contest_results(contest):
             raise RuntimeError(
                 f'Mismatched column heading in {path}: {tsv_stream.line} stats={contest.result_stat_count} choices={contest.choice_count}')
 
-        # The RCV rounds are first.
+        # The RCV rounds are first, starting with the last round.
         rcv_results = list(read_rcv_results(tsv_stream, iter_rows, rounds=contest.rcv_rounds))
-        contest.rcv_results.extend(rcv_results)
+        # Call reversed() so the first round occurs first.
+        contest.rcv_results.extend(reversed(rcv_results))
 
         for row in iter_rows:
             if len(row) != tsv_stream.num_columns:

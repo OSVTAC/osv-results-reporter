@@ -478,6 +478,11 @@ class ResultsMapping:
         return self.result_stat_count + candidate.index
 
     def get_indices_by_id(self, label_or_id):
+        """
+        Args:
+          label_or_id: a ResultStatType id, or one of the special strings "*"
+            or "CHOICES".
+        """
         if label_or_id == '*':
             return list(range(self.result_stat_count))
 
@@ -525,6 +530,47 @@ class ResultsMapping:
         return [stat_types[i] for i in indices]
 
 
+# TODO: test this.
+def find_max_round(results_mapping, rcv_results, choice):
+    """
+    Return the max round for a choice, as a (1-based) integer round number.
+
+    Args:
+      results_mapping: a ResultsMapping object.
+      rcv_results: a list of tuples, one for each round, starting with the
+        first round.
+      choice: a Choice object.
+    """
+    index = results_mapping.get_candidate_index(choice)
+    for round_number, row in enumerate(rcv_results):
+        if row[index] is None:
+            break
+    else:
+        round_number += 1
+
+    assert round_number > 0
+
+    return round_number
+
+
+def compute_max_rounds(results_mapping, rcv_results, choices):
+    """
+    Return a dict mapping choice_id to max round.
+
+    Args:
+      results_mapping: a ResultsMapping object.
+      rcv_results: a list of tuples, one for each round, starting with the
+        first round.
+      choices: a list of Choice objects.
+    """
+    max_rounds = {}
+    for choice in choices:
+        max_round = find_max_round(results_mapping, rcv_results, choice=choice)
+        max_rounds[choice.id] = max_round
+
+    return max_rounds
+
+
 class Contest:
 
     """
@@ -545,7 +591,7 @@ class Contest:
       parent_header: the parent header of the item, as a Header object.
       results_mapping: a ResultsMapping object.
       rcv_results: a list of tuples, one for each round, starting with the
-        last round.
+        first round.
 
     Private attributes:
       _load_contest_results_data: a function that loads the results details
@@ -715,6 +761,43 @@ class Contest:
         # TODO: check stat_index
         return [self.results[i][stat_index] for i in
                 self.result_style.voting_group_indexes_from_idlist(group_idlist)]
+
+    def get_round_stat_by_index(self, index, round_number):
+        return self.rcv_results[round_number - 1][index]
+
+    def get_round_stat(self, stat_id, round_number):
+        index = self.results_mapping.stat_index_by_id[stat_id]
+        return self.get_round_stat_by_index(index, round_number)
+
+    def get_round_total(self, choice, round_number):
+        index = self.results_mapping.get_candidate_index(choice)
+        return self.get_round_stat_by_index(index, round_number)
+
+    def rcv_summary(self):
+        """
+        Yield the candidates in order of highest vote total, starting with
+        the candidate having the highest vote total.
+
+        Yields pairs (choice, max_round), where choice is a Choice object
+        and max_round is the number of the highest round achieved by the
+        candidate, as an integer.
+        """
+        results_mapping = self.results_mapping
+        max_rounds = compute_max_rounds(results_mapping, self.rcv_results,
+                                        choices=self.choices)
+
+        rcv_results = self.rcv_results
+        def key(choice):
+            """
+            A comparison key function to sort choices first by round
+            (starting with the highest), followed by vote total (starting
+            with the highest), followed by id (starting with the lowest).
+            """
+            max_round = max_rounds[choice.id]
+            return (-1 * max_round, -1 * self.get_round_total(choice, max_round), choice.id)
+
+        for choice in sorted(self.choices, key=key):
+            yield (choice, max_rounds[choice.id])
 
     def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """

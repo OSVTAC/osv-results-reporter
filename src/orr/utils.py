@@ -156,14 +156,14 @@ def format_percent(percent):
         return ''
     return f'{percent:.2f}%'
 
-def format_percent2(num,denom):
+def format_percent2(num, denom):
     """
     Format a percentage for display as num/denom.
     """
     if denom is None or num is None or denom == 0:
         return ''
     else:
-        return(format_percent(100*num/denom))
+        return(format_percent(100 * num/denom))
 
 def read_json(filepath):
     """

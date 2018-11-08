@@ -42,6 +42,27 @@
     {% endif %}
     <a href="{{ output_path }}">[Detailed results]</a>
     </p>
+    {% if contest.is_rcv %}
+      <table>
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Votes</th>
+            <th>Round</th>
+            <th>Percent</th>
+          </tr>
+        </thead>
+        {% for choice, round in contest.rcv_summary() %}
+          {% set vote_total = contest.get_round_total(choice, round) %}
+          <tr>
+            <td>{{ choice.ballot_title|translate }}</td>
+            <td>{{ vote_total }}</td>
+            <td>{{ round }}</td>
+            <td>{{ vote_total|format_percent2(contest.get_round_stat("RSTot", round)) }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
     <table>
       <thead><tr><th>&nbsp;</th>
       {% for vg in contest.voting_groups_from_idlist() %}
@@ -63,6 +84,7 @@
         </tr>
       {% endfor %}
     </table>
+    {% endif %}
     {% endfor %}
   {% endwith %}
 {% endblock %}
