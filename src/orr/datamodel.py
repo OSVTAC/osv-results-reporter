@@ -786,18 +786,18 @@ class Contest:
         max_rounds = compute_max_rounds(results_mapping, self.rcv_results,
                                         choices=self.choices)
 
-        rcv_results = self.rcv_results
-        def key(choice):
+        def key(pair):
             """
             A comparison key function to sort choices first by round
             (starting with the highest), followed by vote total (starting
             with the highest), followed by id (starting with the lowest).
             """
-            max_round = max_rounds[choice.id]
+            choice, max_round = pair
             return (-1 * max_round, -1 * self.get_round_total(choice, max_round), choice.id)
 
-        for choice in sorted(self.choices, key=key):
-            yield (choice, max_rounds[choice.id])
+        pairs = [(choice, max_rounds[choice.id]) for choice in self.choices]
+
+        yield from sorted(pairs, key=key)
 
     def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """
