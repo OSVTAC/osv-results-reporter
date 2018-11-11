@@ -30,10 +30,47 @@ import sys
 from setuptools import setup, find_packages
 
 
+PACKAGE_DATA_EXTS = [
+    # Include the empty extension for the file "SHA256SUMS".
+    '',
+    '.html',
+    '.xlsx',
+]
+
+
 def _log(msg):
     # Print to stderr instead of using the logging module because using
     # the logging module is probably overkill for this simple case.
     print(f'setup.py: {msg}', file=sys.stderr)
+
+
+def compute_package_data(name):
+    """
+    Return glob patterns of the data files needed for testing.
+
+    At one point, this returned--
+
+    [
+        'testing/tests/data/*',
+        'tests/end2end/expected_minimal/*',
+        'tests/end2end/expected_minimal/results-detail/*',
+        'tests/end2end/expected_minimal/results-rcv/*',
+    ]
+    """
+    # Instead of listing individual files, we replace individual files
+    # with the directory containing the file, concatenated with "*".
+    # Then we use the set() operation to remove duplicates.
+    # We use relative_to() to return "testing/..." instead of
+    # "orr/testing/...", for example.
+    patterns = set(
+        str((p.parent / '*').relative_to(name))
+        for p in Path(name).glob('**/*')
+        if (p.is_file() and not p.name.startswith('.') and
+            p.suffix in PACKAGE_DATA_EXTS)
+    )
+    patterns = sorted(patterns)
+
+    return patterns
 
 
 def parse_install_requires():
@@ -71,10 +108,6 @@ setup(
         ],
     },
     package_data={
-        'orr': [
-            # Also include our data files needed for testing.
-            'testing/tests/data/*',
-            'tests/end2end/expected_minimal/*',
-        ],
+        'orr': compute_package_data('orr'),
     },
 )

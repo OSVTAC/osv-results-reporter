@@ -314,10 +314,9 @@ def directory_sha256sum(dir_path, exclude_paths=None):
 def process_template(env:Environment, template_name:str, rel_output_path:Path,
     context:dict=None, test_mode:bool=False):
     """
-    Creates the specified output file using the named template,
-    where `data` provides the template context. The template
-    and included templates will be located within the template
-    search path, already setup via configuration data.
+    Write (aka render) a template file to the given relative path.
+
+    Returns the path to the created file, as a Path object.
 
     Args:
       env: a Jinja2 Environment object.
@@ -352,3 +351,5 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     rendered = strip_trailing_whitespace(rendered)
     output_path.write_text(rendered)
     _log.info(f'Created {output_path} from template {template_name}')
+
+    return output_path
