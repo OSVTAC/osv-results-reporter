@@ -95,7 +95,10 @@ To render a template directory to the build directory using Docker:
 ```
 $ docker build -t orr . \
     && docker rm orr_builder; echo "removed container: orr_builder" \
-    && docker run --name orr_builder orr --input sampledata/results-sv.json \
+    && docker run --name orr_builder orr \
+        --input sampledata/test-minimal \
+        --extra templates/test-minimal/extra \
+        --template templates/test-minimal --output-dir minimal \
     && docker cp orr_builder:/app/_build/. _build
 ```
 
