@@ -3,6 +3,9 @@ FROM python:3.6-slim
 RUN apt-get clean && apt-get update \
     && apt-get install -y locales
 
+# Upgrade to the latest pip.
+RUN pip install pip==18.1
+
 # Put all of our files in an application-specific directory.
 WORKDIR app
 
