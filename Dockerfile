@@ -26,10 +26,6 @@ COPY debian/ debian/
 
 # Install locales.
 RUN cp debian/locale.gen /etc/locale.gen \
-    # Make the following error go away:
-    # > locale alias file `/usr/share/locale/locale.alias' not found:
-    #    No such file or directory
-    && ln -s /etc/locale.alias /usr/share/locale/locale.alias \
     && locale-gen \
     # Display all installed locales to simplify troubleshooting.
     && locale -a
