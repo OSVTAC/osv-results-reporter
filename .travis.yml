@@ -1,11 +1,22 @@
+sudo: required
 language: python
 python:
   - "3.6"
-# Install dependencies.
+services:
+  - docker
+
+# First check our Dockerfile by building the image and running our tests
+# inside the container.
+before_install:
+  - docker build -t orr .
+  # Run unit tests and an "end-to-end" test.
+  - docker run --entrypoint python orr -m unittest discover orr
+
+# Next run the tests in Travis CI's normal Python environment.
 install:
   - pip install --upgrade pip
   - pip install -r src/requirements.txt
   - pip install -e ./src
-# Run unit tests and an "end-to-end" test.
 script:
+  # Run unit tests and an "end-to-end" test.
   - python -m unittest discover orr
