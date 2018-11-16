@@ -32,7 +32,7 @@ from datetime import datetime
 import logging
 import re
 
-from orr.model.rcvresults import RCVResults
+from orr.models.rcvresults import RCVResults
 import orr.utils as utils
 from orr.utils import truncate
 

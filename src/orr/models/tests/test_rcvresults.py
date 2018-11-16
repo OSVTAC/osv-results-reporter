@@ -19,14 +19,14 @@
 #
 
 """
-Test the orr.model.rcvresults module.
+Test the orr.models.rcvresults module.
 """
 
 from unittest import TestCase
 
 from orr.datamodel import Candidate, ResultStatType, ResultsMapping
-import orr.model.rcvresults as rcvresults
-from orr.model.rcvresults import RCVResults
+import orr.models.rcvresults as rcvresults
+from orr.models.rcvresults import RCVResults
 
 
 # This is meant for four candidates.
