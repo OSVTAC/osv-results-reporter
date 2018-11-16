@@ -62,5 +62,5 @@ class DataLoadingModuleTest(TestCase):
         # Advance past the header line.
         next(iter_rows)
 
-        actual = list(dataloading.read_rcv_results(tsv_stream, iter_rows, rounds=3))
+        actual = list(dataloading.read_rcv_totals(tsv_stream, iter_rows, rounds=3))
         self.assertEqual(actual, expected)

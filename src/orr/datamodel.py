@@ -495,6 +495,10 @@ class ResultsMapping:
     def stat_index_by_id(self):
         return self.indexes_by_id
 
+    def get_stat_by_id(self, stat_id):
+        index = self.indexes_by_id[stat_id]
+        return self.result_stat_types[index]
+
     def get_stat_index(self, stat_type):
         return self.stat_index_by_id[stat_type.id]
 
@@ -554,20 +558,15 @@ class ResultsMapping:
         return [stat_types[i] for i in indices]
 
 
-def compute_max_rounds(rcv_totals, results_mapping, choices):
+def compute_max_rounds(rcv_results):
     """
     Return a dict mapping choice_id to max round.
 
     Args:
-      results_mapping: a ResultsMapping object.
-      rcv_totals: a list of tuples, one for each round, starting with the
-        first round.
-      choices: a list of Choice objects.
+      rcv_results: an RCVResults object.
     """
-    rcv_results = RCVResults(rcv_totals, results_mapping=results_mapping,
-                             candidates=choices)
     max_rounds = {}
-    for candidate in choices:
+    for candidate in rcv_results.candidates:
         max_round = rcv_results.find_max_round(candidate)
         max_rounds[candidate.id] = max_round
 
@@ -593,7 +592,7 @@ class Contest:
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
       results_mapping: a ResultsMapping object.
-      rcv_results: a list of tuples, one for each round, starting with the
+      rcv_totals: a list of tuples, one for each round, starting with the
         first round.
 
     Private attributes:
@@ -766,7 +765,7 @@ class Contest:
                 self.result_style.voting_group_indexes_from_idlist(group_idlist)]
 
     def get_round_stat_by_index(self, index, round_number):
-        return self.rcv_results[round_number - 1][index]
+        return self.rcv_totals[round_number - 1][index]
 
     def get_round_stat(self, stat_id, round_number):
         index = self.results_mapping.stat_index_by_id[stat_id]
@@ -776,18 +775,31 @@ class Contest:
         index = self.results_mapping.get_candidate_index(choice)
         return self.get_round_stat_by_index(index, round_number)
 
-    def rcv_summary(self):
+    def make_rcv_results(self, continuing_stat_id):
+        """
+        Args:
+          continuing_stat_id: the id of the ResultStatType object
+            corresponding to continuing ballots.
+        """
+        continuing_stat = self.results_mapping.get_stat_by_id(continuing_stat_id)
+        return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
+                          candidates=self.choices, continuing_stat=continuing_stat)
+
+    def rcv_summary(self, continuing_stat_id):
         """
         Yield the candidates in order of highest vote total, starting with
         the candidate having the highest vote total.
+
+        Args:
+          continuing_stat_id: the id of the ResultStatType object
+            corresponding to continuing ballots.
 
         Yields pairs (choice, max_round), where choice is a Choice object
         and max_round is the number of the highest round achieved by the
         candidate, as an integer.
         """
-        results_mapping = self.results_mapping
-        max_rounds = compute_max_rounds(self.rcv_results, results_mapping=results_mapping,
-                                        choices=self.choices)
+        rcv_results = self.make_rcv_results(continuing_stat_id)
+        max_rounds = compute_max_rounds(rcv_results)
 
         def key(pair):
             """

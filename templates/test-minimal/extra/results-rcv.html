@@ -3,16 +3,43 @@
 {% block title %}RCV Rounds -
 {{ options.contest.ballot_title|translate}}{% endblock %}
 
+{% macro show_candidate_round(candidate_result) -%}
+  <td>{{ candidate_result.transfer|format_number }}</td>
+  <td>{{ candidate_result.votes|format_number }}</td>
+  <td>{% if candidate_result.after_eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
+{%- endmacro %}
+
 {% block content %}
   <p>
   {% with %}
     {% set contest = options.contest %}
+    {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
+    {% set rcv_results = contest.make_rcv_results("RSTot") %}
     <table>
-      <thead><tr><th>&nbsp;</th>
-      {% for round in range(1, contest.rcv_rounds + 1) %}
-      <th>Round {{ round }}</th>
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+          {% for round in range(1, contest.rcv_rounds + 1) %}
+            <th colspan="3">Round {{ round }}</th>
+          {% endfor %}
+        </tr>
+        <tr>
+          <th>&nbsp;</th>
+          {% for round in range(1, contest.rcv_rounds + 1) %}
+            <th>Transfer</th>
+            <th>Votes</th>
+            <th>%</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      {% for choice in contest.choices %}
+        <tr><td>{{ choice.ballot_title|translate }}</td>
+        {% for candidate_result in rcv_results.get_candidate_rounds(choice) %}
+          {{ show_candidate_round(candidate_result) }}
+        {% endfor %}
+        </tr>
       {% endfor %}
-      </tr></thead>
+
     </table>
   {% endwith %}
 {% endblock %}

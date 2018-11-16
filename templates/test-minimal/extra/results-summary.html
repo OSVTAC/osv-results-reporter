@@ -52,7 +52,8 @@
             <th>Percent</th>
           </tr>
         </thead>
-        {% for choice, round in contest.rcv_summary() %}
+        {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
+        {% for choice, round in contest.rcv_summary("RSTot") %}
           {% set vote_total = contest.get_round_total(choice, round) %}
           <tr>
             <td>{{ choice.ballot_title|translate }}</td>

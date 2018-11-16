@@ -515,7 +515,7 @@ def get_contest_results_path(contest):
 
 
 # TODO: eliminate the need to pass both tsv_stream and iter_rows.
-def read_rcv_results(tsv_stream, iter_rows, rounds):
+def read_rcv_totals(tsv_stream, iter_rows, rounds):
     """
     Args:
       tsv_stream: a TSVStream object.
@@ -548,7 +548,7 @@ def load_contest_results(contest):
     # TODO: set this as an auto_attr?
     contest.choice_count = len(contest.choices_by_id)
     contest.results = []
-    contest.rcv_results = []
+    contest.rcv_totals = []
 
     with TSVReader(path) as tsv_stream:
         iter_rows = iter(tsv_stream)
@@ -561,9 +561,9 @@ def load_contest_results(contest):
                 f'Mismatched column heading in {path}: {tsv_stream.line} stats={contest.result_stat_count} choices={contest.choice_count}')
 
         # The RCV rounds are first, starting with the last round.
-        rcv_results = list(read_rcv_results(tsv_stream, iter_rows, rounds=contest.rcv_rounds))
+        rcv_totals = list(read_rcv_totals(tsv_stream, iter_rows, rounds=contest.rcv_rounds))
         # Call reversed() so the first round occurs first.
-        contest.rcv_results.extend(reversed(rcv_results))
+        contest.rcv_totals.extend(reversed(rcv_totals))
 
         for row in iter_rows:
             if len(row) != tsv_stream.num_columns:

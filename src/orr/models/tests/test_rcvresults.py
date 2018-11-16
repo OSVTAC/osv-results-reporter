@@ -26,7 +26,7 @@ from unittest import TestCase
 
 from orr.datamodel import Candidate, ResultStatType, ResultsMapping
 import orr.models.rcvresults as rcvresults
-from orr.models.rcvresults import RCVResults
+from orr.models.rcvresults import RCVResults, RoundTotal
 
 
 # This is meant for four candidates.
@@ -35,6 +35,18 @@ SAMPLE_RCV_TOTALS = [
     (10000, 1900, 650, 820, 430, None),
     (10000, 1850, None, 1120, 730, None),
 ]
+
+
+class RoundTotalTest(TestCase):
+
+    """
+    Test the RoundTotal class.
+    """
+
+    def test_percent(self):
+        round_total = RoundTotal(200, transfer=50, continuing=250)
+        actual = round_total.percent
+        self.assertEqual(actual, 80)
 
 
 class RCVResultsTest(TestCase):
@@ -77,8 +89,12 @@ class RCVResultsTest(TestCase):
         candidates = self.make_test_candidates()
         choice_count = len(candidates)
         result_stat_types = self.make_test_result_stat_types()
+        continuing_stat = result_stat_types[1]
+        assert continuing_stat.heading == 'Continuing'
+
         results_mapping = ResultsMapping(result_stat_types, choice_count=choice_count)
-        rcv_results = RCVResults(SAMPLE_RCV_TOTALS, results_mapping, candidates=candidates)
+        rcv_results = RCVResults(SAMPLE_RCV_TOTALS, results_mapping, candidates=candidates,
+                                 continuing_stat=continuing_stat)
 
         return rcv_results
 
@@ -95,9 +111,10 @@ class RCVResultsTest(TestCase):
         candidate = candidates[1]
         round_total = rcv_results.get_candidate_round(candidate, round_num=2)
         self.assertEqual(round_total.votes, 820)
+        self.assertAlmostEqual(round_total.percent, 43.1578947)
         self.assertEqual(round_total.transfer, 20)
 
-    def test_get_candidate_round(self):
+    def test_get_candidate_round__first_round(self):
         """
         Test the first round.
         """
@@ -108,6 +125,8 @@ class RCVResultsTest(TestCase):
         self.assertEqual(round_total.votes, 800)
         self.assertEqual(round_total.transfer, 800)
 
+    # TODO: also test for a winning candidate (including the after_eliminated
+    #  attribute).
     def test_get_candidate_rounds(self):
         rcv_results = self.make_test_results()
         candidates = rcv_results.candidates
@@ -115,9 +134,11 @@ class RCVResultsTest(TestCase):
         rounds = rcv_results.get_candidate_rounds(candidate)
 
         # Test the vote totals.
-        self.assertEqual([r.votes for r in rounds], [600, 650])
+        self.assertEqual([r.votes for r in rounds], [600, 650, 0])
         # Test the transfer totals.
-        self.assertEqual([r.transfer for r in rounds], [600, 50])
+        self.assertEqual([r.transfer for r in rounds], [600, 50, -650])
+        # Test the after_eliminated attribute.
+        self.assertEqual([r.after_eliminated for r in rounds], [False, False, True])
 
     def test_find_max_round(self):
         rcv_results = self.make_test_results()
