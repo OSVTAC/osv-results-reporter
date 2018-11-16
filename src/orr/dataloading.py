@@ -815,7 +815,8 @@ def load_contest_result_style(contest_loader, value, result_styles_by_id):
 def load_results_mapping(contest_loader, data):
     contest = contest_loader.model_object
     choice_count = len(contest.choices_by_id)
-    return ResultsMapping(contest.result_style, choice_count=choice_count)
+    result_style = contest.result_style
+    return ResultsMapping(result_style.result_stat_types, choice_count=choice_count)
 
 
 def load_voting_district(contest_loader, value, areas_by_id):

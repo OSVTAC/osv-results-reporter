@@ -156,9 +156,9 @@ class ResultStatType:
       is_percent:
     """
 
-    def __init__(self):
-        self.id = None
-        self.heading = None
+    def __init__(self, _id=None, heading=None):
+        self.id = _id
+        self.heading = heading
 
 
 class ResultStyle:
@@ -410,11 +410,12 @@ class Choice:
       contest: back-reference to a Contest object.
     """
 
-    def __init__(self, contest):
-        self.contest = contest
-
+    def __init__(self, contest=None):
         self.ballot_title = None
         self.id = None
+
+        # Back-reference.
+        self.contest = contest
 
     def __repr__(self):
         return f'<Choice id={self.id!r} title={i18n_repr(self.ballot_title)}>'
@@ -434,11 +435,12 @@ class Candidate(Choice):
       contest: back-reference to a Contest object.
     """
 
-    def __init__(self, contest):
-        self.contest = contest
-
+    def __init__(self, contest=None):
         self.ballot_title = None
         self.id = None
+
+        # Back-reference.
+        self.contest = contest
 
     def __repr__(self):
         return f'<Candidate id={self.id!r} title={i18n_repr(self.ballot_title)}>'
@@ -472,13 +474,12 @@ class ResultsMapping:
     and (2) index in the results row.
     """
 
-    def __init__(self, result_style, choice_count):
+    def __init__(self, result_stat_types, choice_count):
         """
         Args:
-          result_style: a ResultStyle object.
-          candidate_index: the first candidate index for the rows in the table.
+          result_stat_types: an iterable of ResultStatType objects.
+          choice_count: the number of choices in the contest.
         """
-        result_stat_types = result_style.result_stat_types
         indexes_by_id = make_indexes_by_id(result_stat_types)
 
         self.choice_count = choice_count
