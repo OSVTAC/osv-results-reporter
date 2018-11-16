@@ -23,10 +23,10 @@
 Model classes to support RCV contest results.
 """
 
-class RoundTotal:
+class CandidateRound:
 
     # TODO: also include status like: elected, eliminated, etc.
-    def __init__(self, votes, transfer, continuing, after_eliminated=False):
+    def __init__(self, round_num, total, transfer, continuing, after_eliminated=False):
         """
         Args:
           after_eliminated: whether this is a placeholder round for a
@@ -36,8 +36,9 @@ class RoundTotal:
         """
         self.continuing = continuing
         self.after_eliminated = after_eliminated
+        self.round_num = round_num
         self.transfer = transfer
-        self.votes = votes
+        self.votes = total
 
     @property
     def percent(self):
@@ -90,7 +91,7 @@ class RCVResults:
     # TODO: remove this.
     def get_candidate_round(self, candidate, round_num):
         """
-        Return a RoundTotal object.
+        Return a CandidateRound object.
         """
         total = self.get_candidate_total(candidate, round_num=round_num)
         continuing = self.get_continuing_total(round_num)
@@ -100,13 +101,14 @@ class RCVResults:
             prev_total = self.get_candidate_total(candidate, round_num=(round_num - 1))
 
         transfer = total - prev_total
-        round_total = RoundTotal(total, transfer=transfer, continuing=continuing)
+        cand_round = CandidateRound(round_num, total=total, transfer=transfer,
+                                    continuing=continuing)
 
-        return round_total
+        return cand_round
 
     def get_candidate_rounds(self, candidate):
         """
-        Return a list of RoundTotal objects.
+        Return a list of CandidateRound objects.
         """
         index = self.results_mapping.get_candidate_index(candidate)
         continuing_index = self.get_continuing_index()
@@ -114,7 +116,7 @@ class RCVResults:
         rounds = []
         after_eliminated = False
         prev_total = 0
-        for round_totals in self.rcv_totals:
+        for round_num, round_totals in enumerate(self.rcv_totals, start=1):
             total = round_totals[index]
             if total is None:
                 total = 0
@@ -122,9 +124,9 @@ class RCVResults:
 
             transfer = total - prev_total
             continuing = round_totals[continuing_index]
-            round_total = RoundTotal(total, transfer=transfer, continuing=continuing,
-                                     after_eliminated=after_eliminated)
-            rounds.append(round_total)
+            cand_round = CandidateRound(round_num, total=total, transfer=transfer,
+                                        continuing=continuing, after_eliminated=after_eliminated)
+            rounds.append(cand_round)
             if after_eliminated:
                 break
 
@@ -140,12 +142,12 @@ class RCVResults:
           candidate: a Candidate object.
         """
         rounds = self.get_candidate_rounds(candidate)
-        round_num = len(rounds)
+        max_round = rounds[-1]
         if rounds[-1].after_eliminated:
             # Then don't count the last round.
-            round_num -= 1
+            max_round = rounds[-2]
 
-        return round_num
+        return max_round
 
     def compute_max_rounds(self):
         """
@@ -176,8 +178,8 @@ class RCVResults:
             (starting with the highest), followed by vote total (starting
             with the highest), followed by id (starting with the lowest).
             """
-            max_round = max_rounds[candidate.id]
-            return (-1 * max_round, -1 * self.get_candidate_total(candidate, max_round), candidate.id)
+            round_num = max_rounds[candidate.id].round_num
+            return (-1 * round_num, -1 * self.get_candidate_total(candidate, round_num), candidate.id)
 
         candidates = sorted(self.candidates, key=key)
 
@@ -187,3 +189,22 @@ class RCVResults:
         candidates, max_rounds = self.compute_order_info()
 
         return candidates
+
+    def rcv_summary(self):
+        """
+        Yield the candidates in order of highest vote total, starting with
+        the candidate having the highest vote total.
+
+        Args:
+          continuing_stat_id: the id of the ResultStatType object
+            corresponding to continuing ballots.
+
+        Yields pairs (choice, max_round), where choice is a Choice object
+        and max_round is a CandidateRound object corresponding to the
+        highest round reached by the candidate.
+        """
+        candidates, max_rounds = self.compute_order_info()
+
+        pairs = [(candidate, max_rounds[candidate.id]) for candidate in candidates]
+
+        yield from pairs

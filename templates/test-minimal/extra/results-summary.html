@@ -43,6 +43,8 @@
     <a href="{{ output_path }}">[Detailed results]</a>
     </p>
     {% if contest.is_rcv %}
+      {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
+      {% set rcv_results = contest.make_rcv_results("RSTot") %}
       <table>
         <thead>
           <tr>
@@ -52,14 +54,12 @@
             <th>Percent</th>
           </tr>
         </thead>
-        {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
-        {% for choice, round in contest.rcv_summary("RSTot") %}
-          {% set vote_total = contest.get_round_total(choice, round) %}
+        {% for choice, round in rcv_results.rcv_summary() %}
           <tr>
             <td>{{ choice.ballot_title|translate }}</td>
-            <td>{{ vote_total }}</td>
-            <td>{{ round }}</td>
-            <td>{{ vote_total|format_percent2(contest.get_round_stat("RSTot", round)) }}</td>
+            <td>{{ round.votes }}</td>
+            <td>{{ round.round_num }}</td>
+            <td>{{ round.percent|format_percent }}</td>
           </tr>
         {% endfor %}
       </table>

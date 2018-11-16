@@ -79,6 +79,11 @@ VOTING_GROUPS = OrderedDict([
     ])
 
 
+def ensure_int(value, arg_name):
+    if type(value) != int:
+        raise TypeError(f'argument {arg_name!r} not an int: {type(value)}')
+
+
 def parse_ids_text(ids_text):
     """
     Args:
@@ -749,16 +754,19 @@ class Contest:
         return [self.results[i][stat_index] for i in
                 self.result_style.voting_group_indexes_from_idlist(group_idlist)]
 
-    def get_round_stat_by_index(self, index, round_number):
-        return self.rcv_totals[round_number - 1][index]
+    def get_round_stat_by_index(self, index, round_num):
+        ensure_int(round_num, 'round_num')
+        return self.rcv_totals[round_num - 1][index]
 
-    def get_round_stat(self, stat_id, round_number):
+    def get_round_stat(self, stat_id, round_num):
+        ensure_int(round_num, 'round_num')
         index = self.results_mapping.stat_index_by_id[stat_id]
-        return self.get_round_stat_by_index(index, round_number)
+        return self.get_round_stat_by_index(index, round_num)
 
-    def get_round_total(self, choice, round_number):
+    def get_round_total(self, choice, round_num):
+        ensure_int(round_num, 'round_num')
         index = self.results_mapping.get_candidate_index(choice)
-        return self.get_round_stat_by_index(index, round_number)
+        return self.get_round_stat_by_index(index, round_num)
 
     def make_rcv_results(self, continuing_stat_id):
         """
@@ -772,26 +780,6 @@ class Contest:
         continuing_stat = self.results_mapping.get_stat_by_id(continuing_stat_id)
         return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
                           candidates=candidates, continuing_stat=continuing_stat)
-
-    def rcv_summary(self, continuing_stat_id):
-        """
-        Yield the candidates in order of highest vote total, starting with
-        the candidate having the highest vote total.
-
-        Args:
-          continuing_stat_id: the id of the ResultStatType object
-            corresponding to continuing ballots.
-
-        Yields pairs (choice, max_round), where choice is a Choice object
-        and max_round is the number of the highest round achieved by the
-        candidate, as an integer.
-        """
-        rcv_results = self.make_rcv_results(continuing_stat_id)
-        candidates, max_rounds = rcv_results.compute_order_info()
-
-        pairs = [(candidate, max_rounds[candidate.id]) for candidate in candidates]
-
-        yield from pairs
 
     def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """

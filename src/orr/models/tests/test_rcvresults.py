@@ -26,7 +26,7 @@ from unittest import TestCase
 
 from orr.datamodel import Candidate, ResultStatType, ResultsMapping
 import orr.models.rcvresults as rcvresults
-from orr.models.rcvresults import RCVResults, RoundTotal
+from orr.models.rcvresults import RCVResults, CandidateRound
 
 
 # This is meant for four candidates.
@@ -37,14 +37,14 @@ SAMPLE_RCV_TOTALS = [
 ]
 
 
-class RoundTotalTest(TestCase):
+class CandidateRoundTest(TestCase):
 
     """
-    Test the RoundTotal class.
+    Test the CandidateRound class.
     """
 
     def test_percent(self):
-        round_total = RoundTotal(200, transfer=50, continuing=250)
+        round_total = CandidateRound(2, total=200, transfer=50, continuing=250)
         actual = round_total.percent
         self.assertEqual(actual, 80)
 
@@ -153,5 +153,5 @@ class RCVResultsTest(TestCase):
         for index, expected in cases:
             with self.subTest(index=index):
                 candidate = candidates[index]
-                actual = rcv_results.find_max_round(candidate)
-                self.assertEqual(actual, expected)
+                max_round = rcv_results.find_max_round(candidate)
+                self.assertEqual(max_round.round_num, expected)
