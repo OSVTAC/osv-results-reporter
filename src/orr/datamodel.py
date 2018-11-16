@@ -32,6 +32,7 @@ from datetime import datetime
 import logging
 import re
 
+from orr.model.rcvresults import RCVResults
 import orr.utils as utils
 from orr.utils import truncate
 
@@ -553,42 +554,21 @@ class ResultsMapping:
         return [stat_types[i] for i in indices]
 
 
-# TODO: test this.
-def find_max_round(results_mapping, rcv_results, choice):
-    """
-    Return the max round for a choice, as a (1-based) integer round number.
-
-    Args:
-      results_mapping: a ResultsMapping object.
-      rcv_results: a list of tuples, one for each round, starting with the
-        first round.
-      choice: a Choice object.
-    """
-    index = results_mapping.get_candidate_index(choice)
-    for round_number, row in enumerate(rcv_results):
-        if row[index] is None:
-            break
-    else:
-        round_number += 1
-
-    assert round_number > 0
-
-    return round_number
-
-
-def compute_max_rounds(results_mapping, rcv_results, choices):
+def compute_max_rounds(rcv_totals, results_mapping, choices):
     """
     Return a dict mapping choice_id to max round.
 
     Args:
       results_mapping: a ResultsMapping object.
-      rcv_results: a list of tuples, one for each round, starting with the
+      rcv_totals: a list of tuples, one for each round, starting with the
         first round.
       choices: a list of Choice objects.
     """
+    rcv_results = RCVResults(rcv_totals, results_mapping=results_mapping,
+                             candidates=choices)
     max_rounds = {}
     for choice in choices:
-        max_round = find_max_round(results_mapping, rcv_results, choice=choice)
+        max_round = rcv_results.find_max_round(choice=choice)
         max_rounds[choice.id] = max_round
 
     return max_rounds
@@ -806,7 +786,7 @@ class Contest:
         candidate, as an integer.
         """
         results_mapping = self.results_mapping
-        max_rounds = compute_max_rounds(results_mapping, self.rcv_results,
+        max_rounds = compute_max_rounds(self.rcv_results, results_mapping=results_mapping,
                                         choices=self.choices)
 
         def key(pair):
