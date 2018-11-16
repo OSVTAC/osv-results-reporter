@@ -51,7 +51,6 @@ class RCVResults:
         self.results_mapping = results_mapping
         self.candidates = candidates
 
-    # TODO: test this.
     def find_max_round(self, choice):
         """
         Return the max round for a choice, as a (1-based) integer round number.

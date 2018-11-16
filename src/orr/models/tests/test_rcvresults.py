@@ -82,6 +82,22 @@ class RCVResultsTest(TestCase):
 
         return rcv_results
 
+    def test_find_max_round(self):
+        rcv_results = self.make_test_results()
+        candidates = rcv_results.candidates
+
+        cases = [
+            (0, 2),
+            (1, 3),
+            (2, 3),
+            (3, 1),
+        ]
+        for index, expected in cases:
+            with self.subTest(index=index):
+                candidate = candidates[index]
+                actual = rcv_results.find_max_round(candidate)
+                self.assertEqual(actual, expected)
+
     def test_get_candidate_total(self):
         rcv_results = self.make_test_results()
         candidates = rcv_results.candidates
