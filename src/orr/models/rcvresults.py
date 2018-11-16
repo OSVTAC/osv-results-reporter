@@ -146,3 +146,44 @@ class RCVResults:
             round_num -= 1
 
         return round_num
+
+    def compute_max_rounds(self):
+        """
+        Return a dict mapping choice_id to max round.
+
+        Args:
+          rcv_results: an RCVResults object.
+        """
+        max_rounds = {}
+        for candidate in self.candidates:
+            max_round = self.find_max_round(candidate)
+            max_rounds[candidate.id] = max_round
+
+        return max_rounds
+
+    def compute_order_info(self):
+        """
+        Return (candidates, max_rounds), where candidates is the list
+        of candidates in sorted order (starting with the winner), and
+        max_rounds is a dict mapping candidate id to the number of the
+        highest round the candidate reached.
+        """
+        max_rounds = self.compute_max_rounds()
+
+        def key(candidate):
+            """
+            A comparison key function to sort choices first by round
+            (starting with the highest), followed by vote total (starting
+            with the highest), followed by id (starting with the lowest).
+            """
+            max_round = max_rounds[candidate.id]
+            return (-1 * max_round, -1 * self.get_candidate_total(candidate, max_round), candidate.id)
+
+        candidates = sorted(self.candidates, key=key)
+
+        return (candidates, max_rounds)
+
+    def compute_candidate_order(self):
+        candidates, max_rounds = self.compute_order_info()
+
+        return candidates

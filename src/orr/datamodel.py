@@ -558,21 +558,6 @@ class ResultsMapping:
         return [stat_types[i] for i in indices]
 
 
-def compute_max_rounds(rcv_results):
-    """
-    Return a dict mapping choice_id to max round.
-
-    Args:
-      rcv_results: an RCVResults object.
-    """
-    max_rounds = {}
-    for candidate in rcv_results.candidates:
-        max_round = rcv_results.find_max_round(candidate)
-        max_rounds[candidate.id] = max_round
-
-    return max_rounds
-
-
 class Contest:
 
     """
@@ -781,9 +766,12 @@ class Contest:
           continuing_stat_id: the id of the ResultStatType object
             corresponding to continuing ballots.
         """
+        # Convert the choices from a generator to a list before passing
+        # to RCVResults.
+        candidates = list(self.choices)
         continuing_stat = self.results_mapping.get_stat_by_id(continuing_stat_id)
         return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
-                          candidates=self.choices, continuing_stat=continuing_stat)
+                          candidates=candidates, continuing_stat=continuing_stat)
 
     def rcv_summary(self, continuing_stat_id):
         """
@@ -799,20 +787,11 @@ class Contest:
         candidate, as an integer.
         """
         rcv_results = self.make_rcv_results(continuing_stat_id)
-        max_rounds = compute_max_rounds(rcv_results)
+        candidates, max_rounds = rcv_results.compute_order_info()
 
-        def key(pair):
-            """
-            A comparison key function to sort choices first by round
-            (starting with the highest), followed by vote total (starting
-            with the highest), followed by id (starting with the lowest).
-            """
-            choice, max_round = pair
-            return (-1 * max_round, -1 * self.get_round_total(choice, max_round), choice.id)
+        pairs = [(candidate, max_rounds[candidate.id]) for candidate in candidates]
 
-        pairs = [(choice, max_rounds[choice.id]) for choice in self.choices]
-
-        yield from sorted(pairs, key=key)
+        yield from pairs
 
     def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """

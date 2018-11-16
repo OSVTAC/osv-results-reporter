@@ -20,7 +20,8 @@
         <tr>
           <th>&nbsp;</th>
           {% for round in range(1, contest.rcv_rounds + 1) %}
-            <th colspan="3">Round {{ round }}</th>
+            <th>&nbsp;</th>
+            <th colspan="2">Round {{ round }}</th>
           {% endfor %}
         </tr>
         <tr>
@@ -32,9 +33,9 @@
           {% endfor %}
         </tr>
       </thead>
-      {% for choice in contest.choices %}
-        <tr><td>{{ choice.ballot_title|translate }}</td>
-        {% for candidate_result in rcv_results.get_candidate_rounds(choice) %}
+      {% for candidate in rcv_results.compute_candidate_order() %}
+        <tr><td>{{ candidate.ballot_title|translate }}</td>
+        {% for candidate_result in rcv_results.get_candidate_rounds(candidate) %}
           {{ show_candidate_round(candidate_result) }}
         {% endfor %}
         </tr>
