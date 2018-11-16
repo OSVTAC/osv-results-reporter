@@ -630,47 +630,26 @@ class ResultStatTypeLoader:
 
 # ResultStyle loading
 
-def make_index_map(values):
+def ids_text_to_objects(ids_text, objects_by_id):
     """
-    Return an `indexes_by_value` dict mapping the value to its (0-based)
-    index in the list.
-    """
-    return {value: index for index, value in enumerate(values)}
-
-
-# TODO: remove this?
-def make_id_to_index_map(objlist):
-    """
-    An `indexes_by_id` dict mapping an object id to list index is created
-    for a list of objects. The index converts the id to the index
-    in the list 0..len(objlist)-1
-    """
-    return make_index_map(obj.id for obj in objlist)
-
-
-def process_index_idlist(objects_by_id, idlist):
-    """
-    Parse a space-separated list of object IDS into objects.
+    Convert a space-separated list of object ids into objects.
 
     Args:
-      idlist: a space-separated list of IDS, as a string.
+      ids_text: a space-separated list of object ids, as a string.
       objects_by_id: the dict of all objects of a single type, mapping
         object id to object.
 
     Returns: (objects, indexes_by_id)
       objects: the objects as a list.
-      indexes_by_id: a dict mapping object id to its (0-based) index in
-        the list.
     """
-    ids = datamodel.parse_idlist(idlist)
-    indexes_by_id = make_index_map(ids)
-    objects = [objects_by_id[object_id] for object_id in ids]
+    ids = datamodel.parse_ids_text(ids_text)
+    objects = [objects_by_id[_id] for _id in ids]
 
-    return objects, indexes_by_id
+    return objects
 
 
 # We want a name other than load_result_stat_types() for uniqueness reasons.
-def load_stat_types(result_style_loader, value, result_stat_types_by_id):
+def load_stat_types(result_style_loader, ids_text, result_stat_types_by_id):
     """
     Return the list of ResultStatType objects for a ResultStyle.
 
@@ -680,14 +659,13 @@ def load_stat_types(result_style_loader, value, result_stat_types_by_id):
     result_style = result_style_loader.model_object
     assert type(result_style) == ResultStyle
 
-    result_stat_types, indexes_by_id = process_index_idlist(result_stat_types_by_id, value)
-    result_style.result_stat_type_index_by_id = indexes_by_id
+    result_stat_types = ids_text_to_objects(ids_text, result_stat_types_by_id)
 
     return result_stat_types
 
 
 # We want a name other than load_voting_groups() for uniqueness reasons.
-def load_result_voting_groups(result_style_loader, value, voting_groups_by_id):
+def load_result_voting_groups(result_style_loader, ids_text, voting_groups_by_id):
     """
     Args:
       result_style_loader: a ResultStyleLoader object.
@@ -695,7 +673,9 @@ def load_result_voting_groups(result_style_loader, value, voting_groups_by_id):
     result_style = result_style_loader.model_object
     assert type(result_style) == ResultStyle
 
-    voting_groups, indexes_by_id = process_index_idlist(voting_groups_by_id, value)
+    voting_groups = ids_text_to_objects(ids_text, voting_groups_by_id)
+    indexes_by_id = datamodel.make_indexes_by_id(voting_groups)
+    # TODO: remove setting this?
     result_style.voting_group_indexes_by_id = indexes_by_id
 
     return voting_groups

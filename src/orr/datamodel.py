@@ -78,12 +78,27 @@ VOTING_GROUPS = OrderedDict([
     ])
 
 
-def parse_idlist(idlist):
+def parse_ids_text(ids_text):
     """
     Args:
-      idlist: space-separated list of IDS, as a string.
+      ids_text: space-separated list of IDS, as a string.
     """
-    return idlist.split()
+    return ids_text.split()
+
+
+def make_index_map(values):
+    """
+    Return an `indexes_by_value` dict mapping the value to its (0-based)
+    index in the list.
+    """
+    return {value: index for index, value in enumerate(values)}
+
+
+def make_indexes_by_id(objects):
+    """
+    Return a dict mapping object id to its (0-based) index in the list.
+    """
+    return make_index_map(obj.id for obj in objects)
 
 
 # TODO: test this.
@@ -188,7 +203,7 @@ class ResultStyle:
             return [voting_group.id for voting_group in self.voting_groups]
 
         # Otherwise, return only the matching ones.
-        ids = parse_idlist(idlist)
+        ids = parse_ids_text(idlist)
         ids = [id_ for id_ in ids if id_ in self.voting_group_indexes_by_id]
 
         return ids
@@ -297,7 +312,7 @@ class Area:
         """
         An iterator that creates and yields the reporting groups.
         """
-        reporting_group_ids = parse_idlist(self.reporting_group_ids)
+        reporting_group_ids = parse_ids_text(self.reporting_group_ids)
 
         for index, s in enumerate(reporting_group_ids):
             m = self.reporting_group_pattern.match(s)
@@ -463,13 +478,20 @@ class ResultsMapping:
           result_style: a ResultStyle object.
           candidate_index: the first candidate index for the rows in the table.
         """
+        result_stat_types = result_style.result_stat_types
+        indexes_by_id = make_indexes_by_id(result_stat_types)
+
         self.choice_count = choice_count
-        self.result_style = result_style
-        self.result_stat_count = len(result_style.result_stat_type_index_by_id)
+        self.indexes_by_id = indexes_by_id
+        self.result_stat_types = result_stat_types
+
+    @property
+    def result_stat_count(self):
+        return len(self.result_stat_types)
 
     @property
     def stat_index_by_id(self):
-        return self.result_style.result_stat_type_index_by_id
+        return self.indexes_by_id
 
     def get_stat_index(self, stat_type):
         return self.stat_index_by_id[stat_type.id]
@@ -511,7 +533,7 @@ class ResultsMapping:
         if stat_idlist is None:
             stat_idlist = '*'
 
-        stat_ids = parse_idlist(stat_idlist)
+        stat_ids = parse_ids_text(stat_idlist)
 
         indices = []
         for label_or_id in stat_ids:
@@ -526,7 +548,7 @@ class ResultsMapping:
         matching the space separated IDs.
         """
         indices = self.get_indexes_by_id_list(stat_idlist)
-        stat_types = self.result_style.result_stat_types
+        stat_types = self.result_stat_types
         return [stat_types[i] for i in indices]
 
 
