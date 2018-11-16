@@ -82,22 +82,6 @@ class RCVResultsTest(TestCase):
 
         return rcv_results
 
-    def test_find_max_round(self):
-        rcv_results = self.make_test_results()
-        candidates = rcv_results.candidates
-
-        cases = [
-            (0, 2),
-            (1, 3),
-            (2, 3),
-            (3, 1),
-        ]
-        for index, expected in cases:
-            with self.subTest(index=index):
-                candidate = candidates[index]
-                actual = rcv_results.find_max_round(candidate)
-                self.assertEqual(actual, expected)
-
     def test_get_candidate_total(self):
         rcv_results = self.make_test_results()
         candidates = rcv_results.candidates
@@ -123,3 +107,30 @@ class RCVResultsTest(TestCase):
         round_total = rcv_results.get_candidate_round(candidate, round_num=1)
         self.assertEqual(round_total.votes, 800)
         self.assertEqual(round_total.transfer, 800)
+
+    def test_get_candidate_rounds(self):
+        rcv_results = self.make_test_results()
+        candidates = rcv_results.candidates
+        candidate = candidates[0]
+        rounds = rcv_results.get_candidate_rounds(candidate)
+
+        # Test the vote totals.
+        self.assertEqual([r.votes for r in rounds], [600, 650])
+        # Test the transfer totals.
+        self.assertEqual([r.transfer for r in rounds], [600, 50])
+
+    def test_find_max_round(self):
+        rcv_results = self.make_test_results()
+        candidates = rcv_results.candidates
+
+        cases = [
+            (0, 2),
+            (1, 3),
+            (2, 3),
+            (3, 1),
+        ]
+        for index, expected in cases:
+            with self.subTest(index=index):
+                candidate = candidates[index]
+                actual = rcv_results.find_max_round(candidate)
+                self.assertEqual(actual, expected)

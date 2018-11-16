@@ -567,9 +567,9 @@ def compute_max_rounds(rcv_totals, results_mapping, choices):
     rcv_results = RCVResults(rcv_totals, results_mapping=results_mapping,
                              candidates=choices)
     max_rounds = {}
-    for choice in choices:
-        max_round = rcv_results.find_max_round(choice=choice)
-        max_rounds[choice.id] = max_round
+    for candidate in choices:
+        max_round = rcv_results.find_max_round(candidate)
+        max_rounds[candidate.id] = max_round
 
     return max_rounds
 

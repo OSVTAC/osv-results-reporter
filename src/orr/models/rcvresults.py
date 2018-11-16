@@ -51,30 +51,6 @@ class RCVResults:
         self.results_mapping = results_mapping
         self.candidates = candidates
 
-    def find_max_round(self, choice):
-        """
-        Return the max round for a choice, as a (1-based) integer round number.
-
-        Args:
-          results_mapping: a ResultsMapping object.
-          rcv_results: a list of tuples, one for each round, starting with the
-            first round.
-          choice: a Choice object.
-        """
-        rcv_totals = self.rcv_totals
-        results_mapping = self.results_mapping
-
-        index = results_mapping.get_candidate_index(choice)
-        for round_number, row in enumerate(rcv_totals):
-            if row[index] is None:
-                break
-        else:
-            round_number += 1
-
-        assert round_number > 0
-
-        return round_number
-
     def get_candidate_total(self, candidate, round_num):
         """
         Return a candidate's vote total in a round.
@@ -99,3 +75,34 @@ class RCVResults:
 
         return round_total
 
+    def get_candidate_rounds(self, candidate):
+        """
+        Return a list of RoundTotal objects.
+        """
+        index = self.results_mapping.get_candidate_index(candidate)
+
+        rounds = []
+        prev_total = 0
+        for round_totals in self.rcv_totals:
+            total = round_totals[index]
+            if total is None:
+                break
+
+            transfer = total - prev_total
+            round_total = RoundTotal(total, transfer=transfer)
+            rounds.append(round_total)
+
+            prev_total = total
+
+        return rounds
+
+    def find_max_round(self, candidate):
+        """
+        Return the max round for a choice, as a (1-based) integer round number.
+
+        Args:
+          candidate: a Candidate object.
+        """
+        rounds = self.get_candidate_rounds(candidate)
+
+        return len(rounds)
