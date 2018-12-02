@@ -61,7 +61,7 @@
         </thead>
         <tbody class="choices">
           {% for choice, round in rcv_results.rcv_summary() %}
-            <tr {% if choice.winner %}class="winner"{% endif %}>
+            <tr {%- if choice.winner %}class="winner"{% endif -%}>
               <td>{{ choice.ballot_title|translate }}</td>
               <td>{{ round.votes }}</td>
               <td>{{ round.round_num }}</td>
@@ -83,7 +83,7 @@
       <tbody class="choices">
         {% for choice in contest.choices %}
         {# TODO: Make choice.winner exist/work #}
-          <tr {% if choice.winner %}class="winner"{% endif %}>
+          <tr {%- if choice.winner %}class="winner"{% endif -%}>
             <td>{{ choice.ballot_title|translate }}</td>
             {% for v in contest.summary_results(choice) %}
               <td>{{ v }}</td>

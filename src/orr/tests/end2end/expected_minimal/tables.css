@@ -1,0 +1,16 @@
+.table {
+  border: 1px solid #aaa;
+  border-collapse: collapse;
+  min-width: 40%;
+}
+.table tbody {
+  border-top: 4px solid #aaa;
+}
+.table td,
+.table th {
+  border: 1px solid #aaa;
+  padding: 0.25em;
+}
+.table th {
+  text-align: inherit;
+}

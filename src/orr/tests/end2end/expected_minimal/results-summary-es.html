@@ -3,6 +3,7 @@
   <meta charset="utf-8">
   <title>5 jun. 2018 -
 Summary Results</title>
+<link rel="stylesheet" href="tables.css">
 </head>
 <body>
   <h1>Summary Results</h1>
@@ -26,57 +27,73 @@ Summary Results</title>
     <p>346 of 346 Precincts Reporting (100.00%)
     <a href="results-detail/contest-403-es.html">[Detailed results]</a>
     </p>
-    <table>
-      <thead><tr><th>&nbsp;</th>
-      <th>Total</th>
-      <th>Election Day</th>
-      <th>Vote By Mail</th>
-      </tr></thead>
-        <tr><td>DAVID CHIU</td>
-        <td>18471</td>
-        <td>8437</td>
-        <td>10034</td>
+    <table class="table summary-table">
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+            <th>Total</th>
+            <th>Election Day</th>
+            <th>Vote By Mail</th>
         </tr>
-        <tr><td>ALEJANDRO FERNANDEZ</td>
-        <td>115997</td>
-        <td>52699</td>
-        <td>63298</td>
-        </tr>
-        <tr><td>Registered Voters</td>
-        <td>298,938</td>
-        <td>298,938</td>
-        <td>298,938</td>
-        </tr>
-        <tr><td>Ballots Cast</td>
-        <td>158,051</td>
-        <td>74,785</td>
-        <td>83,266</td>
-        </tr>
-        <tr><td>Ballots Counted</td>
-        <td>158,051</td>
-        <td>74,785</td>
-        <td>83,266</td>
-        </tr>
-        <tr><td>Ballots Rejected</td>
-        <td>0</td>
-        <td>0</td>
-        <td>0</td>
-        </tr>
-        <tr><td>Ballots Uncounted</td>
-        <td>0</td>
-        <td>0</td>
-        <td>0</td>
-        </tr>
-        <tr><td>Undervotes</td>
-        <td>23,539</td>
-        <td>13,631</td>
-        <td>9,908</td>
-        </tr>
-        <tr><td>Overvotes</td>
-        <td>44</td>
-        <td>18</td>
-        <td>26</td>
-        </tr>
+      </thead>
+      <tbody class="choices">
+          <tr>
+            <td>DAVID CHIU</td>
+              <td>18471</td>
+              <td>8437</td>
+              <td>10034</td>
+          </tr>
+          <tr>
+            <td>ALEJANDRO FERNANDEZ</td>
+              <td>115997</td>
+              <td>52699</td>
+              <td>63298</td>
+          </tr>
+      </tbody>
+      <tbody class="result-stats">
+          <tr>
+            <td>Registered Voters</td>
+              <td>298,938</td>
+              <td>298,938</td>
+              <td>298,938</td>
+          </tr>
+          <tr>
+            <td>Ballots Cast</td>
+              <td>158,051</td>
+              <td>74,785</td>
+              <td>83,266</td>
+          </tr>
+          <tr>
+            <td>Ballots Counted</td>
+              <td>158,051</td>
+              <td>74,785</td>
+              <td>83,266</td>
+          </tr>
+          <tr>
+            <td>Ballots Rejected</td>
+              <td>0</td>
+              <td>0</td>
+              <td>0</td>
+          </tr>
+          <tr>
+            <td>Ballots Uncounted</td>
+              <td>0</td>
+              <td>0</td>
+              <td>0</td>
+          </tr>
+          <tr>
+            <td>Undervotes</td>
+              <td>23,539</td>
+              <td>13,631</td>
+              <td>9,908</td>
+          </tr>
+          <tr>
+            <td>Overvotes</td>
+              <td>44</td>
+              <td>18</td>
+              <td>26</td>
+          </tr>
+      </tbody>
     </table>
 
           <h3>CARGOS NO PARTIDARIOS</h3>
@@ -93,7 +110,7 @@ Summary Results</title>
       <a href="results-rcv/contest-598-es.html">[RCV rounds]</a>
     <a href="results-detail/contest-598-es.html">[Detailed results]</a>
     </p>
-      <table>
+      <table class="table summary-table">
         <thead>
           <tr>
             <th>Candidate</th>
@@ -102,54 +119,56 @@ Summary Results</title>
             <th>Percent</th>
           </tr>
         </thead>
-          <tr>
-            <td>LONDON BREED</td>
-            <td>115977</td>
-            <td>8</td>
-            <td>50.55%</td>
-          </tr>
-          <tr>
-            <td>MARK LENO</td>
-            <td>113431</td>
-            <td>8</td>
-            <td>49.45%</td>
-          </tr>
-          <tr>
-            <td>JANE KIM</td>
-            <td>66043</td>
-            <td>7</td>
-            <td>27.81%</td>
-          </tr>
-          <tr>
-            <td>ANGELA ALIOTO</td>
-            <td>21981</td>
-            <td>6</td>
-            <td>8.94%</td>
-          </tr>
-          <tr>
-            <td>ELLEN LEE ZHOU</td>
-            <td>10637</td>
-            <td>5</td>
-            <td>4.28%</td>
-          </tr>
-          <tr>
-            <td>RICHIE GREENBERG</td>
-            <td>7242</td>
-            <td>4</td>
-            <td>2.89%</td>
-          </tr>
-          <tr>
-            <td>AMY FARAH WEISS</td>
-            <td>1735</td>
-            <td>3</td>
-            <td>0.69%</td>
-          </tr>
-          <tr>
-            <td>MICHELLE BRAVO</td>
-            <td>900</td>
-            <td>2</td>
-            <td>0.36%</td>
-          </tr>
+        <tbody class="choices">
+            <tr>
+              <td>LONDON BREED</td>
+              <td>115977</td>
+              <td>8</td>
+              <td>50.55%</td>
+            </tr>
+            <tr>
+              <td>MARK LENO</td>
+              <td>113431</td>
+              <td>8</td>
+              <td>49.45%</td>
+            </tr>
+            <tr>
+              <td>JANE KIM</td>
+              <td>66043</td>
+              <td>7</td>
+              <td>27.81%</td>
+            </tr>
+            <tr>
+              <td>ANGELA ALIOTO</td>
+              <td>21981</td>
+              <td>6</td>
+              <td>8.94%</td>
+            </tr>
+            <tr>
+              <td>ELLEN LEE ZHOU</td>
+              <td>10637</td>
+              <td>5</td>
+              <td>4.28%</td>
+            </tr>
+            <tr>
+              <td>RICHIE GREENBERG</td>
+              <td>7242</td>
+              <td>4</td>
+              <td>2.89%</td>
+            </tr>
+            <tr>
+              <td>AMY FARAH WEISS</td>
+              <td>1735</td>
+              <td>3</td>
+              <td>0.69%</td>
+            </tr>
+            <tr>
+              <td>MICHELLE BRAVO</td>
+              <td>900</td>
+              <td>2</td>
+              <td>0.36%</td>
+            </tr>
+        </tbody>
       </table>
 
           <h3>INICIATIVAS DE LEY PRESENTADAS A LOS ELECTORES</h3>
@@ -162,57 +181,73 @@ Summary Results</title>
     <p>597 of 597 Precincts Reporting (100.00%)
     <a href="results-detail/contest-617-es.html">[Detailed results]</a>
     </p>
-    <table>
-      <thead><tr><th>&nbsp;</th>
-      <th>Total</th>
-      <th>Election Day</th>
-      <th>Vote By Mail</th>
-      </tr></thead>
-        <tr><td>SÍ</td>
-        <td>180002</td>
-        <td>89356</td>
-        <td>90646</td>
+    <table class="table summary-table">
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+            <th>Total</th>
+            <th>Election Day</th>
+            <th>Vote By Mail</th>
         </tr>
-        <tr><td>NO</td>
-        <td>57054</td>
-        <td>24012</td>
-        <td>33042</td>
-        </tr>
-        <tr><td>Registered Voters</td>
-        <td>513,573</td>
-        <td>513,573</td>
-        <td>513,573</td>
-        </tr>
-        <tr><td>Ballots Cast</td>
-        <td>274,207</td>
-        <td>131,900</td>
-        <td>142,307</td>
-        </tr>
-        <tr><td>Ballots Counted</td>
-        <td>272,618</td>
-        <td>131,676</td>
-        <td>140,942</td>
-        </tr>
-        <tr><td>Ballots Rejected</td>
-        <td>1,589</td>
-        <td>224</td>
-        <td>1,365</td>
-        </tr>
-        <tr><td>Ballots Uncounted</td>
-        <td>0</td>
-        <td>0</td>
-        <td>0</td>
-        </tr>
-        <tr><td>Undervotes</td>
-        <td>35,462</td>
-        <td>18,253</td>
-        <td>17,209</td>
-        </tr>
-        <tr><td>Overvotes</td>
-        <td>100</td>
-        <td>55</td>
-        <td>45</td>
-        </tr>
+      </thead>
+      <tbody class="choices">
+          <tr>
+            <td>SÍ</td>
+              <td>180002</td>
+              <td>89356</td>
+              <td>90646</td>
+          </tr>
+          <tr>
+            <td>NO</td>
+              <td>57054</td>
+              <td>24012</td>
+              <td>33042</td>
+          </tr>
+      </tbody>
+      <tbody class="result-stats">
+          <tr>
+            <td>Registered Voters</td>
+              <td>513,573</td>
+              <td>513,573</td>
+              <td>513,573</td>
+          </tr>
+          <tr>
+            <td>Ballots Cast</td>
+              <td>274,207</td>
+              <td>131,900</td>
+              <td>142,307</td>
+          </tr>
+          <tr>
+            <td>Ballots Counted</td>
+              <td>272,618</td>
+              <td>131,676</td>
+              <td>140,942</td>
+          </tr>
+          <tr>
+            <td>Ballots Rejected</td>
+              <td>1,589</td>
+              <td>224</td>
+              <td>1,365</td>
+          </tr>
+          <tr>
+            <td>Ballots Uncounted</td>
+              <td>0</td>
+              <td>0</td>
+              <td>0</td>
+          </tr>
+          <tr>
+            <td>Undervotes</td>
+              <td>35,462</td>
+              <td>18,253</td>
+              <td>17,209</td>
+          </tr>
+          <tr>
+            <td>Overvotes</td>
+              <td>100</td>
+              <td>55</td>
+              <td>45</td>
+          </tr>
+      </tbody>
     </table>
   </div>
 </body>
