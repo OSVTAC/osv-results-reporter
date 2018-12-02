@@ -2,6 +2,11 @@
 
 {% block title %}Summary Results{% endblock %}
 
+{% block styles %}
+{# TODO move to static/tables.css once render_template_dir() supports that #}
+<link rel="stylesheet" href="tables.css">
+{% endblock %}
+
 {% block content %}
   <p>
   {% with %}
@@ -45,7 +50,7 @@
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
       {% set rcv_results = contest.make_rcv_results("RSTot") %}
-      <table>
+      <table class="table summary-table">
         <thead>
           <tr>
             <th>Candidate</th>
@@ -54,36 +59,48 @@
             <th>Percent</th>
           </tr>
         </thead>
-        {% for choice, round in rcv_results.rcv_summary() %}
-          <tr>
-            <td>{{ choice.ballot_title|translate }}</td>
-            <td>{{ round.votes }}</td>
-            <td>{{ round.round_num }}</td>
-            <td>{{ round.percent|format_percent }}</td>
-          </tr>
-        {% endfor %}
+        <tbody class="choices">
+          {% for choice, round in rcv_results.rcv_summary() %}
+            <tr {% if choice.winner %}class="winner"{% endif %}>
+              <td>{{ choice.ballot_title|translate }}</td>
+              <td>{{ round.votes }}</td>
+              <td>{{ round.round_num }}</td>
+              <td>{{ round.percent|format_percent }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     {% else %}
-    <table>
-      <thead><tr><th>&nbsp;</th>
-      {% for vg in contest.voting_groups_from_idlist() %}
-      <th>{{ vg.heading }}</th>
-      {% endfor %}
-      </tr></thead>
-      {% for choice in contest.choices %}
-        <tr><td>{{ choice.ballot_title|translate }}</td>
-        {% for v in contest.summary_results(choice) %}
-        <td>{{ v }}</td>
-        {% endfor %}
+    <table class="table summary-table">
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+          {% for vg in contest.voting_groups_from_idlist() %}
+            <th>{{ vg.heading }}</th>
+          {% endfor %}
         </tr>
-      {% endfor %}
-      {% for result_stat in contest.result_stats %}
-        <tr><td>{{ result_stat.heading }}</td>
-        {% for v in contest.summary_results(result_stat) %}
-        <td>{{ v|format_number}}</td>
+      </thead>
+      <tbody class="choices">
+        {% for choice in contest.choices %}
+        {# TODO: Make choice.winner exist/work #}
+          <tr {% if choice.winner %}class="winner"{% endif %}>
+            <td>{{ choice.ballot_title|translate }}</td>
+            {% for v in contest.summary_results(choice) %}
+              <td>{{ v }}</td>
+            {% endfor %}
+          </tr>
         {% endfor %}
-        </tr>
-      {% endfor %}
+      </tbody>
+      <tbody class="result-stats">
+        {% for result_stat in contest.result_stats %}
+          <tr>
+            <td>{{ result_stat.heading }}</td>
+            {% for v in contest.summary_results(result_stat) %}
+              <td>{{ v|format_number}}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
     </table>
     {% endif %}
     {% endfor %}

@@ -3,10 +3,20 @@
 {% block title %}RCV Rounds -
 {{ options.contest.ballot_title|translate}}{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="../tables.css">
+<link rel="stylesheet" href="../results-rcv.css">
+{% endblock %}
+
 {% macro show_candidate_round(candidate_result) -%}
-  <td>{{ candidate_result.transfer|format_number }}</td>
-  <td>{{ candidate_result.votes|format_number }}</td>
-  <td>{% if candidate_result.after_eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
+  {% with -%}
+    {% set eliminated = candidate_result.after_eliminated %}
+    {% set maybeEliminated = 'eliminated' if eliminated else '' %}
+    {% set maybePlus = '+' if not eliminated else '' %}
+    <td class="{{ maybeEliminated }}">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
+    <td class="{{ maybeEliminated }}">{{ candidate_result.votes|format_number }}</td>
+    <td class="{{ maybeEliminated }}">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
+  {%- endwith %}
 {%- endmacro %}
 
 {% block content %}
@@ -15,7 +25,7 @@
     {% set contest = options.contest %}
     {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
     {% set rcv_results = contest.make_rcv_results("RSTot") %}
-    <table>
+    <table class="table table-rcv">
       <thead>
         <tr>
           <th>&nbsp;</th>

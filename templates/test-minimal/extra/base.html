@@ -1,8 +1,11 @@
 <html lang="{{ options.lang }}">
 <head>
   <meta charset="utf-8">
-  <title>{{ election.date|format_date_medium }} -
-    {% block title %}{% endblock %}</title>
+  <title>
+    {{ election.date|format_date_medium }} -
+    {% block title %}{% endblock %}
+  </title>
+  {% block styles %}{% endblock %}
 </head>
 <body>
   <h1>{{ self.title() }}</h1>

@@ -3,6 +3,10 @@
 {% block title %}Detailed Results -
 {{ options.contest.ballot_title|translate}}{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="../tables.css">
+{% endblock %}
+
 {% block content %}
   {% with %}
     {% set contest = options.contest %}
@@ -28,7 +32,7 @@
       </p>
     {% endif %}
     <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})</p>
-    <table>
+    <table class="table detail-table">
       <thead><tr>{% with headings=contest.detail_headings(translate=translator) %}<th>{{ headings|first }}</th>
       {% for heading in headings[1:] %}
         <th class="choice">{{ heading }}</th>
