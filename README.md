@@ -1,6 +1,7 @@
 # Open Source Voting Results Reporter (ORR)
 
 [![Build Status](https://travis-ci.org/OSVTAC/osv-results-reporter.svg?branch=master)](https://travis-ci.org/OSVTAC/osv-results-reporter)
+[![Docker Repository on Quay](https://quay.io/repository/osvtac/osv-results-reporter/status "Docker Repository on Quay")](https://quay.io/repository/osvtac/osv-results-reporter)
 
 ## Election results report generator (HTML/PDF/XLS)
 
