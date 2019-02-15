@@ -26,10 +26,12 @@ spec:
           mountPath: /usr/share/nginx/html
       - name: orr
         image: quay.io/osvtac/osv-results-reporter
+        imagePullPolicy: Always
+        workingDir: /usr/src/app
         volumeMounts:
         - name: shared-data
           mountPath: /web-data
-        args: ["--output-dir", "/web-data", "--input", "/app/sampledata/test-minimal", "--template", "/app/templates/test-minimal"]
+        args: ["--output-dir", "/web-data", "--input", "sampledata/test-minimal", "--template", "templates/test-minimal"]
 ---
 kind: Service
 apiVersion: v1
