@@ -7,7 +7,7 @@ RUN apt-get clean && apt-get update \
 RUN pip install pip==18.1
 
 # Put all of our files in an application-specific directory.
-WORKDIR app
+WORKDIR /usr/src/app
 
 # Only copy the requirements file before installing requirements so that
 # updating our Python code doesn't force the requirements to be reinstalled.
