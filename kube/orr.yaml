@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orr
+  labels:
+    app: orr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orr
+  template:
+    metadata:
+      name: orr
+      labels:
+        app: orr
+    spec:
+      volumes:
+      - name: shared-data
+        emptyDir: {}
+      containers:
+      - name: nginx
+        image: nginx
+        volumeMounts:
+        - name: shared-data
+          mountPath: /usr/share/nginx/html
+      - name: orr
+        image: quay.io/osvtac/osv-results-reporter
+        volumeMounts:
+        - name: shared-data
+          mountPath: /web-data
+        args: ["--output-dir", "/web-data", "--input", "/app/sampledata/test-minimal", "--template", "/app/templates/test-minimal"]
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: orr
+spec:
+  selector:
+    app: orr
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
