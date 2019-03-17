@@ -373,7 +373,8 @@ def process_auto_attr(loader, model_obj, attr, data, context):
 
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
-def load_object(loader, data, cls_info=None, context=None):
+# TODO: expose "strict" via the command-line.
+def load_object(loader, data, cls_info=None, context=None, strict=False):
     """
     Load and return an object in our data model.
 
@@ -421,7 +422,10 @@ def load_object(loader, data, cls_info=None, context=None):
     # Check that all keys in the JSON have been processed.
     if data:
         msg = f'unrecognized keys for model object {model_obj!r}: {sorted(data.keys())}'
-        raise RuntimeError(msg)
+        if strict:
+            raise RuntimeError(msg)
+        else:
+            _log.warning(msg)
 
     if hasattr(loader, 'finalize'):
         # Perform class-specific init after data is loaded
