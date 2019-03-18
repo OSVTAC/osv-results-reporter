@@ -57,9 +57,12 @@
             <th>Votes</th>
             <th>Round</th>
             <th>Percent</th>
+            <th class="bars-header"></th>
           </tr>
         </thead>
         <tbody class="choices">
+          {# HACK: overwriting variables within loops doesn't work in Jinja, but updating dicts does #}
+          {% set winnerPercent = {'percent': 100} %}
           {% for choice, round in rcv_results.rcv_summary() %}
             {# TODO use choice.winner when available #}
             <tr {%- if loop.first %} class="winner"{% endif -%}>
@@ -67,6 +70,10 @@
               <td>{{ round.votes }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
+              {%- if loop.first -%}
+                {%- if winnerPercent.update({'percent': round.percent}) -%}{%- endif -%}
+              {%- endif -%}
+              <div class="percentage-bar" style="width: {{round.percent / winnerPercent.percent * 100}}%"></div>
             </tr>
           {% endfor %}
         </tbody>

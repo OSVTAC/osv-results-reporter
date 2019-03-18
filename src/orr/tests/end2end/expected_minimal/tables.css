@@ -18,3 +18,18 @@
 .table .winner .title {
     font-weight: bold;
 }
+
+.table .bars-header:before {
+    content: ' ';
+    display: block;
+    width: 10em;
+}
+
+.table .percentage-bar {
+    height: 1em;
+    background-color: orange;
+}
+
+.table .winner .percentage-bar {
+    background-color: green;
+}
