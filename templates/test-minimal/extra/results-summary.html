@@ -73,7 +73,10 @@
               {%- if loop.first -%}
                 {%- if winnerPercent.update({'percent': round.percent}) -%}{%- endif -%}
               {%- endif -%}
-              <div class="percentage-bar" style="width: {{round.percent / winnerPercent.percent * 100}}%"></div>
+              <td class="bars-row">
+                  <div class="percentage-bar" style="width: {{round.percent / winnerPercent.percent * 100}}%"></div>
+                  <div class="cutoff-line" style="left: calc({{50 / winnerPercent.percent * 100}}% - 0.25em)"></div>
+              </td>
             </tr>
           {% endfor %}
         </tbody>
