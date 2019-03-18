@@ -53,7 +53,7 @@
       <table class="table summary-table">
         <thead>
           <tr>
-            <th>Candidate</th>
+            <th></th>
             <th>Votes</th>
             <th>Round</th>
             <th>Percent</th>
@@ -61,8 +61,9 @@
         </thead>
         <tbody class="choices">
           {% for choice, round in rcv_results.rcv_summary() %}
-            <tr {%- if choice.winner %}class="winner"{% endif -%}>
-              <td>{{ choice.ballot_title|translate }}</td>
+            {# TODO use choice.winner when available #}
+            <tr {%- if loop.first %} class="winner"{% endif -%}>
+              <td class="title">{{ choice.ballot_title|translate }}</td>
               <td>{{ round.votes }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>

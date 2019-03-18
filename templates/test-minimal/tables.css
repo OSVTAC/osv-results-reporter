@@ -14,3 +14,7 @@
 .table th {
   text-align: inherit;
 }
+
+.table .winner .title {
+    font-weight: bold;
+}
