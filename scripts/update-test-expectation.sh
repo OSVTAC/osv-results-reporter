@@ -30,12 +30,25 @@ set -x
 git rm --force --ignore-unmatch -r src/orr/tests/end2end/expected_minimal \
     || { echo 'git-rm failed' ; exit 1; }
 
-orr --debug --input sampledata/test-minimal \
-    --build-time "2018-06-01 20:48:12" --deterministic \
-    --template templates/test-minimal \
-    --extra templates/test-minimal/extra \
-    --output-parent src/orr/tests/end2end --output-dir expected_minimal \
-    || { echo 'running orr failed' ; exit 1; }
+if [ "$1" == "docker" ];
+then
+    docker build -t orr .
+    docker rm orr_test_builder
+    docker run --name orr_test_builder orr --debug --input sampledata/test-minimal \
+        --build-time "2018-06-01 20:48:12" --deterministic \
+        --template templates/test-minimal \
+        --extra templates/test-minimal/extra \
+        --output-dir expected_minimal \
+        || { echo 'running orr failed' ; exit 1; }
+    docker cp orr_test_builder:/app/_build/expected_minimal/. src/orr/tests/end2end/expected_minimal
+else
+    orr --debug --input sampledata/test-minimal \
+        --build-time "2018-06-01 20:48:12" --deterministic \
+        --template templates/test-minimal \
+        --extra templates/test-minimal/extra \
+        --output-parent src/orr/tests/ --output-dir expected_minimal \
+        || { echo 'running orr failed' ; exit 1; }
+fi
 
 git add src/orr/tests/end2end/expected_minimal/ \
     || { echo 'git-add failed' ; exit 1; }
