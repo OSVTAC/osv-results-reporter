@@ -244,6 +244,7 @@
                     "tl": "Maaari ninyong pagsunud-sunurin ang hanggang sa tatlong pinili. Para pagsunud-sunurin ang mas kaunti sa tatlong kandidato, iwanan na blangko ang anumang mga natitirang pagpipilian.",
                     "zh": "您最多可以投選三個選擇。如果投選的候選人少於三名候選人，多餘欄目可留為空白。"
                 },
+                "max_ranked": 3,
                 "number_elected": 1,
                 "result_style": "EMRW",
                 "vote_for_msg": {
