@@ -767,6 +767,7 @@ class CandidateLoader:
 CONTEST_TO_CHOICE_LOADER = {
     'office': CandidateLoader,
     'measure': ChoiceLoader,
+    'retention': ChoiceLoader,
     'ynoffice': ChoiceLoader,
 }
 
