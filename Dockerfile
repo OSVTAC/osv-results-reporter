@@ -4,7 +4,7 @@ RUN apt-get clean && apt-get update \
     && apt-get install -y locales
 
 # Upgrade to the latest pip.
-RUN pip install pip==18.1
+RUN pip install pip==19.0.3
 
 # Put all of our files in an application-specific directory.
 WORKDIR app
