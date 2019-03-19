@@ -195,7 +195,7 @@ class AutoAttr:
     # TODO: allow attr_name to be None to indicate that no attribute
     #  should be set.
     def __init__(self, attr_name, load_value, data_key=None, context_keys=None,
-        unpack_context=False):
+        unpack_context=False, required=False):
         """
         Args:
           attr_name: the name of the attribute to set.
@@ -209,6 +209,8 @@ class AutoAttr:
             attribute depends on.  Defaults to not depending on the context.
           unpack_context: whether to unpack the context argument into
             kwargs when calling the load_value() function.
+          required: whether the data_key is required to be present in the
+            JSON.
         """
         if data_key is None:
             data_key = attr_name
@@ -219,6 +221,7 @@ class AutoAttr:
         self.context_keys = set(context_keys)
         self.data_key = data_key
         self.load_value = load_value
+        self.required = required
         self.unpack_context = unpack_context
 
     def __repr__(self):
@@ -269,13 +272,18 @@ class AutoAttr:
           data: the dict of data containing the key-value to process.
           context: the current Jinja2 context.
         """
-        if self.data_key is False:
-            # Then no data is required.
+        key = self.data_key
+        if key == False:
+            # Then no value should be accessed.
             value = None
+        elif key in data:
+            value = data.pop(key)
+        elif self.required:
+            msg = f'key {key!r} missing from data; remaining keys: {sorted(data)}'
+            raise RuntimeError(msg)
         else:
-            value = data.pop(self.data_key, None)
-            if value is None:
-                return
+            # Then there is no value to process.
+            return
 
         kwargs = self.make_load_value_kwargs(context)
 
@@ -821,6 +829,7 @@ def load_results_mapping(contest_loader, data):
     contest = contest_loader.model_object
     choice_count = len(contest.choices_by_id)
     result_style = contest.result_style
+
     return ResultsMapping(result_style.result_stat_types, choice_count=choice_count)
 
 
@@ -854,7 +863,7 @@ class ContestLoader:
         ('number_elected', parse_as_is),
         ('question_text', parse_as_is),
         AutoAttr('result_style', load_contest_result_style,
-            context_keys=('result_styles_by_id',), unpack_context=True),
+            context_keys=('result_styles_by_id',), unpack_context=True, required=True),
         AutoAttr('results_mapping', load_results_mapping, data_key=False),
         AutoAttr('voting_district', load_voting_district,
             context_keys=('areas_by_id',), unpack_context=True),
