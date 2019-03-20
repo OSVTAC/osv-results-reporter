@@ -379,6 +379,26 @@ def process_auto_attr(loader, model_obj, attr, data, context):
         raise RuntimeError(f"couldn't set {attr_name!r} on {model_obj!r}")
 
 
+# TODO: test this.
+def format_abbreviated_dict(mapping):
+    """
+    Return a string formatting a dict for brief display.
+    """
+    items = []
+    for key, value in mapping.items():
+        if type(value) in (dict, list):
+            value = type(value).__name__
+        else:
+            value = repr(value)
+
+        # Truncate the value in case e.g. a string is really long.
+        value = str(value)[:100]
+        item = f'* {key}: {value}'
+        items.append(item)
+
+    return '\n'.join(items)
+
+
 # TODO: make context required?
 # TODO: rename cls_info to init_kwargs?
 # TODO: expose "strict" via the command-line.
@@ -422,10 +442,20 @@ def load_object(loader, data, cls_info=None, context=None, strict=False):
     # Set the object being loaded on the loader.
     loader.model_object = model_obj
 
-    # Set all of the (remaining) object attributes -- iterating over all
-    # of the auto_attrs and parsing the corresponding JSON key values.
-    for attr in auto_attrs:
-        process_auto_attr(loader, model_obj, attr, data=data, context=context)
+    # Make a (shallow) copy of the data because process_auto_attr() changes
+    # it while processing.  We want a copy of the original in case an error
+    # occurs.
+    original_data = data.copy()
+
+    try:
+        # Set all of the (remaining) object attributes -- iterating over all
+        # of the auto_attrs and parsing the corresponding JSON key values.
+        for attr in auto_attrs:
+            process_auto_attr(loader, model_obj, attr, data=data, context=context)
+    except Exception:
+        # Include data about the object that failed in the error message.
+        formatted = format_abbreviated_dict(original_data)
+        raise RuntimeError(f'json data has key values:\n{formatted}')
 
     # Check that all keys in the JSON have been processed.
     if data:
