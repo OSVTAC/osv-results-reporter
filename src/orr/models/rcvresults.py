@@ -42,7 +42,7 @@ class CandidateRound:
 
     @property
     def percent(self):
-        return 100 * (self.votes / self.continuing)
+        return 100 * (self.votes / self.continuing) if self.continuing else 0
 
 
 class RCVResults:
