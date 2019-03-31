@@ -89,6 +89,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
         to_xml=templating.to_xml,
         to_xml_attr=templating.to_xml_attr,
         format_number=utils.format_number,
+        compute_percent=utils.compute_percent,
         format_percent=utils.format_percent,
         format_percent2=utils.format_percent2,
     )
