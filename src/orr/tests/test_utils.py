@@ -104,7 +104,24 @@ class UtilsModuleTest(TestCase):
             with self.subTest(args=args):
                 num, denom = args
                 actual = utils.compute_percent(num, denom)
-                self.assertAlmostEqual(actual, expected)
+                if type(expected) is int:
+                    # Use exact equality when the result is expected to be
+                    # an integer (e.g. so 99.99999999999999 isn't acceptable
+                    # when 100 is expected).
+                    self.assertEqual(actual, expected)
+                else:
+                    # Use approximate equality for floats.
+                    self.assertAlmostEqual(actual, expected)
+
+    def test_compute_percent__float_handling(self):
+        """
+        Test a case with the property that 100 * x / x != 100.
+        """
+        x = 1 / 3
+        self.assertNotEqual(100 * x / x, 100)
+
+        actual = utils.compute_percent(x, x)
+        self.assertEqual(actual, 100)
 
     def test_format_percent(self):
         cases = [
