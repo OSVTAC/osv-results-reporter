@@ -23,6 +23,9 @@
 Model classes to support RCV contest results.
 """
 
+import orr.utils as utils
+
+
 class CandidateRound:
 
     # TODO: also include status like: elected, eliminated, etc.
@@ -42,7 +45,7 @@ class CandidateRound:
 
     @property
     def percent(self):
-        return 100 * (self.votes / self.continuing) if self.continuing else 0
+        return utils.compute_percent(self.votes, self.continuing)
 
 
 class RCVResults:
