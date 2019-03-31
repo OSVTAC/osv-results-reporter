@@ -4,14 +4,14 @@
 #
 #    pip-compile --output-file src/requirements.txt src/requirements.in
 #
-babel==2.5.3
+babel==2.6.0
 et-xmlfile==1.0.1         # via openpyxl
 jdcal==1.4                # via openpyxl
 jinja2==2.10
-markupsafe==1.0           # via jinja2
-openpyxl==2.5.3
-pillow==5.1.0             # via reportlab
-pytz==2018.4              # via babel
-pyyaml==3.12
-reportlab==3.4.0
-xlsxwriter==1.0.5
+markupsafe==1.1.1         # via jinja2
+openpyxl==2.6.2
+pillow==5.4.1             # via reportlab
+pytz==2018.9              # via babel
+pyyaml==5.1
+reportlab==3.5.17
+xlsxwriter==1.1.5
