@@ -572,6 +572,9 @@ def read_rcv_totals(tsv_stream, iter_rows, rounds):
                    f'(line={tsv_stream.line_num}, round={rcv_round}):\n{tsv_stream.line!r}')
             raise RuntimeError(msg)
 
+        # The empty string is used to signify that the candidate has been
+        # eliminated.  Otherwise, the candidate is still in the running
+        # and the value should be a numeric vote total.
         yield tuple(None if x == '' else int(x) for x in row[2:])
 
 
