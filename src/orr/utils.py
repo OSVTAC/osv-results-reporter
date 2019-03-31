@@ -145,6 +145,25 @@ def format_number(num):
     return f'{num:n}'
 
 
+def compute_percent(numer, denom):
+    """
+    Compute a numeric percent, given a numerator and denominator.
+
+    This function differs from the "format" variants below by returning
+    a number even if the denominator is 0.  This is useful in certain
+    situations (e.g. in templates) when a number is always desired.
+
+    >>> compute_percent(1, 3)
+    33.333333333333336
+    >>> compute_percent(1, 0)
+    0
+    """
+    if not denom:
+        return 0
+
+    return 100 * numer / denom
+
+
 def format_percent(percent):
     """
     Format a percentage for display.
@@ -156,6 +175,7 @@ def format_percent(percent):
         return ''
     return f'{percent:.2f}%'
 
+
 def format_percent2(num, denom):
     """
     Format a percentage for display as num/denom.
@@ -164,6 +184,7 @@ def format_percent2(num, denom):
         return ''
     else:
         return(format_percent(100 * num/denom))
+
 
 def read_json(filepath):
     """

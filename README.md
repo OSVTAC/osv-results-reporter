@@ -66,6 +66,12 @@ non-trivial template directory (the "test-minimal" one):
 $ python -m unittest discover orr
 ```
 
+To run an individual test, e.g.:
+
+```
+$ python -m unittest orr orr.tests.test_utils.UtilsModuleTest.test_compute_percent
+```
+
 For available options for running tests:
 
 ```

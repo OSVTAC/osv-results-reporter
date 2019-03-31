@@ -94,13 +94,24 @@ class UtilsModuleTest(TestCase):
 
         self.assertEqual(actual, expected)
 
+    def test_compute_percent(self):
+        cases = [
+            ((1, 3), 33.3333333),
+            # 0 is allowed for the denominator.
+            ((1, 0), 0),
+        ]
+        for args, expected in cases:
+            with self.subTest(args=args):
+                num, denom = args
+                actual = utils.compute_percent(num, denom)
+                self.assertAlmostEqual(actual, expected)
+
     def test_format_percent(self):
         cases = [
             (0, '0.00%'),
             (10, '10.00%'),
             (5.7777, '5.78%'),
         ]
-
         for percent, expected in cases:
             with self.subTest(percent=percent):
                 actual = utils.format_percent(percent)
