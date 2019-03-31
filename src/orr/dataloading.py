@@ -896,7 +896,7 @@ class ContestLoader:
             context_keys=('result_styles_by_id',), unpack_context=True, required=True),
         AutoAttr('results_mapping', load_results_mapping, data_key=False),
         AutoAttr('voting_district', load_voting_district,
-            context_keys=('areas_by_id',), unpack_context=True),
+            context_keys=('areas_by_id',), unpack_context=True, required=True),
         ('type', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
