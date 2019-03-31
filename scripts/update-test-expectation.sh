@@ -46,7 +46,7 @@ else
         --build-time "2018-06-01 20:48:12" --deterministic \
         --template templates/test-minimal \
         --extra templates/test-minimal/extra \
-        --output-parent src/orr/tests/ --output-dir expected_minimal \
+        --output-parent src/orr/tests/end2end --output-dir expected_minimal \
         || { echo 'running orr failed' ; exit 1; }
 fi
 
