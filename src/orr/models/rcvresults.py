@@ -28,17 +28,25 @@ import orr.utils as utils
 
 class CandidateRound:
 
+    """
+    Represents a candidate's state in a particular round of an RCV tally.
+    """
+
     # TODO: also include status like: elected, eliminated, etc.
-    def __init__(self, round_num, total, transfer, continuing, after_eliminated=False):
+    def __init__(self, round_num, total, transfer, continuing, is_leading=False,
+        after_eliminated=False):
         """
         Args:
+          is_leading: whether the candidate has the highest vote total
+            in this round (ties for the highest are permitted).
           after_eliminated: whether this is a placeholder round for a
             candidate after they have been eliminated.  This is useful
             for showing the negative transfer when a candidate has been
             eliminated.
         """
-        self.continuing = continuing
         self.after_eliminated = after_eliminated
+        self.continuing = continuing
+        self.is_leading = is_leading
         self.round_num = round_num
         self.transfer = transfer
         self.votes = total
@@ -67,8 +75,33 @@ class RCVResults:
         self.results_mapping = results_mapping
         self.rcv_totals = rcv_totals
 
+    @classmethod
+    def get_max_total(self, totals, indices):
+        """
+        Return the highest candidate votal total for the given (raw) round
+        vote totals.
+        """
+        # Skip None values (which correspond to a candidate being
+        # eliminated in the round).
+        return max(totals[i] for i in indices if totals[i] is not None)
+
     def get_continuing_index(self):
+        """
+        Return the totals index corresponding to the continuing total.
+        """
         return self.results_mapping.get_stat_index(self.continuing_stat)
+
+    def get_candidate_index(self, candidate):
+        """
+        Return the totals index corresponding to a candidate.
+        """
+        return self.results_mapping.get_candidate_index(candidate)
+
+    def get_candidate_indices(self):
+        """
+        Return the totals indices corresponding to candidates.
+        """
+        return [self.get_candidate_index(candidate) for candidate in self.candidates]
 
     def get_round_totals(self, round_num):
         return self.rcv_totals[round_num - 1]
@@ -87,7 +120,7 @@ class RCVResults:
         Return a candidate's vote total in a round.
         """
         round_totals = self.get_round_totals(round_num)
-        index = self.results_mapping.get_candidate_index(candidate)
+        index = self.get_candidate_index(candidate)
 
         return round_totals[index]
 
@@ -111,29 +144,35 @@ class RCVResults:
 
     def get_candidate_rounds(self, candidate):
         """
-        Return a list of CandidateRound objects.
+        Return a list of CandidateRound objects for a particular candidate.
         """
-        index = self.results_mapping.get_candidate_index(candidate)
         continuing_index = self.get_continuing_index()
+        candidate_index = self.get_candidate_index(candidate)
+        candidate_indices = self.get_candidate_indices()
 
         rounds = []
         after_eliminated = False
         prev_total = 0
         for round_num, round_totals in enumerate(self.rcv_totals, start=1):
-            total = round_totals[index]
-            if total is None:
-                total = 0
+            candidate_total = round_totals[candidate_index]
+            if candidate_total is None:
+                candidate_total = 0
                 after_eliminated = True
 
-            transfer = total - prev_total
+            # max_total is the highest **candidate** total in the round.
+            max_total = self.get_max_total(round_totals, indices=candidate_indices)
+            is_leading = (candidate_total == max_total)
+
+            transfer = candidate_total - prev_total
             continuing = round_totals[continuing_index]
-            cand_round = CandidateRound(round_num, total=total, transfer=transfer,
-                                        continuing=continuing, after_eliminated=after_eliminated)
+            cand_round = CandidateRound(round_num, total=candidate_total, transfer=transfer,
+                                        continuing=continuing, is_leading=is_leading,
+                                        after_eliminated=after_eliminated)
             rounds.append(cand_round)
             if after_eliminated:
                 break
 
-            prev_total = total
+            prev_total = candidate_total
 
         return rounds
 
