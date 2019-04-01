@@ -78,8 +78,7 @@ class RCVResults:
     @classmethod
     def get_max_total(self, totals, indices):
         """
-        Return the highest candidate votal total for the given (raw) round
-        vote totals.
+        Return the highest vote total for the given indices.
         """
         # Skip None values (which correspond to a candidate being
         # eliminated in the round).
