@@ -44,24 +44,29 @@ from orr.utils import truncate
 _log = logging.getLogger(__name__)
 
 
-# The directory, relative to the input directory, containing the
-# results-related input files.
-RESULTS_DIR = Path('resultdata')
+INPUT_FILE_NAME = 'election.json'
 
-# The path to the JSON contest status file, relative to the input directory.
-CONTEST_STATUS_PATH = RESULTS_DIR / 'contest-status.json'
+# The default directory containing the detailed results data files,
+# relative to the input directory.
+DEFAULT_RESULTS_DIR_NAME = 'resultdata'
+
+# The name of the contest status file, inside the input results directory.
+CONTEST_STATUS_FILE_NAME = 'contest-status.json'
 
 # The format string for the name of the file in the results directory
 # containing the detailed results for a contest.
 CONTEST_RESULTS_FILE_NAME_FORMAT = 'results-{}.tsv'
 
 
-def load_context(input_dir, build_time):
+def load_context(input_dir, input_results_dir, build_time):
     """
     Read the input data, and return the context to use for Jinja2.
 
     Args:
-      input_dir: the directory containing the input data, as a Path object.
+      input_dir: the directory containing the election.json file, as a
+        Path object.
+      input_results_dir: the directory containing the detailed results
+        data files, as a Path object.
       build_time: a datetime object representing the current build time,
         e.g. datetime.datetime.now().
 
@@ -78,11 +83,11 @@ def load_context(input_dir, build_time):
     """
     context = dict(build_time=build_time)
 
-    path = input_dir / 'election.json'
+    path = input_dir / INPUT_FILE_NAME
     data = utils.read_json(path)
 
     cls_info = dict(context=context)
-    root_loader = RootLoader(input_dir=input_dir)
+    root_loader = RootLoader(input_dir=input_dir, input_results_dir=input_results_dir)
 
     # This load_object() call returns a ModelRoot object, but we don't need
     # or use that object.  Instead, the context is the entry way we provide
@@ -527,8 +532,8 @@ def load_contest_status(election):
     Args:
       election: an Election object.
     """
-    input_dir = election.input_dir
-    path = input_dir / CONTEST_STATUS_PATH
+    input_results_dir = election.input_results_dir
+    path = input_results_dir / CONTEST_STATUS_FILE_NAME
 
     contests_data = utils.read_json(path)
 
@@ -547,11 +552,10 @@ def get_contest_results_path(contest):
     a contest.
     """
     election = contest.election
-    input_dir = election.input_dir
-    results_dir = input_dir / RESULTS_DIR
+    input_results_dir = election.input_results_dir
 
     file_name = CONTEST_RESULTS_FILE_NAME_FORMAT.format(contest.id)
-    path = results_dir / file_name
+    path = input_results_dir / file_name
 
     return path
 
@@ -1118,7 +1122,8 @@ def load_election(root_loader, election_data, context):
     Args:
       root_loader: a RootLoader object.
     """
-    cls_info = dict(input_dir=root_loader.input_dir)
+    cls_info = dict(input_dir=root_loader.input_dir,
+                    input_results_dir=root_loader.input_results_dir)
     election_loader = ElectionLoader()
     return load_object(election_loader, election_data, cls_info=cls_info, context=context)
 
@@ -1142,9 +1147,13 @@ class RootLoader:
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
 
-    def __init__(self, input_dir):
+    def __init__(self, input_dir, input_results_dir):
         """
         Args:
-          input_dir: the directory containing the input data, as a Path object.
+          input_dir: the directory containing the election.json file, as a
+            Path object.
+          input_results_dir: the directory containing the detailed results
+            data files, as a Path object.
         """
         self.input_dir = input_dir
+        self.input_results_dir = input_results_dir

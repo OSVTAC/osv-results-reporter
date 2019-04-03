@@ -35,12 +35,14 @@ from pathlib import Path
 from pprint import pprint
 import re
 import sys
+from textwrap import dedent
 
 from jinja2 import TemplateSyntaxError
 import yaml
 
 import orr.configlib as configlib
 import orr.dataloading as dataloading
+from orr.dataloading import INPUT_FILE_NAME, DEFAULT_RESULTS_DIR_NAME
 import orr.templating as templating
 import orr.utils as utils
 from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME, US_LOCALE
@@ -82,9 +84,17 @@ def parse_args():
     parser.add_argument('--debug', action='store_true', help='enable debug printout')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
-    parser.add_argument('--input-paths', metavar='PATH', nargs='+',
-                        help=('paths to files containing election data '
-                              '(e.g. in json format).'))
+    input_help = dedent(f"""\
+    path to the directory containing the input data files (e.g. the
+    {INPUT_FILE_NAME} file).
+    """)
+    parser.add_argument('--input-dir', metavar='PATH', help=input_help)
+    results_dir_help = dedent(f"""\
+    optional path to a directory with the detailed results files.
+    Defaults to the "{DEFAULT_RESULTS_DIR_NAME}" subdirectory of the input
+    directory.
+    """)
+    parser.add_argument('--input-results-dir', metavar='PATH', help=results_dir_help)
     parser.add_argument('--build-time', metavar='DATETIME',
                         help=('the datetime to use as the build time, '
                               'in the format "2018-06-01 20:48:12". '
@@ -289,13 +299,15 @@ def make_sha256sums_file(dir_path):
     sha256sums_path.write_text(contents)
 
 
-def run(config_path=None, input_paths=None, template_dir=None,
+def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
     extra_template_dirs=None, output_parent=None, output_dir_name=None,
     fresh_output=False, test_mode=False, build_time=None, deterministic=None):
     """
     Args:
       config_path: optional path to the config file, as a string.
-      input_paths: paths to the election data files, as a list of strings.
+      input_dir: required path to the input directory, as a string.
+      input_results_dir: optional path the the input results data directory,
+        as a string.  Defaults to a directory inside the input directory.
       template_dir: a directory containing the templates to render.
       extra_template_dirs: optional extra directories to search for
         templates (e.g. for the subtemplate tag).  This should be a list
@@ -307,8 +319,6 @@ def run(config_path=None, input_paths=None, template_dir=None,
       build_time: this is exposed to permit reproducible builds more easily.
       deterministic: for deterministic PDF generation.  Defaults to False.
     """
-    if input_paths is None:
-        input_paths = []
     if extra_template_dirs is None:
         extra_template_dirs = []
     if output_parent is None:
@@ -345,12 +355,21 @@ def run(config_path=None, input_paths=None, template_dir=None,
     env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs,
                                      deterministic=deterministic)
 
-    if len(input_paths) != 1:
-        raise RuntimeError(f'only one input path can be provided: {input_paths}')
-    input_dir = Path(input_paths[0])
+    if input_dir is None:
+        raise RuntimeError('--input-dir not provided')
+
+    input_dir = Path(input_dir)
     if not input_dir.is_dir():
-        raise RuntimeError(f'input path is not a directory: {input_path}')
-    context = dataloading.load_context(input_dir, build_time=build_time)
+        raise RuntimeError(f'--input-dir is not a directory: {input_dir}')
+
+    if input_results_dir is None:
+        input_results_dir = input_dir / DEFAULT_RESULTS_DIR_NAME
+
+    if not input_results_dir.is_dir():
+        raise RuntimeError(f'--input-results-dir is not a directory: {input_dir}')
+
+    context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
+                                build_time=build_time)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -392,7 +411,8 @@ def main():
     deterministic = ns.deterministic
     template_dir = ns.template_dir
     extra_template_dirs = ns.extra_template_dirs
-    input_paths = ns.input_paths
+    input_dir = ns.input_dir
+    input_results_dir = ns.input_results_dir
     build_time = ns.build_time
 
     output_parent = ns.output_parent
@@ -404,7 +424,7 @@ def main():
     if build_time is not None:
         build_time = utils.parse_datetime(build_time)
 
-    run(config_path=config_path, input_paths=input_paths,
+    run(config_path=config_path, input_dir=input_dir, input_results_dir=input_results_dir,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_parent=output_parent, output_dir_name=output_dir_name,
         fresh_output=fresh_output, test_mode=test_mode, build_time=build_time,

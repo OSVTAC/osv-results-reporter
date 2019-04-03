@@ -34,7 +34,7 @@ if [ "$1" == "docker" ];
 then
     docker build -t orr .
     docker rm orr_test_builder
-    docker run --name orr_test_builder orr --debug --input sampledata/test-minimal \
+    docker run --name orr_test_builder orr --debug --input-dir sampledata/test-minimal \
         --build-time "2018-06-01 20:48:12" --deterministic \
         --template templates/test-minimal \
         --extra templates/test-minimal/extra \
@@ -42,7 +42,7 @@ then
         || { echo 'running orr failed' ; exit 1; }
     docker cp orr_test_builder:/app/_build/expected_minimal/. src/orr/tests/end2end/expected_minimal
 else
-    orr --debug --input sampledata/test-minimal \
+    orr --debug --input-dir sampledata/test-minimal \
         --build-time "2018-06-01 20:48:12" --deterministic \
         --template templates/test-minimal \
         --extra templates/test-minimal/extra \

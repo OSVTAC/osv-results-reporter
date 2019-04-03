@@ -819,7 +819,10 @@ class Election:
 
     Instance attributes:
 
-      input_dir: the directory containing the input data, as a Path object.
+      input_dir: the directory containing the election.json file, as a
+        Path object.
+      input_results_dir: the directory containing the detailed results
+        data files, as a Path object.
 
       ballot_title:
       date:
@@ -833,13 +836,19 @@ class Election:
           load(election).
     """
 
-    def __init__(self, input_dir):
+    def __init__(self, input_dir, input_results_dir):
         """
         Args:
-          input_dir: the directory containing the input data, as a Path object.
+          input_dir: the directory containing the election.json file, as a
+            Path object.
+          input_results_dir: the directory containing the detailed results
+            data files, as a Path object.
         """
         assert input_dir is not None
+        assert input_results_dir is not None
+
         self.input_dir = input_dir
+        self.input_results_dir = input_results_dir
 
         self.ballot_title = None
         self.date = None

@@ -96,10 +96,9 @@ class EndToEndTest(TestCase):
 
     def render(self, input_dir, template_dir, extra_template_dirs, output_parent,
         build_time):
-        input_paths = [input_dir]
         output_dir_name = 'actual'
 
-        output_data = main.run(input_paths=input_paths,
+        output_data = main.run(input_dir=input_dir,
             template_dir=template_dir, extra_template_dirs=extra_template_dirs,
             output_parent=output_parent, output_dir_name=output_dir_name,
             build_time=build_time, deterministic=True)
