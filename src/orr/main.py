@@ -364,9 +364,10 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     if input_results_dir is None:
         input_results_dir = input_dir / DEFAULT_RESULTS_DIR_NAME
+    input_results_dir = Path(input_results_dir)
 
     if not input_results_dir.is_dir():
-        raise RuntimeError(f'--input-results-dir is not a directory: {input_dir}')
+        raise RuntimeError(f'--input-results-dir is not a directory: {input_results_dir}')
 
     context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
                                 build_time=build_time)
