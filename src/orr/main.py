@@ -306,7 +306,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     Args:
       config_path: optional path to the config file, as a string.
       input_dir: required path to the input directory, as a string.
-      input_results_dir: optional path the the input results data directory,
+      input_results_dir: optional path to the input results data directory,
         as a string.  Defaults to a directory inside the input directory.
       template_dir: a directory containing the templates to render.
       extra_template_dirs: optional extra directories to search for
