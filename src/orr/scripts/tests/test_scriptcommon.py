@@ -1,6 +1,6 @@
 #
 # Open Source Voting Results Reporter (ORR) - election results report generator
-# Copyright (C) 2018  Chris Jerdonek
+# Copyright (C) 2018, 2019  Chris Jerdonek
 #
 # This file is part of Open Source Voting Results Reporter (ORR).
 #
@@ -19,23 +19,23 @@
 #
 
 """
-Test the orr.main module.
+Test the orr.scripts.scriptcommon module.
 """
 
 from datetime import datetime
 from unittest import TestCase
 
-import orr.main as main
+import orr.scripts.scriptcommon as scriptcommon
 
 
-class MainModuleTest(TestCase):
+class ModuleTest(TestCase):
 
     """
-    Test the functions in orr.main.
+    Test the functions in the module.
     """
 
     def test_generate_output_name(self):
         dt = datetime(2018, 1, 2, 16, 30, 15)
         expected = 'build_20180102_163015'
-        actual = main.generate_output_name(dt=dt)
+        actual = scriptcommon.generate_output_name(dt=dt)
         self.assertEqual(actual, expected)

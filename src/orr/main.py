@@ -3,7 +3,7 @@
 #
 # Open Source Voting Results Reporter (ORR) - election results report generator
 # Copyright (C) 2018  Carl Hage
-# Copyright (C) 2018  Chris Jerdonek
+# Copyright (C) 2018, 2019  Chris Jerdonek
 #
 # This file is part of Open Source Voting Results Reporter (ORR).
 #
@@ -28,7 +28,6 @@ Documentation: [TODO]
 
 import argparse
 from datetime import datetime
-import json
 import logging
 import os
 from pathlib import Path
@@ -43,16 +42,16 @@ import yaml
 import orr.configlib as configlib
 import orr.dataloading as dataloading
 from orr.dataloading import INPUT_FILE_NAME, DEFAULT_RESULTS_DIR_NAME
+import orr.scripts.scriptcommon as scriptcommon
 import orr.templating as templating
 import orr.utils as utils
-from orr.utils import DEFAULT_JSON_DUMPS_ARGS, SHA256SUMS_FILENAME, US_LOCALE
+from orr.utils import SHA256SUMS_FILENAME, US_LOCALE
 
 
 _log = logging.getLogger(__name__)
 
 VERSION='0.0.1'     # Program version
 
-DEFAULT_OUTPUT_PARENT_DIR = '_build'
 DEFAULT_TEMPLATE_DIR = 'templates'
 
 ENCODING='utf-8'
@@ -95,10 +94,6 @@ def parse_args():
     directory.
     """)
     parser.add_argument('--input-results-dir', metavar='PATH', help=results_dir_help)
-    parser.add_argument('--build-time', metavar='DATETIME',
-                        help=('the datetime to use as the build time, '
-                              'in the format "2018-06-01 20:48:12". '
-                              'Defaults to the current datetime.'))
     parser.add_argument('--deterministic', action='store_true',
                         help='make PDF generation deterministic.')
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
@@ -107,13 +102,7 @@ def parse_args():
     parser.add_argument('--extra-template-dirs', metavar='DIR', nargs='+',
                         help=('extra directories to search when looking for '
                               'templates, and not rendered otherwise.'))
-    parser.add_argument('--output-parent', metavar='DIR',
-                        help=('the directory in which to write the output directory. '
-                              f'Defaults to: {DEFAULT_OUTPUT_PARENT_DIR}.'))
-    parser.add_argument('--output-dir-name', metavar='NAME',
-                        help=('the name to give the output directory inside '
-                              'the parent output directory. '
-                              'Defaults to a name generated using the current datetime.'))
+    scriptcommon.add_output_dir_args(parser)
     parser.add_argument('--output-fresh-parent', action='store_true',
                         help=('require that the output parent not already exist. '
                               'This is for running inside a Docker container.'))
@@ -122,18 +111,6 @@ def parse_args():
 
     return ns
 
-#--- Utility Routines: ---
-
-def generate_output_name(dt):
-    """
-    Return a name of the form "build_20180511_224339".
-
-    Args:
-      dt: a datetime object.
-    """
-    name = 'build_{:%Y%m%d_%H%M%S}'.format(dt)
-
-    return name
 
 #--- Configuration file processing: ---
 
@@ -300,8 +277,8 @@ def make_sha256sums_file(dir_path):
 
 
 def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
-    extra_template_dirs=None, output_parent=None, output_dir_name=None,
-    fresh_output=False, test_mode=False, build_time=None, deterministic=None):
+    extra_template_dirs=None, output_dir=None, fresh_output=False,
+    test_mode=False, build_time=None, deterministic=None):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -312,23 +289,16 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
       extra_template_dirs: optional extra directories to search for
         templates (e.g. for the subtemplate tag).  This should be a list
         of path-like objects.
-      output_parent: the parent of the output directory.
-      output_dir_name: the name to give the output directory inside the
-        output parent.  Defaults to a name generated using the current
-        datetime.
+      output_dir: the output directory, as a Path object.
       build_time: this is exposed to permit reproducible builds more easily.
       deterministic: for deterministic PDF generation.  Defaults to False.
     """
-    if extra_template_dirs is None:
-        extra_template_dirs = []
-    if output_parent is None:
-        output_parent = DEFAULT_OUTPUT_PARENT_DIR
     if build_time is None:
         build_time = datetime.now()
+    if extra_template_dirs is None:
+        extra_template_dirs = []
 
-    if output_dir_name is None:
-        output_dir_name = generate_output_name(build_time)
-
+    assert output_dir is not None
     assert template_dir is not None
 
     if config_path is None:
@@ -337,13 +307,12 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
         config_path = Path(config_path)
         config = Config(config_path)
 
-    output_parent = Path(output_parent)
+    output_parent = output_dir.parent
 
     if fresh_output and output_parent.exists():
         msg = f'--output-fresh-parent: output parent directory already exists: {output_parent}'
         raise RuntimeError(msg)
 
-    output_dir = output_parent / output_dir_name
     _log.debug(f'using output directory: {output_dir}')
 
     # Create the jinja environment
@@ -382,16 +351,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     make_sha256sums_file(output_dir)
 
-    output_data = dict(
-        build_time=build_time.isoformat(),
-        output_dir=str(output_dir),
-    )
-
-    # TODO: allow changing the stdout output format (e.g. YAML or text)?
-    output = json.dumps(output_data, **DEFAULT_JSON_DUMPS_ARGS)
-
-    # TODO: allow suppressing stdout?
-    print(output)
+    output_data = scriptcommon.print_result(output_dir, build_time=build_time)
 
     return output_data
 
@@ -414,19 +374,15 @@ def main():
     extra_template_dirs = ns.extra_template_dirs
     input_dir = ns.input_dir
     input_results_dir = ns.input_results_dir
-    build_time = ns.build_time
 
-    output_parent = ns.output_parent
-    output_dir_name = ns.output_dir_name
     fresh_output = ns.output_fresh_parent
 
     test_mode = ns.test
 
-    if build_time is not None:
-        build_time = utils.parse_datetime(build_time)
+    output_dir, build_time = scriptcommon.get_output_dir(ns)
 
     run(config_path=config_path, input_dir=input_dir, input_results_dir=input_results_dir,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
-        output_parent=output_parent, output_dir_name=output_dir_name,
-        fresh_output=fresh_output, test_mode=test_mode, build_time=build_time,
+        output_dir=output_dir, fresh_output=fresh_output,
+        test_mode=test_mode, build_time=build_time,
         deterministic=deterministic)

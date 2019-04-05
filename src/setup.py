@@ -1,6 +1,6 @@
 #
 # Open Source Voting Results Reporter (ORR) - election results report generator
-# Copyright (C) 2018  Chris Jerdonek
+# Copyright (C) 2018, 2019  Chris Jerdonek
 #
 # This file is part of Open Source Voting Results Reporter (ORR).
 #
@@ -105,6 +105,7 @@ setup(
     entry_points={
         'console_scripts': [
             'orr=orr.main:main',
+            'orr-docker=orr.scripts.orr_docker:main',
         ],
     },
     package_data={

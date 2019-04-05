@@ -92,20 +92,16 @@ $ ./scripts/update-test-expectation.sh
 ## Docker (experimental)
 
 ```
-$ docker build -t orr .
-$ docker run orr -h
+$ orr-docker -h
 ```
 
 To render a template directory to the build directory using Docker:
 
 ```
-$ docker build -t orr . \
-    && docker rm orr_builder; echo "removed container: orr_builder" \
-    && docker run --name orr_builder orr \
-        --input-dir sampledata/test-minimal \
+$ orr-docker --output-dir minimal \
+    --orr --input-dir sampledata/test-minimal \
         --extra templates/test-minimal/extra \
-        --template templates/test-minimal --output-dir minimal \
-    && docker cp orr_builder:/app/_build/. _build
+        --template templates/test-minimal
 ```
 
 To run tests:
@@ -137,7 +133,7 @@ with one another outside of meetings.
 
 Copyright (C) 2018  Carl Hage
 
-Copyright (C) 2018  Chris Jerdonek
+Copyright (C) 2018, 2019  Chris Jerdonek
 
 
 ## License

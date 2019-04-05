@@ -1,6 +1,6 @@
 #
 # Open Source Voting Results Reporter (ORR) - election results report generator
-# Copyright (C) 2018  Chris Jerdonek
+# Copyright (C) 2018, 2019  Chris Jerdonek
 #
 # This file is part of Open Source Voting Results Reporter (ORR).
 #
@@ -94,14 +94,12 @@ class EndToEndTest(TestCase):
             actual_path, expected_path = (dir_path / rel_path for dir_path in dirs)
             self.assert_files_equal(actual_path, expected_path)
 
-    def render(self, input_dir, template_dir, extra_template_dirs, output_parent,
+    def render(self, input_dir, template_dir, extra_template_dirs, output_dir,
         build_time):
-        output_dir_name = 'actual'
 
         output_data = main.run(input_dir=input_dir,
             template_dir=template_dir, extra_template_dirs=extra_template_dirs,
-            output_parent=output_parent, output_dir_name=output_dir_name,
-            build_time=build_time, deterministic=True)
+            output_dir=output_dir, build_time=build_time, deterministic=True)
 
         output_dir = Path(output_data['output_dir'])
 
@@ -117,8 +115,9 @@ class EndToEndTest(TestCase):
 
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
+            output_dir = temp_dir / 'actual'
             actual_dir = self.render(input_dir=input_dir,
                 template_dir=template_dir, extra_template_dirs=extra_template_dirs,
-                output_parent=temp_dir, build_time=build_time)
+                output_dir=output_dir, build_time=build_time)
 
             self.check_directories(actual_dir, expected_dir)
