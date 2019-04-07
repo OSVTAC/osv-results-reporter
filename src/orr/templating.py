@@ -28,7 +28,6 @@ import functools
 import json
 import logging
 from pathlib import Path
-import re
 
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Undefined)

@@ -25,6 +25,7 @@ Script-related functions shared by both orr and orr-docker.
 
 from datetime import datetime
 import json
+import logging
 from pathlib import Path
 
 import orr.utils as utils
@@ -46,7 +47,10 @@ def generate_output_name(dt):
     return name
 
 
-def add_output_dir_args(parser):
+def add_common_args(parser):
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='enable verbose info printout')
+    parser.add_argument('--debug', action='store_true', help='enable debug printout')
     parser.add_argument('--output-parent', metavar='DIR',
                         help=('the directory in which to write the output directory. '
                               f'Defaults to: {DEFAULT_OUTPUT_PARENT_DIR}.'))
@@ -60,7 +64,7 @@ def add_output_dir_args(parser):
                               'Defaults to the current datetime.'))
 
 
-def get_output_dir(ns):
+def parse_common_args(ns):
     """
     Return: (output_dir, build_time)
     """
@@ -68,20 +72,28 @@ def get_output_dir(ns):
     output_parent = ns.output_parent
     output_dir_name = ns.output_dir_name
 
-    if output_parent is None:
-        output_parent = DEFAULT_OUTPUT_PARENT_DIR
-    if output_dir_name is None:
-        output_dir_name = generate_output_name(build_time)
+    if ns.debug:
+        level = logging.DEBUG
+    elif ns.verbose:
+        level = logging.INFO
+    else:
+        level = logging.ERROR
 
     if build_time is None:
         build_time = datetime.now()
     else:
         build_time = utils.parse_datetime(build_time)
 
+    if output_parent is None:
+        output_parent = DEFAULT_OUTPUT_PARENT_DIR
+
+    if output_dir_name is None:
+        output_dir_name = generate_output_name(build_time)
+
     output_parent = Path(output_parent)
     output_dir = output_parent / output_dir_name
 
-    return (output_dir, build_time)
+    return (output_dir, build_time, level)
 
 
 def print_result(output_dir, build_time):

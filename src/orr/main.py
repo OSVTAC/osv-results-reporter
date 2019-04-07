@@ -32,7 +32,6 @@ import logging
 import os
 from pathlib import Path
 from pprint import pprint
-import re
 import sys
 from textwrap import dedent
 
@@ -75,12 +74,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    scriptcommon.add_common_args(parser)
     parser.add_argument('--version', action='version', version='%(prog)s '+VERSION)
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='enable verbose info printout')
     parser.add_argument('-t', dest='test', action='store_true',
                         help='test mode, print files to expand')
-    parser.add_argument('--debug', action='store_true', help='enable debug printout')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
     input_help = dedent(f"""\
@@ -102,7 +99,6 @@ def parse_args():
     parser.add_argument('--extra-template-dirs', metavar='DIR', nargs='+',
                         help=('extra directories to search when looking for '
                               'templates, and not rendered otherwise.'))
-    scriptcommon.add_output_dir_args(parser)
     parser.add_argument('--output-fresh-parent', action='store_true',
                         help=('require that the output parent not already exist. '
                               'This is for running inside a Docker container.'))
@@ -359,14 +355,9 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 def main():
     ns = parse_args()
 
-    if ns.debug:
-        level = logging.DEBUG
-    elif ns.verbose:
-        level = logging.INFO
-    else:
-        level = logging.ERROR
+    output_dir, build_time, log_level = scriptcommon.parse_common_args(ns)
 
-    logging.basicConfig(level=level)
+    logging.basicConfig(level=log_level)
 
     config_path = ns.config_path
     deterministic = ns.deterministic
@@ -378,8 +369,6 @@ def main():
     fresh_output = ns.output_fresh_parent
 
     test_mode = ns.test
-
-    output_dir, build_time = scriptcommon.get_output_dir(ns)
 
     run(config_path=config_path, input_dir=input_dir, input_results_dir=input_results_dir,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,

@@ -50,7 +50,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    scriptcommon.add_output_dir_args(parser)
+    scriptcommon.add_common_args(parser)
     parser.add_argument('--skip-docker-build', action='store_true',
         help='whether to skip building the Docker image.')
     parser.add_argument('--orr_args', nargs=argparse.REMAINDER,
@@ -88,17 +88,15 @@ def run_subprocess(args, check=True, **kwargs):
             raise RuntimeError(msg)
 
 
-# TODO: support passing in: the log level.
 def main():
     ns = parse_args()
 
     orr_args = ns.orr_args or []
     skip_docker_build = ns.skip_docker_build
 
-    log_level = logging.DEBUG
-    logging.basicConfig(level=log_level)
+    output_dir, build_time, log_level = scriptcommon.parse_common_args(ns)
 
-    output_dir, build_time = scriptcommon.get_output_dir(ns)
+    logging.basicConfig(level=log_level)
 
     docker_tag = 'orr'
     container_name = 'orr_test'
