@@ -66,7 +66,7 @@ def add_common_args(parser):
 
 def parse_common_args(ns):
     """
-    Return: (output_dir, build_time)
+    Return: (output_dir, build_time, log_level).
     """
     build_time = ns.build_time
     output_parent = ns.output_parent
