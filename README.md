@@ -38,7 +38,7 @@ For a small HTML example demonstrating much of the functionality:
 ```
 $ orr -v --input-dir sampledata/test-minimal \
       --extra templates/test-minimal/extra \
-      --template templates/test-minimal --output-dir minimal
+      --template templates/test-minimal --output-subdir minimal
 ```
 
 Then open `_build/minimal/index.html` in a browser. The example above
@@ -98,7 +98,7 @@ $ orr-docker -h
 To render a template directory to the build directory using Docker:
 
 ```
-$ orr-docker --output-dir minimal \
+$ orr-docker --output-subdir minimal \
     --orr --input-dir sampledata/test-minimal \
         --extra templates/test-minimal/extra \
         --template templates/test-minimal

@@ -54,7 +54,7 @@ def add_common_args(parser):
     parser.add_argument('--output-parent', metavar='DIR',
                         help=('the directory in which to write the output directory. '
                               f'Defaults to: {DEFAULT_OUTPUT_PARENT_DIR}.'))
-    parser.add_argument('--output-dir-name', metavar='NAME',
+    parser.add_argument('--output-subdir', metavar='NAME',
                         help=('the name to give the output directory inside '
                               'the parent output directory. '
                               'Defaults to a name generated using the current datetime.'))
@@ -64,20 +64,23 @@ def add_common_args(parser):
                               'Defaults to the current datetime.'))
 
 
-def parse_common_args(ns):
+def parse_common_args(ns, default_log_level=None):
     """
     Return: (output_dir, build_time, log_level).
     """
+    if default_log_level is None:
+        default_log_level = logging.ERROR
+
     build_time = ns.build_time
     output_parent = ns.output_parent
-    output_dir_name = ns.output_dir_name
+    output_subdir = ns.output_subdir
 
     if ns.debug:
         level = logging.DEBUG
     elif ns.verbose:
         level = logging.INFO
     else:
-        level = logging.ERROR
+        level = default_log_level
 
     if build_time is None:
         build_time = datetime.now()
@@ -87,11 +90,11 @@ def parse_common_args(ns):
     if output_parent is None:
         output_parent = DEFAULT_OUTPUT_PARENT_DIR
 
-    if output_dir_name is None:
-        output_dir_name = generate_output_name(build_time)
+    if output_subdir is None:
+        output_subdir = generate_output_name(build_time)
 
     output_parent = Path(output_parent)
-    output_dir = output_parent / output_dir_name
+    output_dir = output_parent / output_subdir
 
     return (output_dir, build_time, level)
 

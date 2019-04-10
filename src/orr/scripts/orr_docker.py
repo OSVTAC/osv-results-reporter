@@ -26,6 +26,7 @@ Entry-point script to run ORR using Docker.
 import argparse
 import logging
 import os
+from pathlib import Path
 import shlex
 import subprocess
 from subprocess import Popen
@@ -51,6 +52,12 @@ def parse_args():
                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     scriptcommon.add_common_args(parser)
+    source_dir_help = dedent("""\
+    the directory containing the Dockerfile to build.  Normally this should
+    be the directory to the repository root of a clone of the ORR repository.
+    Defaults to the current working directory (".").
+    """)
+    parser.add_argument('--source-dir', metavar='DIR', help=source_dir_help)
     parser.add_argument('--skip-docker-build', action='store_true',
         help='whether to skip building the Docker image.')
     parser.add_argument('--orr_args', nargs=argparse.REMAINDER,
@@ -91,12 +98,24 @@ def run_subprocess(args, check=True, **kwargs):
 def main():
     ns = parse_args()
 
-    orr_args = ns.orr_args or []
-    skip_docker_build = ns.skip_docker_build
-
-    output_dir, build_time, log_level = scriptcommon.parse_common_args(ns)
+    output_dir, build_time, log_level = scriptcommon.parse_common_args(ns, default_log_level=logging.INFO)
 
     logging.basicConfig(level=log_level)
+
+    orr_args = ns.orr_args or []
+    skip_docker_build = ns.skip_docker_build
+    source_dir = ns.source_dir
+
+    if source_dir is None:
+        source_dir = os.curdir
+
+    source_dir = Path(source_dir)
+    if not (source_dir / 'Dockerfile').exists():
+        resolved_path = source_dir.resolve()
+        raise RuntimeError(
+            f'--source-dir does not contain a file "Dockerfile": {source_dir} '
+            f'(resolves to: {resolved_path})'
+        )
 
     docker_tag = 'orr'
     container_name = 'orr_test'
@@ -106,7 +125,8 @@ def main():
     else:
         _log.info(f'building Docker image: {docker_tag}')
 
-        args = ['docker', 'build', '-t', docker_tag, '.']
+        # Convert the path object to a string.
+        args = ['docker', 'build', '-t', docker_tag, str(source_dir)]
         run_subprocess(args)
 
     args = ['docker', 'rm', container_name]
@@ -118,7 +138,7 @@ def main():
 
     args = [
         'docker', 'run', '--name', container_name, 'orr',
-        '--output-parent', docker_output_parent, '--output-dir-name', docker_output_dir_name,
+        '--output-parent', docker_output_parent, '--output-subdir', docker_output_dir_name,
     ]
     args.extend(orr_args)
     run_subprocess(args)
