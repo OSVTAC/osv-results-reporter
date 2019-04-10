@@ -12,6 +12,5 @@ markupsafe==1.1.1         # via jinja2
 openpyxl==2.6.2
 pillow==5.4.1             # via reportlab
 pytz==2018.9              # via babel
-pyyaml==5.1
 reportlab==3.5.17
 xlsxwriter==1.1.5

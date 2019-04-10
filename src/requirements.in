@@ -10,7 +10,6 @@ Babel
 Jinja2
 # For reading Excel files, which we use only for testing.
 openpyxl
-PyYAML
 # For writing PDF's.
 reportlab
 # For writing Excel files.

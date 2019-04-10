@@ -35,9 +35,6 @@ from pprint import pprint
 import sys
 from textwrap import dedent
 
-from jinja2 import TemplateSyntaxError
-import yaml
-
 import orr.configlib as configlib
 import orr.dataloading as dataloading
 from orr.dataloading import INPUT_FILE_NAME, DEFAULT_RESULTS_DIR_NAME
@@ -108,97 +105,6 @@ def parse_args():
     return ns
 
 
-#--- Configuration file processing: ---
-
-class Config(dict):
-
-    """
-    [TODO]
-    """
-
-    def __init__(self, config_path:Path):
-        """
-        Args:
-          config_path: path to the YAML configuration file to load, as a
-            Path object.
-        """
-        self._config_path = config_path
-
-        # Collect other include files to merge
-        self.include_config = []
-
-        local_config = self.load_config_file(config_path);
-        # We could do some default operations here, e.g.
-        # locating a root level config and using a search path
-        # or other means to find configuration data. [TODO]
-
-        self.overlay_config(local_config)
-
-        while len(self.include_config)>0:
-            f = self.include_config.pop(0)
-            self.overlay_config(self.load_config_file(f))
-
-    def load_config_file(self,filepath:str):
-        """
-        Loads the parsed contents of the specified file.
-
-        Returns: the parsed data, as a dict.
-
-        Raises an exception if the file is not present or is invalid.
-
-        Args:
-          filepath: Full file path to load
-        """
-        _log.info(f'Loading config data from {filepath}')
-        config = utils.read_yaml(filepath)
-        # Verify the returned data is a dict
-        #[TODO]
-        return config
-
-    def overlay_config(self,newconfig:dict,replace:bool=False):
-        """
-        Overlays a configuration dict into the configuration data,
-        either replacing any existing data (a higher level config
-        replaces pre-loaded default data) or setting values only
-        if not already defined (the new config provides defaults).
-
-        Each item in newconfig is validated and possibly converted
-        from a string format.
-
-        [For future] Some config attributes might be prepended or appended,
-        as defined in the config schema.
-
-        Args:
-          newconfig:    Parsed configuration data dict or None to skip
-          replace:      If true, replace defined entries, otherwise not
-        """
-        if newconfig is None:
-            return
-
-        for k,v in newconfig.items():
-            if k == 'include_config':
-                # push nested whitespace separated list of config files
-                self.include_config += v.split()
-                continue
-
-            if not replace and hasattr(self,k): continue;
-            # Validate the new attribute value
-            # [TODO]
-            _log.debug(f'set Config.{k}={v}')
-            setattr(self,k,v)
-
-    def overlay_config_file(self,filepath:str,replace=False):
-        """
-        Shorthand combination of load_config_file() and overlay_config()
-        """
-        self.overlay_config(self.load_config_file(filepath),replace)
-
-    def overlay_config_path(self,searchpath,filename:str,replace=False):
-        """
-        Overlay configuration files found in the search path
-        """
-
-
 #--- Data environment: ---
 
 # The following routines help set/update the global environment data settings
@@ -224,8 +130,6 @@ def load_input(data, path):
     suffix = path.suffix
     if suffix == '.json':
         newdata = utils.read_json(path)
-    elif suffix == '.yaml':
-        newdata = utils.read_yaml(path)
     else:
         raise RuntimeError(f'unsupported suffix {suffix!r} for input path: {path}')
 
@@ -296,12 +200,6 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     assert output_dir is not None
     assert template_dir is not None
-
-    if config_path is None:
-        config = None
-    else:
-        config_path = Path(config_path)
-        config = Config(config_path)
 
     output_parent = output_dir.parent
 
