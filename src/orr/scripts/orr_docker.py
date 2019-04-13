@@ -28,21 +28,27 @@ import logging
 import os
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 from subprocess import Popen
 import sys
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 
 import orr.scripts.scriptcommon as scriptcommon
+from orr.scripts.scriptcommon import InputDirs
 from orr.utils import UTF8_ENCODING
 
 
 _log = logging.getLogger(__name__)
 
+DOCKER_OUTPUT_PARENT = '/tmp/orr'
+DOCKER_OUTPUT_DIR_NAME = 'output'
 
 DESCRIPTION = """\
 Wrapper script to run orr in a Docker container.
 """
+
 
 def parse_args():
     """
@@ -52,12 +58,14 @@ def parse_args():
                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     scriptcommon.add_common_args(parser)
+
     source_dir_help = dedent("""\
     the directory containing the Dockerfile to build.  Normally this should
     be the directory to the repository root of a clone of the ORR repository.
     Defaults to the current working directory (".").
     """)
     parser.add_argument('--source-dir', metavar='DIR', help=source_dir_help)
+
     parser.add_argument('--skip-docker-build', action='store_true',
         help='whether to skip building the Docker image.')
     parser.add_argument('--orr_args', nargs=argparse.REMAINDER,
@@ -95,10 +103,156 @@ def run_subprocess(args, check=True, **kwargs):
             raise RuntimeError(msg)
 
 
+def make_docker_path(rel_path):
+    """
+    Return an absolute path inside the Docker container.
+
+    Args:
+      rel_path: a path relative to the container's app directory.
+    """
+    return str(Path('/app') / rel_path)
+
+
+def build_docker_image(source_dir, tag):
+    msg = dedent(f"""\
+    building Docker image:
+             tag: {tag}
+      source_dir: {source_dir}
+    """)
+    _log.info(msg)
+
+    # Convert the path object to a string.
+    args = ['docker', 'build', '-t', tag, str(source_dir)]
+    run_subprocess(args)
+
+
+def remove_container(container_name):
+    args = ['docker', 'rm', container_name]
+    # Don't pass check=True to prevent an error if the container doesn't exist.
+    run_subprocess(args, check=False)
+
+
+def copy_to_temp(temp_dir, source_dir, rel_dest_dir, desc):
+    dest_dir = temp_dir / rel_dest_dir
+
+    msg = dedent(f"""\
+    copying {desc} to temp directory:
+
+       src_dir: {source_dir}
+      dest_dir: {dest_dir}
+    """)
+    _log.info(msg)
+    shutil.copytree(source_dir, dest_dir)
+
+
+def copy_input_dirs(temp_dir, input_dirs):
+    """
+    Return: (rel_root_dir, rel_input_dirs)
+      rel_root_dir: a path relative to the temp directory, as a Path object.
+      rel_input_dirs: input paths relative to the temp directory, as an InputDirs
+        object.
+    """
+    input_data_dir, template_dir, extra_template_dirs = input_dirs
+
+    rel_input_root = Path('input')
+    rel_data_dir = rel_input_root / 'input_data'
+    rel_template_dir = rel_input_root / 'template'
+    # This is the parent directory for the extra template directories.
+    rel_extra_templates_dir = rel_input_root / 'extra_templates'
+    rel_extra_template_dirs = []
+
+    dir_infos = [
+        (input_data_dir, rel_data_dir, 'input data directory'),
+        (template_dir, rel_template_dir, 'template directory'),
+    ]
+
+    extra_count = len(extra_template_dirs)
+    for i, extra_template_dir in enumerate(extra_template_dirs, start=1):
+        rel_extra_template_dir = rel_extra_templates_dir / f'extra-{i}'
+        dir_info = (
+            extra_template_dir, rel_extra_template_dir,
+            f'extra template directory ({i} of {extra_count})'
+        )
+        dir_infos.append(dir_info)
+        rel_extra_template_dirs.append(rel_extra_template_dir)
+
+    for source_dir, rel_dest_dir, desc in dir_infos:
+        copy_to_temp(temp_dir, source_dir=source_dir, rel_dest_dir=rel_dest_dir,
+            desc=desc)
+
+    rel_input_dirs = InputDirs(data_dir=rel_data_dir, template_dir=rel_template_dir,
+                            extra_template_dirs=rel_extra_template_dirs)
+
+    return (rel_input_root, rel_input_dirs)
+
+
+def make_dockerfile_text(base_image, rel_input_root):
+    docker_input_dir = make_docker_path(rel_input_root)
+    rel_input_root = str(rel_input_root)
+    # Docker requires that the COPY <dest> end in a slash when the
+    # destination path is a directory.
+    if not docker_input_dir.endswith('/'):
+        docker_input_dir += '/'
+
+    text = dedent(f"""\
+    FROM {base_image}
+
+    COPY {rel_input_root} {docker_input_dir}
+    """)
+
+    return text
+
+
+def create_dockerfile(base_image, temp_dir, rel_input_root):
+    dockerfile_text = make_dockerfile_text(base_image, rel_input_root=rel_input_root)
+    dockerfile_path = temp_dir / 'Dockerfile'
+    dockerfile_path.write_text(dockerfile_text)
+
+
+def build_temp_image(base_image, input_dirs, container, temp_tag):
+    """
+    Args:
+      input_dirs: the input directories, as an InputDirs object.
+      container: the name to give the container being created.
+    """
+    with TemporaryDirectory(prefix='orr_builder_') as temp_dir:
+        temp_dir = Path(temp_dir)
+        rel_input_root, rel_input_dirs = copy_input_dirs(temp_dir, input_dirs=input_dirs)
+        create_dockerfile(base_image, temp_dir=temp_dir, rel_input_root=rel_input_root)
+        build_docker_image(temp_dir, tag=temp_tag)
+
+    return (rel_input_root, rel_input_dirs)
+
+
+def run_orr(orr_args, image_name, container):
+    """
+    Args:
+      image_name: the name of the Docker image to run.
+      container: the name to give the container being created.
+    """
+    input_dir = Path('submodules/osv-sample-data/2018-11-06/out-orr/')
+    input_dir = input_dir.resolve()
+    docker_input_dir = '/app/input-dir'
+
+    args = [
+        'docker', 'run', '--name', container, image_name,
+        # These are the arguments to pass to orr.
+        '--output-parent', DOCKER_OUTPUT_PARENT,
+        '--output-subdir', DOCKER_OUTPUT_DIR_NAME,
+    ]
+    args.extend(orr_args)
+    run_subprocess(args)
+
+
 def main():
     ns = parse_args()
 
-    output_dir, build_time, log_level = scriptcommon.parse_common_args(ns, default_log_level=logging.INFO)
+    options = scriptcommon.parse_common_args(ns, default_log_level=logging.INFO)
+
+    build_time = options.build_time
+    log_level = options.log_level
+    input_dirs = options.input_dirs
+    output_dir = options.output_dir
 
     logging.basicConfig(level=log_level)
 
@@ -117,35 +271,34 @@ def main():
             f'(resolves to: {resolved_path})'
         )
 
-    docker_tag = 'orr'
-    container_name = 'orr_test'
+    image_tag = 'orr'
+    container_name = 'orr_builder'
 
     if skip_docker_build:
         _log.info('skipping building Docker image')
     else:
-        _log.info(f'building Docker image: {docker_tag}')
+        build_docker_image(source_dir, tag=image_tag)
 
-        # Convert the path object to a string.
-        args = ['docker', 'build', '-t', docker_tag, str(source_dir)]
-        run_subprocess(args)
+    remove_container(container_name)
 
-    args = ['docker', 'rm', container_name]
-    # Don't pass check=True to prevent an error if the container doesn't exist.
-    run_subprocess(args, check=False)
+    temp_tag = 'orr_builder_temp'
+    rel_input_root, input_dirs = build_temp_image(image_tag, input_dirs=input_dirs,
+                                    container=container_name, temp_tag=temp_tag)
 
-    docker_output_parent = '/tmp/orr'
-    docker_output_dir_name = 'output'
+    orr_args.extend([
+        '--input-dir', str(input_dirs.data_dir),
+        '--template-dir', str(input_dirs.template_dir),
+    ])
+    extra_template_dirs = input_dirs.extra_template_dirs
+    if extra_template_dirs:
+        orr_args.append('--extra-template-dirs')
+        orr_args.extend(str(extra_dir) for extra_dir in extra_template_dirs)
 
-    args = [
-        'docker', 'run', '--name', container_name, 'orr',
-        '--output-parent', docker_output_parent, '--output-subdir', docker_output_dir_name,
-    ]
-    args.extend(orr_args)
-    run_subprocess(args)
+    run_orr(orr_args, image_name=temp_tag, container=container_name)
 
     # Append a "." so the contents of the directory will be copied,
     # rather than the directory itself.
-    src_dir = os.path.join(docker_output_parent, docker_output_dir_name, '.')
+    src_dir = os.path.join(DOCKER_OUTPUT_PARENT, DOCKER_OUTPUT_DIR_NAME, '.')
     docker_src = f'{container_name}:{src_dir}'
 
     # Convert the Path object to a string.
@@ -154,4 +307,4 @@ def main():
 
     output_data = scriptcommon.print_result(output_dir, build_time=build_time)
 
-    _log.info(f'done: {docker_tag}')
+    _log.info(f'done: {image_tag}')

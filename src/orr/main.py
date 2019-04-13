@@ -37,7 +37,7 @@ from textwrap import dedent
 
 import orr.configlib as configlib
 import orr.dataloading as dataloading
-from orr.dataloading import INPUT_FILE_NAME, DEFAULT_RESULTS_DIR_NAME
+from orr.dataloading import DEFAULT_RESULTS_DIR_NAME
 import orr.scripts.scriptcommon as scriptcommon
 import orr.templating as templating
 import orr.utils as utils
@@ -47,8 +47,6 @@ from orr.utils import SHA256SUMS_FILENAME, US_LOCALE
 _log = logging.getLogger(__name__)
 
 VERSION='0.0.1'     # Program version
-
-DEFAULT_TEMPLATE_DIR = 'templates'
 
 ENCODING='utf-8'
 
@@ -77,11 +75,6 @@ def parse_args():
                         help='test mode, print files to expand')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
-    input_help = dedent(f"""\
-    path to the directory containing the input data files (e.g. the
-    {INPUT_FILE_NAME} file).
-    """)
-    parser.add_argument('--input-dir', metavar='PATH', help=input_help)
     results_dir_help = dedent(f"""\
     optional path to a directory with the detailed results files.
     Defaults to the "{DEFAULT_RESULTS_DIR_NAME}" subdirectory of the input
@@ -90,12 +83,6 @@ def parse_args():
     parser.add_argument('--input-results-dir', metavar='PATH', help=results_dir_help)
     parser.add_argument('--deterministic', action='store_true',
                         help='make PDF generation deterministic.')
-    parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
-                        help=('directory containing the template files to render. '
-                              f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
-    parser.add_argument('--extra-template-dirs', metavar='DIR', nargs='+',
-                        help=('extra directories to search when looking for '
-                              'templates, and not rendered otherwise.'))
     parser.add_argument('--output-fresh-parent', action='store_true',
                         help=('require that the output parent not already exist. '
                               'This is for running inside a Docker container.'))
@@ -253,22 +240,28 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 def main():
     ns = parse_args()
 
-    output_dir, build_time, log_level = scriptcommon.parse_common_args(ns)
+    options = scriptcommon.parse_common_args(ns)
+
+    build_time = options.build_time
+    log_level = options.log_level
+    input_dirs = options.input_dirs
+    output_dir = options.output_dir
 
     logging.basicConfig(level=log_level)
 
     config_path = ns.config_path
     deterministic = ns.deterministic
-    template_dir = ns.template_dir
-    extra_template_dirs = ns.extra_template_dirs
-    input_dir = ns.input_dir
     input_results_dir = ns.input_results_dir
 
     fresh_output = ns.output_fresh_parent
 
     test_mode = ns.test
 
-    run(config_path=config_path, input_dir=input_dir, input_results_dir=input_results_dir,
+    input_data_dir = input_dirs.data_dir
+    template_dir = input_dirs.template_dir
+    extra_template_dirs = input_dirs.extra_template_dirs
+
+    run(config_path=config_path, input_dir=input_data_dir, input_results_dir=input_results_dir,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_dir=output_dir, fresh_output=fresh_output,
         test_mode=test_mode, build_time=build_time,

@@ -32,11 +32,11 @@ git rm --force --ignore-unmatch -r src/orr/tests/end2end/expected_minimal \
 
 if [ "$1" == "docker" ];
 then
-    orr-docker --output-parent src/orr/tests/end2end --output-subdir expected_minimal \
-        --orr --debug --input-dir sampledata/test-minimal \
-        --build-time "2018-06-01 20:48:12" --deterministic \
-        --template templates/test-minimal \
-        --extra templates/test-minimal/extra \
+    orr-docker --input-dir sampledata/test-minimal \
+        --template-dir templates/test-minimal \
+        --extra-template templates/test-minimal/extra \
+        --output-parent src/orr/tests/end2end --output-subdir expected_minimal \
+        --orr --debug --deterministic --build-time "2018-06-01 20:48:12" \
         || { echo 'running orr failed' ; exit 1; }
 else
     orr --output-parent src/orr/tests/end2end --output-subdir expected_minimal \

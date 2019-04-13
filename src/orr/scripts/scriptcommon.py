@@ -23,16 +23,25 @@
 Script-related functions shared by both orr and orr-docker.
 """
 
+from collections import namedtuple
 from datetime import datetime
 import json
 import logging
 from pathlib import Path
+from textwrap import dedent
 
+from orr.dataloading import INPUT_FILE_NAME
 import orr.utils as utils
 from orr.utils import DEFAULT_JSON_DUMPS_ARGS
 
 
+DEFAULT_TEMPLATE_DIR = 'templates'
+
 DEFAULT_OUTPUT_PARENT_DIR = '_build'
+
+InputDirs = namedtuple('InputDirs', 'data_dir, template_dir, extra_template_dirs')
+
+OrrOptions = namedtuple('OrrOptions', 'input_dirs, output_dir, build_time, log_level')
 
 
 def generate_output_name(dt):
@@ -51,6 +60,20 @@ def add_common_args(parser):
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='enable verbose info printout')
     parser.add_argument('--debug', action='store_true', help='enable debug printout')
+
+    input_help = dedent(f"""\
+    path to the directory containing the input data files (e.g. the
+    {INPUT_FILE_NAME} file).
+    """)
+    parser.add_argument('--input-dir', metavar='PATH', help=input_help)
+
+    parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
+                        help=('directory containing the template files to render. '
+                              f'Defaults to: {DEFAULT_TEMPLATE_DIR}.'))
+    parser.add_argument('--extra-template-dirs', metavar='DIR', nargs='+',
+                        help=('extra directories to search when looking for '
+                              'templates, and not rendered otherwise.'))
+
     parser.add_argument('--output-parent', metavar='DIR',
                         help=('the directory in which to write the output directory. '
                               f'Defaults to: {DEFAULT_OUTPUT_PARENT_DIR}.'))
@@ -66,14 +89,17 @@ def add_common_args(parser):
 
 def parse_common_args(ns, default_log_level=None):
     """
-    Return: (output_dir, build_time, log_level).
+    Return an OrrOptions object.
     """
     if default_log_level is None:
         default_log_level = logging.ERROR
 
     build_time = ns.build_time
+    input_data_dir = ns.input_dir
     output_parent = ns.output_parent
     output_subdir = ns.output_subdir
+    template_dir = ns.template_dir
+    extra_template_dirs = ns.extra_template_dirs
 
     if ns.debug:
         level = logging.DEBUG
@@ -87,6 +113,11 @@ def parse_common_args(ns, default_log_level=None):
     else:
         build_time = utils.parse_datetime(build_time)
 
+    if not input_data_dir:
+        raise RuntimeError('--input-dir not provided')
+
+    input_data_dir = Path(input_data_dir)
+
     if output_parent is None:
         output_parent = DEFAULT_OUTPUT_PARENT_DIR
 
@@ -96,7 +127,18 @@ def parse_common_args(ns, default_log_level=None):
     output_parent = Path(output_parent)
     output_dir = output_parent / output_subdir
 
-    return (output_dir, build_time, level)
+    if extra_template_dirs is None:
+        extra_template_dirs = []
+
+    extra_template_dirs = [Path(path) for path in extra_template_dirs]
+
+    input_dirs = InputDirs(data_dir=input_data_dir, template_dir=template_dir,
+                        extra_template_dirs=extra_template_dirs)
+
+    options = OrrOptions(input_dirs, output_dir=output_dir, build_time=build_time,
+                    log_level=level)
+
+    return options
 
 
 def print_result(output_dir, build_time):
