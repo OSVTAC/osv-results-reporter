@@ -6,6 +6,11 @@
 # (2) passed as the install_requires argument to the setup() function
 #     inside setup.py (for use when developing locally).
 #
+# To update src/requirements.txt to the latest versions, run the following
+# command from the repository root:
+#
+#   $ pip-compile --upgrade --output-file src/requirements.txt src/requirements.in
+#
 Babel
 Jinja2
 # For reading Excel files, which we use only for testing.
