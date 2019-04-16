@@ -76,10 +76,14 @@ def parse_args():
     return ns
 
 
-def run_subprocess(args, check=True, **kwargs):
+def run_subprocess(args, check=True, desc=None, **kwargs):
     command = ' '.join(shlex.quote(arg) for arg in args)
+    if desc is None:
+        desc = ''
+    else:
+        desc = f' ({desc})'
     msg = dedent(f"""\
-    running command:
+    running command{desc}:
 
         $ {command}
     """)
@@ -244,6 +248,30 @@ def run_orr(orr_args, image_name, container):
     run_subprocess(args)
 
 
+def copy_output_dir(output_dir, container_name):
+    """
+    Copy the build output directory from the container to the host.
+
+    Args:
+      output_dir: the output directory on the host machine (as opposed to
+        inside the Docker container).
+    """
+    # Append a "." so the contents of the directory will be copied,
+    # rather than the directory itself.
+    src_dir = os.path.join(DOCKER_OUTPUT_PARENT, DOCKER_OUTPUT_DIR_NAME, '.')
+    docker_src = f'{container_name}:{src_dir}'
+
+    output_parent_dir = output_dir.parent
+    if not output_parent_dir.exists():
+        _log.info('creating output parent directory: {output_parent_dir}')
+        output_parent_dir.mkdir()
+
+    desc = 'copying build output from container to host'
+    # Convert the Path object to a string.
+    args = ['docker', 'cp', docker_src, str(output_dir)]
+    run_subprocess(args, desc=desc)
+
+
 def main():
     ns = parse_args()
 
@@ -296,14 +324,7 @@ def main():
 
     run_orr(orr_args, image_name=temp_tag, container=container_name)
 
-    # Append a "." so the contents of the directory will be copied,
-    # rather than the directory itself.
-    src_dir = os.path.join(DOCKER_OUTPUT_PARENT, DOCKER_OUTPUT_DIR_NAME, '.')
-    docker_src = f'{container_name}:{src_dir}'
-
-    # Convert the Path object to a string.
-    args = ['docker', 'cp', docker_src, str(output_dir)]
-    run_subprocess(args)
+    copy_output_dir(output_dir, container_name=container_name)
 
     output_data = scriptcommon.print_result(output_dir, build_time=build_time)
 

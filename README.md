@@ -98,10 +98,10 @@ $ orr-docker -h
 To render a template directory to the build directory using Docker:
 
 ```
-$ orr-docker --output-subdir minimal \
-    --orr --input-dir sampledata/test-minimal \
-        --extra templates/test-minimal/extra \
-        --template templates/test-minimal
+$ orr-docker --input-dir sampledata/test-minimal \
+        --output-subdir minimal \
+        --template templates/test-minimal \
+        --extra templates/test-minimal/extra
 ```
 
 To run tests:
