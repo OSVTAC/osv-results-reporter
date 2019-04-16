@@ -28,7 +28,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
-import orr.main as main
+import orr.scripts.orr_main as main
 from orr.utils import SHA256SUMS_FILENAME
 
 

@@ -90,7 +90,7 @@ def parse_install_requires():
 
 setup(
     name='osv-results-reporter',
-    # TODO: DRY up with orr.main.VERSION.
+    # TODO: DRY up with orr.scripts.orr_main.VERSION.
     version='0.0.1',
     description='template-based election results report generator',
     url='https://github.com/OSVTAC/osv-results-reporter',
@@ -104,7 +104,7 @@ setup(
     install_requires=parse_install_requires(),
     entry_points={
         'console_scripts': [
-            'orr=orr.main:main',
+            'orr=orr.scripts.orr_main:main',
             'orr-docker=orr.scripts.orr_docker:main',
         ],
     },
