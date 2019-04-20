@@ -30,8 +30,10 @@ import locale
 import logging
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
+import unicodedata
 
 import babel.dates
 from jinja2 import Environment
@@ -47,11 +49,14 @@ except ModuleNotFoundError:
 else:
     IN_DOCKER = True
 
-
 ENGLISH_LANG = 'en'
 
 UTF8_ENCODING = 'utf-8'
 US_LOCALE = 'en_US.UTF-8'
+
+ELEMENT_ID_SEP = '-'
+# A regex pattern matching one or more consecutive hyphens (ELEMENT_ID_SEP).
+ELEMENT_ID_PATTERN = re.compile('-+')
 
 # The buffer size to use when hashing files.
 HASH_BYTES = 2 ** 12  # 4K
@@ -206,6 +211,31 @@ def format_percent2(num, denom):
         return ''
     else:
         return(format_percent(100 * num/denom))
+
+
+def _convert_fragment(char):
+    if unicodedata.category(char)[0] in ('L', 'N'):  # letter or number
+        return char
+
+    return ELEMENT_ID_SEP
+
+
+def make_element_id(text):
+    """
+    Create an element id from text (e.g. to support navigation within a
+    page using a fragment identifier).
+
+    Args:
+      text: the text to convert.
+
+    Examples:
+
+    >>> make_element_id('MEMBER - DISTRICT 17')
+    'member-district-17'
+    """
+    fragment = ''.join(_convert_fragment(char) for char in text.lower())
+    # Collapse consecutive hyphens.
+    return re.sub(ELEMENT_ID_PATTERN, ELEMENT_ID_SEP, fragment)
 
 
 def read_json(filepath):

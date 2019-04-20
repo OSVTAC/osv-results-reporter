@@ -7,17 +7,24 @@
 <link rel="stylesheet" href="tables.css">
 {% endblock %}
 
+{% macro anchored_header(text, anchor_id) -%}
+{{ text|translate }}
+  <a class="headerlink" href="{{ anchor_id|to_fragment }}" title="Permalink to this header">¶</a>
+{%- endmacro %}
+
 {% block content %}
   <p>
   {% with %}
     {% for headers, contest in election.contests_with_headers() %}
+      {% set options.contest = contest %}
 
       {# First display any headers, if there are new headers. #}
       {% for level, header in headers %}
+        {% set header_id = header.ballot_title|to_element_id %}
         {% if level == 1 %}
-          <h3>{{ header.ballot_title|translate }}</h3>
+          <h3 id="{{ header_id }}">{{ anchored_header(header.ballot_title, header_id) }}</h3>
         {% else %}
-          <h4>{{ header.ballot_title|translate }}</h4>
+          <h4 id="{{ header_id }}">{{ anchored_header(header.ballot_title, header_id) }}</h4>
         {% endif %}
       {% endfor %}
 

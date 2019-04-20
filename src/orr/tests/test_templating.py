@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Open Source Voting Results Reporter (ORR) - election results report generator
 # Copyright (C) 2018  Chris Jerdonek

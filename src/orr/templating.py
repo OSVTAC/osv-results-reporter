@@ -28,6 +28,7 @@ import functools
 import json
 import logging
 from pathlib import Path
+import urllib.parse
 
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Undefined)
@@ -127,11 +128,12 @@ def choose_translation(translations, lang):
 
 
 @contextfilter
-def translate(context, value):
+def translate(context, value, lang=None):
     """
     Return the translation using the currently set language.
     """
-    lang = utils.get_language(context)
+    if lang is None:
+        lang = utils.get_language(context)
 
     if type(value) == dict:
         text = choose_translation(value, lang)
@@ -145,6 +147,18 @@ def translate(context, value):
         text = choose_translation(translations, lang)
 
     return text
+
+
+@contextfilter
+def to_element_id(context, text):
+    text = translate(context, text, lang=ENGLISH_LANG)
+    return utils.make_element_id(text)
+
+
+def to_fragment(anchor_id):
+    quoted = urllib.parse.quote(anchor_id)
+
+    return f'#{quoted}'
 
 
 @contextfilter

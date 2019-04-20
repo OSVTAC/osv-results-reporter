@@ -134,6 +134,20 @@ class UtilsModuleTest(TestCase):
                 actual = utils.format_percent(percent)
                 self.assertEqual(actual, expected)
 
+    def test_make_element_id(self):
+        cases = [
+            ('Prop A', 'prop-a'),
+            ('Measure 1', 'measure-1'),
+            ('MEMBER, BOARD', 'member-board'),
+            ('MEMBER - DISTRICT 17', 'member-district-17'),
+            ('MIEMBRO, CONSEJO DE EDUCACIÓN', 'miembro-consejo-de-educación'),
+            ('灣區捷運董事 - 第8選區', '灣區捷運董事-第8選區'),
+        ]
+        for text, expected in cases:
+            with self.subTest(text=text):
+                actual = utils.make_element_id(text)
+                self.assertEqual(actual, expected)
+
     def test_strip_trailing_whitespace(self):
         cases = [
             # Test the last line ending in a trailing newline.
