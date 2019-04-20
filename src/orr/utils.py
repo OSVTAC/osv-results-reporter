@@ -34,6 +34,7 @@ import re
 import subprocess
 import sys
 import unicodedata
+import urllib.parse
 
 import babel.dates
 from jinja2 import Environment
@@ -233,20 +234,22 @@ def make_element_id(text):
     >>> make_element_id('MEMBER - DISTRICT 17')
     'member-district-17'
     """
-    fragment = ''.join(_convert_fragment(char) for char in text.lower())
+    element_id = ''.join(_convert_fragment(char) for char in text.lower())
     # Collapse consecutive hyphens.
-    return re.sub(ELEMENT_ID_PATTERN, ELEMENT_ID_SEP, fragment)
+    element_id = re.sub(ELEMENT_ID_PATTERN, ELEMENT_ID_SEP, element_id)
+    # Strip trailing dashes (for cosmetic reasons).
+    element_id = element_id.rstrip(ELEMENT_ID_SEP)
+
+    return element_id
 
 
-def read_json(filepath):
+def to_fragment(element_id):
     """
-    Data Loader: Reads the specified json file into a python data structure
+    Convert an element id to a (quoted) fragment identifier.
     """
-    _log.debug(f'load_json({filepath})')
-    with open(filepath) as f:
-        data = json.load(f)
+    quoted = urllib.parse.quote(element_id)
 
-    return data
+    return f'#{quoted}'
 
 
 def strip_trailing_whitespace(text):
@@ -279,6 +282,17 @@ def format_date(date, lang, format_=None):
     if format_ is None:
         format_ = 'long'
     return babel.dates.format_date(date, format=format_, locale=lang)
+
+
+def read_json(filepath):
+    """
+    Data Loader: Reads the specified json file into a python data structure
+    """
+    _log.debug(f'load_json({filepath})')
+    with open(filepath) as f:
+        data = json.load(f)
+
+    return data
 
 
 # TODO: support other hash algorithms.

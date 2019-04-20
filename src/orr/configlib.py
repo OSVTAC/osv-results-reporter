@@ -91,7 +91,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
         format_percent=utils.format_percent,
         format_percent2=utils.format_percent2,
         to_element_id=templating.to_element_id,
-        to_fragment=templating.to_fragment,
+        to_fragment=utils.to_fragment,
     )
     tests = {}
 

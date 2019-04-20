@@ -28,7 +28,6 @@ import functools
 import json
 import logging
 from pathlib import Path
-import urllib.parse
 
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Undefined)
@@ -153,12 +152,6 @@ def translate(context, value, lang=None):
 def to_element_id(context, text):
     text = translate(context, text, lang=ENGLISH_LANG)
     return utils.make_element_id(text)
-
-
-def to_fragment(anchor_id):
-    quoted = urllib.parse.quote(anchor_id)
-
-    return f'#{quoted}'
 
 
 @contextfilter

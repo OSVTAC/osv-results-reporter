@@ -142,10 +142,21 @@ class UtilsModuleTest(TestCase):
             ('MEMBER - DISTRICT 17', 'member-district-17'),
             ('MIEMBRO, CONSEJO DE EDUCACIÓN', 'miembro-consejo-de-educación'),
             ('灣區捷運董事 - 第8選區', '灣區捷運董事-第8選區'),
+            # Check that trailing dashes are stripped.
+            ('Partisan offices.', 'partisan-offices'),
         ]
         for text, expected in cases:
             with self.subTest(text=text):
                 actual = utils.make_element_id(text)
+                self.assertEqual(actual, expected)
+
+    def test_to_fragment(self):
+        cases = [
+            ('consejo-de-educación', '#consejo-de-educaci%C3%B3n'),
+        ]
+        for element_id, expected in cases:
+            with self.subTest(element_id=element_id):
+                actual = utils.to_fragment(element_id)
                 self.assertEqual(actual, expected)
 
     def test_strip_trailing_whitespace(self):
