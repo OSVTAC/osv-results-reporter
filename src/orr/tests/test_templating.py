@@ -85,3 +85,19 @@ class TemplatingModuleTest(TestCase):
 
                 actual = templating.format_date_medium(context, day)
                 self.assertEqual(actual, expected)
+
+    def test_contest_path_template(self):
+        class Contest:
+            def __init__(self, id):
+                self.id = id
+
+        contest = Contest(id=42)
+
+        cases = [
+            (None, 'contest-42-{}.html'),
+            ('results', 'results/contest-42-{}.html'),
+        ]
+        for dir_path, expected in cases:
+            with self.subTest(dir_path=dir_path):
+                actual = templating.contest_path_template(contest, dir_path=dir_path)
+                self.assertEqual(actual, expected)

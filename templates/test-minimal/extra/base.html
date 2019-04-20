@@ -9,6 +9,15 @@
 </head>
 <body>
   <h1>{{ self.title() }}</h1>
+
+  <p>
+    Switch language:
+  {% for lang in languages %}
+    {% with %}
+      <a href="{{ current_page_link(lang) }}">{{ lang }}</a> |
+    {% endwith %}
+  {% endfor %}
+
   <h2>{{ election.date|format_date }} -
     {{ election.ballot_title|translate }} -
     {{ election.election_area|translate }}</h2>

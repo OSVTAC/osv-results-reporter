@@ -33,14 +33,13 @@ from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Undefined)
 
 import orr.utils as utils
+from orr.utils import ENGLISH_LANG
 import orr.writers.pdfwriting.pdfwriter as pdfwriter
 import orr.writers.tsvwriting as tsvwriting
 from orr.writers.xlsxwriting import XLSXBook
 
 
 _log = logging.getLogger(__name__)
-
-ENGLISH_LANG = 'en'
 
 
 @environmentfilter
@@ -83,7 +82,8 @@ def secure_hash(env, rel_path):
 
 
 def _format_date(context, date, format_=None):
-    lang = context['options'].lang
+    lang = utils.get_language(context)
+
     try:
         return utils.format_date(date, lang=lang, format_=format_)
     except Exception:
@@ -131,8 +131,7 @@ def translate(context, value):
     """
     Return the translation using the currently set language.
     """
-    options = context['options']
-    lang = options.lang
+    lang = utils.get_language(context)
 
     if type(value) == dict:
         text = choose_translation(value, lang)
@@ -149,19 +148,48 @@ def translate(context, value):
 
 
 @contextfilter
-def contest_path(context, contest, dirpath=None):
+def format_path(context, path_template, lang=None):
     """
-    Create and return a path for a contest.
+    Format a path template, and return a string path.
 
-    The path returned has the form: "results-detail/contest-403-en.html".
+    Args:
+      path_template: a path as a format string.  The format string should
+        have at most one replacement field -- for a language abbreviation.
     """
-    if dirpath is None:
-        dirpath = ''
+    if lang is None:
+        lang = utils.get_language(context)
 
-    options = context['options']
-    lang = options.lang
+    return path_template.format(lang)
 
-    return str(Path(dirpath) / f'contest-{contest.id}-{lang}.html')
+
+@contextfunction
+def current_page_link(context, lang=None):
+    """
+    Return a link to the current page (optionally specifying a language
+    version), as a link relative to the current page.
+
+    Args:
+      lang: an optional language abbreviation.  Defaults to the context's
+        current language.
+    """
+    rel_path_template = context['rel_path_template']
+    rel_path = Path(format_path(context, path_template=rel_path_template, lang=lang))
+    filename = rel_path.name
+
+    return filename
+
+
+def contest_path_template(contest, dir_path=None):
+    """
+    Create and return a relative path template for a contest.
+
+    The return value is a format string with the following as an example:
+    "results-detail/contest-403-{}.html".
+    """
+    if dir_path is None:
+        dir_path = ''
+
+    return str(Path(dir_path) / f'contest-{contest.id}-{{}}.html')
 
 
 @contextfunction
@@ -170,18 +198,22 @@ def make_translator(context):
 
 
 @contextfunction
-def subtemplate(context, template_name, output_path):
+def subtemplate(context, template_name, rel_path_template):
     """
     Render a template.
 
     Args:
-      output_path: the output path (relative to the output directory
-        configured in the Jinja2 Environment object).
+      rel_path_template: the output path to which to write the rendered
+        template, as a format string.  The format string should have at most
+        one replacement field -- for a language abbreviation.
+           When formatted, it should be a path relative to the output
+        directory configured in the Jinja2 Environment object.  An example
+        value is "results-detail/contest-403-{}.html".
     """
     env = context.environment
 
-    utils.process_template(env, template_name=template_name, rel_output_path=output_path,
-        context=context)
+    utils.process_template(env, template_name=template_name,
+                rel_path_template=rel_path_template, context=context)
 
 
 # TODO: turn this into a generator-iterator so not all data needs to be

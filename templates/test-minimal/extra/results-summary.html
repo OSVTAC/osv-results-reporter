@@ -22,12 +22,13 @@
       {% endfor %}
 
       {# Compute detailed results now so we can link to the results file below. #}
-      {% set output_path = contest|contest_path("results-detail") %}
+      {% set rel_path_template = contest|contest_path_template("results-detail") %}
+      {% set rel_output_path = rel_path_template|format_path %}
 
       {# Set options so the objects are available within the subtemplate. #}
       {% set options.contest = contest %}
       {% set options.headers = headers %}
-      {% do subtemplate('results-detail.html', output_path) %}
+      {% do subtemplate('results-detail.html', rel_path_template) %}
 
     <p>{{ contest.ballot_title|translate}}
       {% if contest.ballot_subtitle %}
@@ -41,11 +42,12 @@
     {% endif %}
     <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
     {% if contest.is_rcv %}
-      {% set rcv_path = contest|contest_path("results-rcv") %}
-      {% do subtemplate('results-rcv.html', rcv_path) %}
+      {% set rcv_path_template = contest|contest_path_template("results-rcv") %}
+      {% set rcv_path = rcv_path_template|format_path %}
+      {% do subtemplate('results-rcv.html', rcv_path_template) %}
       <a href="{{ rcv_path }}">[RCV rounds]</a>
     {% endif %}
-    <a href="{{ output_path }}">[Detailed results]</a>
+    <a href="{{ rel_output_path }}">[Detailed results]</a>
     </p>
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}

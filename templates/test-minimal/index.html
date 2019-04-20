@@ -15,10 +15,11 @@
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
-    {% set output_path = "results-summary-{}.html".format(lang) %}
-    {% do subtemplate('results-summary.html', output_path) %}
-    <li><a href="{{ output_path }}">{{ output_path }}</a>
-      (<code>{{ output_path|secure_hash }}</code>)</li>
+    {% set rel_path_template = "results-summary-{}.html" %}
+    {% set rel_output_path = rel_path_template|format_path %}
+    {% do subtemplate('results-summary.html', rel_path_template) %}
+    <li><a href="{{ rel_output_path }}">{{ rel_output_path }}</a>
+      (<code>{{ rel_output_path|secure_hash }}</code>)</li>
   {% endwith %}
 {% endfor %}
 {% with base_name='sov' %}

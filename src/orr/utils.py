@@ -48,6 +48,8 @@ else:
     IN_DOCKER = True
 
 
+ENGLISH_LANG = 'en'
+
 UTF8_ENCODING = 'utf-8'
 US_LOCALE = 'en_US.UTF-8'
 
@@ -58,6 +60,19 @@ HASH_BYTES = 2 ** 12  # 4K
 DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
 
 SHA256SUMS_FILENAME = 'SHA256SUMS'
+
+
+def get_language(context):
+    """
+    Return the language stored in the current context.
+    """
+    if 'options' not in context:
+        return ENGLISH_LANG
+
+    options = context['options']
+    lang = options.lang
+
+    return lang
 
 
 def get_output_dir(env):
@@ -327,7 +342,7 @@ def directory_sha256sum(dir_path, exclude_paths=None):
     return text
 
 
-def process_template(env:Environment, template_name:str, rel_output_path:Path,
+def process_template(env:Environment, template_name:str, rel_path_template:str,
     context:dict=None, test_mode:bool=False):
     """
     Write (aka render) a template file to the given relative path.
@@ -337,18 +352,33 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     Args:
       env: a Jinja2 Environment object.
       template_name: template to expand.
-      rel_output_path: the output path (relative to the output directory
-        configured in the Jinja2 Environment object), or else '-'.
-      context: optional context data.
+      rel_path_template: the output path to which to write the rendered
+        template, as a format string.  The format string should have at most
+        one replacement field -- for a language abbreviation.
+           When formatted, it should be a path relative to the output
+        directory configured in the Jinja2 Environment object.  An example
+        value is "results-detail/contest-403-{}.html".
+      context: optional context data, as a dict or Jinja Context object.
     """
     if context is None:
         context = {}
+    elif hasattr(context, 'get_exported'):
+        # Then the context is a Context object.
+        # Copy the context to a dict so we can add to it below.
+        context = context.get_all()
+    else:
+        # Then the context is a dict.  Make a copy of it because we will
+        # be changing it (adding to it) below.
+        context = context.copy()
 
     if test_mode:
         print(
             f'Will process_template {template_name} to create {output_path})')
         return
 
+    lang = get_language(context)
+
+    rel_output_path = rel_path_template.format(lang)
     output_path = get_output_path(env, rel_output_path)
 
     _log.debug(f'process_template: {template_name} -> {output_path}')
@@ -359,6 +389,9 @@ def process_template(env:Environment, template_name:str, rel_output_path:Path,
     if not output_dir.exists():
         output_dir.mkdir()
 
+    context.update({
+        'rel_path_template': rel_path_template,
+    })
     rendered = template.render(context)
 
     # Strip trailing whitespace as a normalization step to simplify

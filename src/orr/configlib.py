@@ -31,8 +31,7 @@ from jinja2.utils import Namespace
 
 import orr.templating as templating
 import orr.utils as utils
-from orr.templating import ENGLISH_LANG
-from orr.utils import SHA256SUMS_FILENAME
+from orr.utils import ENGLISH_LANG, SHA256SUMS_FILENAME
 
 
 def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
@@ -70,6 +69,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
     options['deterministic'] = deterministic
 
     env.globals.update(options=options,
+        current_page_link=templating.current_page_link,
         create_pdf=templating.create_pdf,
         create_tsv_files=templating.create_tsv_files,
         create_xlsx=templating.create_xlsx,
@@ -84,7 +84,8 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
         format_date_medium=templating.format_date_medium,
         secure_hash=templating.secure_hash,
         translate=templating.translate,
-        contest_path=templating.contest_path,
+        format_path=templating.format_path,
+        contest_path_template=templating.contest_path_template,
         to_json=templating.to_json,
         to_xml=templating.to_xml,
         to_xml_attr=templating.to_xml_attr,

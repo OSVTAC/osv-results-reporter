@@ -4,9 +4,9 @@ Office
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
-    {% set output_path = "details-{}.html".format(lang) %}
-    <li><a href="{{ output_path }}">{{ i8n_office|translate }}</a> ({{ lang }})</li>
-    {% do subtemplate('detail.html', output_path) %}
+    {% set rel_path_template = "details-{}.html" %}
+    <li><a href="{{ rel_path_template }}">{{ i8n_office|translate }}</a> ({{ lang }})</li>
+    {% do subtemplate('detail.html', rel_path_template) %}
   {% endwith %}
 {% endfor %}
 </ul>
