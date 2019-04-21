@@ -8,12 +8,12 @@
 <link rel="stylesheet" href="../results-rcv.css">
 {% endblock %}
 
-{% macro show_candidate_round(candidate_result, round) -%}
+{% macro show_candidate_round(candidate_result) -%}
   {% with -%}
     {% set eliminated = candidate_result.after_eliminated %}
     {% set classes = ( ['eliminated'] if eliminated else [] ) + ( ['leading'] if candidate_result.is_leading else [] ) %}
     {% set maybePlus = '+' if not eliminated else '' %}
-    {% if round != 1 %}
+    {% if candidate_result.round_num != 1 %}
         <td class="{{ classes|join(' ') }}">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
     {% endif %}
     <td class="{{ classes|join(' ') }}">{{ candidate_result.votes|format_number }}</td>
@@ -52,7 +52,7 @@
       {% for candidate in rcv_results.compute_candidate_order() %}
         <tr><td class="text-cell">{{ candidate.ballot_title|translate }}</td>
         {% for candidate_result in rcv_results.get_candidate_rounds(candidate) %}
-          {{ show_candidate_round(candidate_result, loop.index) }}
+          {{ show_candidate_round(candidate_result) }}
         {% endfor %}
         </tr>
       {% endfor %}
