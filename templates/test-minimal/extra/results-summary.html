@@ -76,9 +76,9 @@
             {# TODO use choice.winner when available #}
             <tr {%- if loop.first %} class="winner"{% endif -%}>
               <td class="title">{{ choice.ballot_title|translate }}</td>
-              <td>{{ round.votes }}</td>
-              <td>{{ round.round_num }}</td>
-              <td>{{ round.percent|format_percent }}</td>
+              <td class="number-cell">{{ round.votes }}</td>
+              <td class="number-cell">{{ round.round_num }}</td>
+              <td class="number-cell">{{ round.percent|format_percent }}</td>
               {%- if loop.first -%}
                 {%- if winnerPercent.update({'percent': round.percent}) -%}{%- endif -%}
               {%- endif -%}
@@ -106,7 +106,7 @@
           <tr {%- if choice.winner %}class="winner"{% endif -%}>
             <td>{{ choice.ballot_title|translate }}</td>
             {% for v in contest.summary_results(choice) %}
-              <td>{{ v }}</td>
+              <td class="number-cell">{{ v }}</td>
             {% endfor %}
           </tr>
         {% endfor %}
@@ -116,7 +116,7 @@
           <tr>
             <td>{{ result_stat.heading }}</td>
             {% for v in contest.summary_results(result_stat) %}
-              <td>{{ v|format_number}}</td>
+              <td class="number-cell">{{ v|format_number}}</td>
             {% endfor %}
           </tr>
         {% endfor %}

@@ -42,7 +42,7 @@
       {% for row in contest.detail_rows('CHOICES *') %}
         <tr><td>{{ row|first }}</td>
         {% for value in row[1:] %}
-        <td>{{ value }}</td>
+        <td class="number-cell">{{ value }}</td>
         {% endfor %}
         </tr>
       {% endfor %}

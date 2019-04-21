@@ -13,9 +13,9 @@
     {% set eliminated = candidate_result.after_eliminated %}
     {% set maybeEliminated = 'eliminated' if eliminated else '' %}
     {% set maybePlus = '+' if not eliminated else '' %}
-    <td class="{{ maybeEliminated }}">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
-    <td class="{{ maybeEliminated }}">{{ candidate_result.votes|format_number }}</td>
-    <td class="{{ maybeEliminated }}">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
+    <td class="{{ maybeEliminated }} number-cell">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
+    <td class="{{ maybeEliminated }} number-cell">{{ candidate_result.votes|format_number }}</td>
+    <td class="{{ maybeEliminated }} number-cell">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
   {%- endwith %}
 {%- endmacro %}
 

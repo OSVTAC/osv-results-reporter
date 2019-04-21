@@ -11,8 +11,9 @@
   border: 1px solid #aaa;
   padding: 0.25em;
 }
-.table th {
-  text-align: inherit;
+
+.table .number-cell {
+    text-align: right;
 }
 
 .table .winner .title {
