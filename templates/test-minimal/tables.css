@@ -12,8 +12,12 @@
   padding: 0.25em;
 }
 
-.table .number-cell {
+.table td {
     text-align: right;
+}
+
+.table td.text-cell {
+    text-align: inherit;
 }
 
 .table .winner .title {

@@ -13,9 +13,9 @@
     {% set eliminated = candidate_result.after_eliminated %}
     {% set maybeEliminated = 'eliminated' if eliminated else '' %}
     {% set maybePlus = '+' if not eliminated else '' %}
-    <td class="{{ maybeEliminated }} number-cell">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
-    <td class="{{ maybeEliminated }} number-cell">{{ candidate_result.votes|format_number }}</td>
-    <td class="{{ maybeEliminated }} number-cell">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
+    <td class="{{ maybeEliminated }}">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
+    <td class="{{ maybeEliminated }}">{{ candidate_result.votes|format_number }}</td>
+    <td class="{{ maybeEliminated }}">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
   {%- endwith %}
 {%- endmacro %}
 
@@ -44,7 +44,7 @@
         </tr>
       </thead>
       {% for candidate in rcv_results.compute_candidate_order() %}
-        <tr><td>{{ candidate.ballot_title|translate }}</td>
+        <tr><td class="text-cell">{{ candidate.ballot_title|translate }}</td>
         {% for candidate_result in rcv_results.get_candidate_rounds(candidate) %}
           {{ show_candidate_round(candidate_result) }}
         {% endfor %}
