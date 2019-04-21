@@ -29,6 +29,7 @@ yes/no.
 
 from collections import OrderedDict
 from datetime import datetime
+import itertools
 import logging
 import re
 
@@ -870,24 +871,25 @@ class Election:
 
     def contests_with_headers(self):
         """
-        Yield all contests as pairs (headers, contest), where--
+        Yield all contests as pairs (headers, contests), where--
           headers: the new headers that need to be displayed, as a list
             of pairs (level, header) (or the empty list if there are no
             new headers):
               level: the "level" of the header, as an integer (1-based) index.
               header: a Header object.
-          contest: a Contest object.
+          contests: a list of Contest objects to follow the headers.
         """
-        parent_header = None
-        header_path = []
-        for contest in self.contests:
-            headers = []
-            if contest.parent_header != parent_header:
-                # Then there are new headers to display.
-                headers.extend(contest.get_new_headers(header_path))
-                header_path = contest.make_header_path()
+        key = lambda contest: contest.parent_header
 
-            yield headers, contest
+        header_path = []
+        # Group contests in order by parent_header (i.e. by "section").
+        for parent_header, contests in itertools.groupby(self.contests, key=key):
+            contests = list(contests)
+            contest = contests[0]
+            headers = contest.get_new_headers(header_path)
+            header_path = contest.make_header_path()
+
+            yield (headers, contests)
 
     def load_contest_statuses(self):
         """

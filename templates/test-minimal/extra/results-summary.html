@@ -7,18 +7,38 @@
 <link rel="stylesheet" href="tables.css">
 {% endblock %}
 
-{% macro anchored_header(text, anchor_id) -%}
+{% macro anchored_header(text, element_id) -%}
 {{ text|translate }}
-  <a class="headerlink" href="{{ anchor_id|to_fragment }}" title="Permalink to this header">¶</a>
+  <a class="headerlink" href="{{ element_id|to_fragment }}" title="Permalink to this header">¶</a>
 {%- endmacro %}
 
 {% block content %}
+  <h3>Contents</h3>
+
+  <ul>
+  {% for headers, contests in election.contests_with_headers() %}
+    {% for level, header in headers %}
+      {% set header_id = header.ballot_title|to_element_id %}
+      <li>
+        <a href="{{ header_id|to_fragment }}">{{ header.ballot_title|translate }}</a>
+      {%- if not loop.last %}
+      </li>
+      {% endif -%}
+    {% endfor %}
+      <ul>
+        <li>
+          {% for contest in contests %}
+            {{ contest.ballot_title|translate}}{%- if not loop.last %} ●{% endif -%}
+          {% endfor %}
+        </li>
+      </ul>
+    </li>
+  {% endfor %}
+  </ul>
+
   <p>
   {% with %}
-    {% for headers, contest in election.contests_with_headers() %}
-      {% set options.contest = contest %}
-
-      {# First display any headers, if there are new headers. #}
+    {% for headers, contests in election.contests_with_headers() %}
       {% for level, header in headers %}
         {% set header_id = header.ballot_title|to_element_id %}
         {% if level == 1 %}
@@ -28,6 +48,7 @@
         {% endif %}
       {% endfor %}
 
+    {% for contest in contests %}
       {# Compute detailed results now so we can link to the results file below. #}
       {% set rel_path_template = contest|contest_path_template("results-detail") %}
       {% set rel_output_path = rel_path_template|format_path %}
@@ -123,6 +144,7 @@
       </tbody>
     </table>
     {% endif %}
-    {% endfor %}
+    {% endfor %} {# End iterating over the contests. #}
+    {% endfor %} {# End iterating over (headers, contests) pairs. #}
   {% endwith %}
 {% endblock %}
