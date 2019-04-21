@@ -1,3 +1,6 @@
 .table-rcv .eliminated {
 	background-color: #fcc;
 }
+.table-rcv .leading {
+	background-color: #cfc;
+}

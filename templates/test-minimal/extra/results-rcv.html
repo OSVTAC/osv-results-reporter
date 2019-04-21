@@ -11,11 +11,11 @@
 {% macro show_candidate_round(candidate_result) -%}
   {% with -%}
     {% set eliminated = candidate_result.after_eliminated %}
-    {% set maybeEliminated = 'eliminated' if eliminated else '' %}
+    {% set classes = ( ['eliminated'] if eliminated else [] ) + ( ['leading'] if candidate_result.is_leading else [] ) %}
     {% set maybePlus = '+' if not eliminated else '' %}
-    <td class="{{ maybeEliminated }}">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
-    <td class="{{ maybeEliminated }}">{{ candidate_result.votes|format_number }}</td>
-    <td class="{{ maybeEliminated }}">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
+    <td class="{{ classes|join(' ') }}">{{ maybePlus }}{{ candidate_result.transfer|format_number }}</td>
+    <td class="{{ classes|join(' ') }}">{{ candidate_result.votes|format_number }}</td>
+    <td class="{{ classes|join(' ') }}">{% if eliminated %}&nbsp;{% else %}{{ candidate_result.percent|format_percent }}{% endif %}</td>
   {%- endwith %}
 {%- endmacro %}
 
