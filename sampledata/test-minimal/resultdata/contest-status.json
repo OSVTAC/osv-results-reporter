@@ -165,6 +165,15 @@
                     4600,
                     3555
                 ]
+            },
+            {
+                "_id": "9912",
+                "ballot_title": "ANTOINE R. ROGERS",
+                "results": [
+                    3,
+                    0,
+                    3
+                ]
             }
         ],
         "precincts_reporting": 48,

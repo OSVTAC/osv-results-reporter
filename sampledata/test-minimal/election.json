@@ -235,6 +235,16 @@
                             "en": "ANGELA ALIOTO",
                             "zh": "安琪娜  阿里奧圖"
                         }
+                    },
+                    {
+                        "_id": "9912",
+                        "ballot_title": {
+                            "en": "ANTOINE R. ROGERS"
+                        },
+                        "ballot_designation": {
+                            "en": "Write-In"
+                        },
+                        "is_writein": true
                     }
                 ],
                 "header_id": "HDR10",
