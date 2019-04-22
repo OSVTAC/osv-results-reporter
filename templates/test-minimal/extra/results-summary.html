@@ -28,8 +28,10 @@
       <ul>
         <li>
           {% for contest in contests %}
+            {% set contest_id = contest.contest_name|to_element_id %}
+            <a href="{{ contest_id|to_fragment }}">
             {# Prevent contest names from breaking across lines in the table of contents. #}
-            {{ contest.contest_name|translate|escape|nobreak|safe }}{%- if not loop.last %}&nbsp;●{% endif -%}
+            {{ contest.contest_name|translate|escape|nobreak|safe }}</a>{%- if not loop.last %}&nbsp;●{% endif -%}
           {% endfor %}
         </li>
       </ul>
@@ -59,7 +61,8 @@
       {% set options.headers = headers %}
       {% do subtemplate('results-detail.html', rel_path_template) %}
 
-    <p>{{ contest.contest_name|translate}}
+    {% set contest_id = contest.contest_name|to_element_id %}
+    <p id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}
     </p>
     {% if contest.vote_for_msg %}
       <p>

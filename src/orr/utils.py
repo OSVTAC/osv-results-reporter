@@ -254,7 +254,10 @@ def to_fragment(element_id):
     """
     Convert an element id to a (quoted) fragment identifier.
     """
-    quoted = urllib.parse.quote(element_id)
+    try:
+        quoted = urllib.parse.quote(element_id)
+    except Exception:
+        raise RuntimeError(f'failed with: {element_id!r}')
 
     return f'#{quoted}'
 

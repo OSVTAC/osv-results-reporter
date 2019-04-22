@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Detailed Results -
-{{ options.contest.contest_name|translate}}{% endblock %}
+{{ options.contest.contest_name|translate }}{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="../tables.css">
@@ -21,7 +21,7 @@
           <h4>{{ header.ballot_title|translate }}</h4>
         {% endif %}
       {% endfor %}
-    <p>{{ contest.contest_name|translate}}
+    <p>{{ contest.contest_name|translate }}
     </p>
     {% if contest.vote_for_msg %}
       <p>
