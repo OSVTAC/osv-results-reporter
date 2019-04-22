@@ -90,6 +90,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
         compute_percent=utils.compute_percent,
         format_percent=utils.format_percent,
         format_percent2=utils.format_percent2,
+        nobreak=utils.make_non_breaking,
         to_element_id=templating.to_element_id,
         to_fragment=utils.to_fragment,
     )

@@ -65,6 +65,25 @@ class UtilsModuleTest(TestCase):
                 actual = utils.truncate(obj)
                 self.assertEqual(actual, expected)
 
+    def test_make_non_breaking(self):
+        cases = [
+            # Test no whitespace.
+            ('a', 'a'),
+            ('a b', 'a&nbsp;b'),
+            # Test multiple consecutive whitespace characters.
+            ('a   b', 'a&nbsp;b'),
+            # Test whitespace from a newline.
+            ('a\nb', 'a&nbsp;b'),
+            # Test more than one non-consecutive whitespace characters.
+            ('a b c', 'a&nbsp;b&nbsp;c'),
+            # Test leading and trailing whitespace.
+            (' a b ', 'a&nbsp;b'),
+        ]
+        for text, expected in cases:
+            with self.subTest(text=text):
+                actual = utils.make_non_breaking(text)
+                self.assertEqual(actual, expected)
+
     def test_format_number(self):
         cases = [
             ((1000, 'C'), '1000'),

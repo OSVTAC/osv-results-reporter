@@ -153,6 +153,13 @@ def changing_locale(loc):
         locale.resetlocale()
 
 
+def make_non_breaking(text):
+    """
+    Return the string back with whitespace replaced by "&nbsp;".
+    """
+    return '&nbsp;'.join(text.split())
+
+
 # TODO: rename to format_integer()?
 def format_number(num):
     """

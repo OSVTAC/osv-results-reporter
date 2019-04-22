@@ -28,7 +28,8 @@
       <ul>
         <li>
           {% for contest in contests %}
-            {{ contest.contest_name|translate}}{%- if not loop.last %} ●{% endif -%}
+            {# Prevent contest names from breaking across lines in the table of contents. #}
+            {{ contest.contest_name|translate|escape|nobreak|safe }}{%- if not loop.last %}&nbsp;●{% endif -%}
           {% endfor %}
         </li>
       </ul>
