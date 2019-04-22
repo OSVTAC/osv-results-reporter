@@ -32,6 +32,7 @@ from pathlib import Path
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Undefined)
 
+from orr.datamodel import SubstitutionString
 import orr.utils as utils
 from orr.utils import ENGLISH_LANG
 import orr.writers.pdfwriting.pdfwriter as pdfwriter
@@ -135,17 +136,21 @@ def translate(context, value, lang=None):
         lang = utils.get_language(context)
 
     if type(value) == dict:
-        text = choose_translation(value, lang)
-    else:
-        # Then assume the value is the key for a translation.
-        try:
-            all_trans = context['translations']
-        except KeyError:
-            raise RuntimeError(f'"translations" missing while translating: {value}')
-        translations = all_trans[value]
-        text = choose_translation(translations, lang)
+        return choose_translation(value, lang)
 
-    return text
+    if isinstance(value, SubstitutionString):
+        data = tuple(translate(context, part, lang=lang) for part in value.data)
+        return value.format_string.format(*data)
+
+    # Then assume the value is the key for a translation.
+    try:
+        all_trans = context['translations']
+    except KeyError:
+        raise RuntimeError(f'"translations" missing while translating: {value}')
+
+    translations = all_trans[value]
+
+    return choose_translation(translations, lang)
 
 
 @contextfilter

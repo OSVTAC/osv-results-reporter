@@ -28,7 +28,7 @@
       <ul>
         <li>
           {% for contest in contests %}
-            {{ contest.ballot_title|translate}}{%- if not loop.last %} ●{% endif -%}
+            {{ contest.contest_name|translate}}{%- if not loop.last %} ●{% endif -%}
           {% endfor %}
         </li>
       </ul>
@@ -58,10 +58,7 @@
       {% set options.headers = headers %}
       {% do subtemplate('results-detail.html', rel_path_template) %}
 
-    <p>{{ contest.ballot_title|translate}}
-      {% if contest.ballot_subtitle %}
-        - {{ contest.ballot_subtitle|translate }}
-      {% endif %}
+    <p>{{ contest.contest_name|translate}}
     </p>
     {% if contest.vote_for_msg %}
       <p>

@@ -27,7 +27,7 @@ of candidates or MeasureContest with list of named choices, usually
 yes/no.
 """
 
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 from datetime import datetime
 import itertools
 import logging
@@ -119,6 +119,13 @@ def i18n_repr(i18n_text):
         return '[en]{}'.format(truncate(i18n_text['en']))
 
     return truncate(i18n_text)
+
+
+# Encapsulates the data needed to format a Python format string.
+#
+# This is useful for text that needs to be translated prior to being
+# inserted into the format string.
+SubstitutionString = namedtuple('SubstitutionString', 'format_string, data')
 
 
 # --- Results reporting group/type definitions ---
@@ -629,6 +636,18 @@ class Contest:
 
     def __repr__(self):
         return f'<Contest {self.type_name!r}: id={self.id!r}>'
+
+    # This is named "contest_name" instead of "name" to make it easier to
+    # search for occurrences in the code.
+    @property
+    def contest_name(self):
+        """
+        Return the contest name, as a SubstitutionString object.
+        """
+        if hasattr(self, 'ballot_subtitle') and self.ballot_subtitle:
+            return SubstitutionString('{} - {}', (self.ballot_title, self.ballot_subtitle))
+
+        return SubstitutionString('{}', (self.ballot_title, ))
 
     @property
     def is_rcv(self):

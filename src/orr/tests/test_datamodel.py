@@ -26,7 +26,8 @@ import datetime
 from unittest import TestCase
 
 import orr.datamodel as datamodel
-from orr.datamodel import Area, Choice, Contest, ReportingGroup, VotingGroup
+from orr.datamodel import (Area, Choice, Contest, ReportingGroup, SubstitutionString,
+    VotingGroup)
 
 
 class DataModelModuleTest(TestCase):
@@ -125,6 +126,23 @@ class ChoiceTest(TestCase):
 
 
 class ContestTest(TestCase):
+
+    def test_contest_name__with_subtitle(self):
+        contest = Contest(id_=1, type_name='item', election=object())
+        contest.ballot_title = 'Board Member'
+        contest.ballot_subtitle = 'District 2'
+
+        actual = contest.contest_name
+        expected = SubstitutionString('{} - {}', data=('Board Member', 'District 2'))
+        self.assertEqual(actual, expected)
+
+    def test_contest_name__without_subtitle(self):
+        contest = Contest(id_=1, type_name='item', election=object())
+        contest.ballot_title = 'Board Member'
+
+        actual = contest.contest_name
+        expected = SubstitutionString('{}', data=('Board Member', ))
+        self.assertEqual(actual, expected)
 
     def test_make_header_path(self):
         # A real Election object isn't needed, so pass any non-None value.
