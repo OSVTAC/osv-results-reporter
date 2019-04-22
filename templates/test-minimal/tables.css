@@ -50,3 +50,25 @@
     border-left: 1px dashed black;
     border-right: 1px dashed black;
 }
+
+.sticky-table thead th {
+    position: sticky;
+    top: -1px;
+    background: white;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    padding-bottom: 0.5em;
+}
+
+.sticky-table thead th:after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-bottom: 0.25em solid #aaa;
+}
+
+.sticky-table tbody {
+    border-top-width: 0;
+}
