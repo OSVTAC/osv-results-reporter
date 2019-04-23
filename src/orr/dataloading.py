@@ -480,49 +480,60 @@ def load_object(loader, data, cls_info=None, context=None, strict=False):
 #--- Results Data Loading Routines ---
 
 def _set_attributes(
-    objects_data:list,
+    data:dict,
+    process_attrs:dict, # Dict of processing routines by source attr
     objects_by_id:dict,     # Dict of objects to overlay by id
     id_key:str,
-    process_attrs:dict, # Dict of processing routines by source attr
-    map_attrs:dict=None): # Optional dictionary mapping source->target attrs
+):
     """
     Set attributes on objects identified by id, using the given data.
 
     This method mutates the given objects_data.
 
     Args:
-      objects_data: a list of contest data (one for each contest)
-        deserialized from a json contest status file.
+      data: the data for a contest, deserialized from a json contest status
+        file.
       id_key: the key for the contest id in the given data.
     """
-    if map_attrs is None:
-        map_attrs = {}
+    try:
+        object_id = data.pop(id_key)
+    except KeyError:
+        raise RuntimeError(f'object data does not contain id key {id_key!r}: {data}')
 
-    for data in objects_data:
-        try:
-            object_id = data.pop(id_key)
-        except KeyError:
-            raise RuntimeError(f'object data does not contain id key {id_key!r}: {data}')
+    # Retrieve the object on which to set attributes.
+    try:
+        obj = objects_by_id[object_id]
+    except KeyError:
+        msg = f'object with id {object_id!r} not among: {sorted(objects_by_id)}'
+        raise RuntimeError(msg)
 
-        # Retrieve the object on which to set attributes.
-        try:
-            obj = objects_by_id[object_id]
-        except KeyError:
-            msg = f'object with id {object_id!r} not among: {sorted(objects_by_id)}'
-            raise RuntimeError(msg)
+    # For each key-value, set an attribute in the obj
+    for attr_name, raw_value in data.items():
+        # Skip if we do not have a processing routine for this attr
+        if attr_name not in process_attrs: continue
 
-        # For each key-value, set an attribute in the obj
-        for attr_name, raw_value in data.items():
-            # Skip if we do not have a processing routine for this attr
-            if attr_name not in process_attrs: continue
+        # Invoke the processing routine to convert the raw string.
+        value = process_attrs[attr_name](obj, raw_value)
 
-            # Invoke the processing routine to convert the raw string.
-            value = process_attrs[attr_name](obj, raw_value)
+        # Only set a value if the value is non-trivial and nothing is set yet.
+        # TODO: fix this hack.
+        if value is None and hasattr(obj, attr_name):
+            # Then don't set anything.
+            continue
 
-            # The attribute name can be changed from the input file.
-            attr_name = map_attrs.get(attr_name, attr_name)
+        setattr(obj, attr_name, value)
 
-            setattr(obj, attr_name, value)
+
+def process_choice_results(contest, choices_data):
+    choices_by_id = contest.choices_by_id
+
+    for choice_data in choices_data:
+        choice_id = choice_data['_id']
+        choice = choices_by_id[choice_id]
+
+        success = choice_data.get('success')
+        if success:
+            choice.is_successful = success
 
 
 def load_contest_status(election):
@@ -537,13 +548,18 @@ def load_contest_status(election):
 
     contests_data = utils.read_json(path)
 
-    process_attrs = dict(reporting_time=parse_date_time,
+    # TODO: this should be converted to the object model style.
+    process_attrs = dict(
+        choices=process_choice_results,
+        reporting_time=parse_date_time,
         total_precincts=parse_int,
         precincts_reporting=parse_int,
-        rcv_rounds=parse_int)
+        rcv_rounds=parse_int,
+    )
 
-    _set_attributes(contests_data, objects_by_id=election.contests_by_id,
-                     id_key='_id', process_attrs=process_attrs)
+    for data in contests_data:
+        _set_attributes(data, process_attrs=process_attrs,
+                        objects_by_id=election.contests_by_id, id_key='_id')
 
 
 def get_contest_results_path(contest):

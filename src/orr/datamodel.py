@@ -422,11 +422,14 @@ class Choice:
       id:
       ballot_title:
       contest: back-reference to a Contest object.
+      is_successful: boolean indicating whether the choice was successful
+        (e.g. elected, advanced to runoff, met the initiative threshold, etc).
     """
 
     def __init__(self, contest=None):
-        self.ballot_title = None
         self.id = None
+        self.ballot_title = None
+        self.is_successful = None
 
         # Back-reference.
         self.contest = contest

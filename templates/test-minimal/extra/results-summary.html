@@ -97,7 +97,7 @@
           {% for choice, round in rcv_results.rcv_summary() %}
             {# TODO use choice.winner when available #}
             <tr {%- if loop.first %} class="winner"{% endif -%}>
-              <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
+              <td class="text-cell title">{{ choice.ballot_title|translate }}{%- if choice.is_successful %}*{% endif -%}</td>
               <td>{{ round.votes }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
@@ -125,8 +125,8 @@
       <tbody class="choices">
         {% for choice in contest.choices %}
         {# TODO: Make choice.winner exist/work #}
-          <tr {%- if choice.winner %}class="winner"{% endif -%}>
-            <td class="text-cell">{{ choice.ballot_title|translate }}</td>
+          <tr {%- if choice.is_successful %} class="winner"{% endif -%}>
+            <td class="text-cell">{{ choice.ballot_title|translate }}{%- if choice.is_successful %}*{% endif -%}</td>
             {% for v in contest.summary_results(choice) %}
               <td>{{ v }}</td>
             {% endfor %}
