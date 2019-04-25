@@ -123,7 +123,7 @@
         </tr>
       </thead>
       <tbody class="choices">
-        {% for choice in contest.choices %}
+        {% for choice in contest.choices_sorted %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
             {% for v in contest.summary_results(choice) %}

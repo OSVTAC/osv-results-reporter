@@ -666,6 +666,13 @@ class Contest:
         yield from self.choices_by_id.values()
 
     @property
+    def choices_sorted(self):
+        """
+        Return the list of choices in descending order of total votes
+        """
+        yield from sorted(self.choices, reverse=True, key=lambda c: self.summary_results(c, "TO")[0])
+
+    @property
     def reporting_groups(self):
         """
         Create and return a list of ReportingGroup objects.
