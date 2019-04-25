@@ -50,10 +50,11 @@
         </tr>
       </thead>
       {% for candidate in rcv_results.compute_candidate_order() %}
-        <tr><td class="text-cell">{{ candidate.ballot_title|translate }}</td>
-        {% for candidate_result in rcv_results.get_candidate_rounds(candidate) %}
-          {{ show_candidate_round(candidate_result) }}
-        {% endfor %}
+        <tr {%- if candidate.is_successful %} class="successful"{% endif -%}>
+            <td class="text-cell title">{{ candidate.ballot_title|translate }}</td>
+            {% for candidate_result in rcv_results.get_candidate_rounds(candidate) %}
+                {{ show_candidate_round(candidate_result) }}
+            {% endfor %}
         </tr>
       {% endfor %}
 
