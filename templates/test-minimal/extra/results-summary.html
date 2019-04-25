@@ -97,7 +97,7 @@
           {% for choice, round in rcv_results.rcv_summary() %}
             <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
               <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
-              <td>{{ round.votes }}</td>
+              <td>{{ round.votes|format_number }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
               {# HACK: this assumes the winner is the first candidate, and that there is only one winner #}
@@ -127,7 +127,7 @@
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
             {% for v in contest.summary_results(choice) %}
-              <td>{{ v }}</td>
+              <td>{{ v|format_number }}</td>
             {% endfor %}
           </tr>
         {% endfor %}
