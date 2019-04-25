@@ -22,7 +22,22 @@
 
 .table .successful .title {
     font-weight: bold;
-    background-color: lightgreen;
+}
+
+.table .successful .title:after {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    padding: 0.1em;
+    margin-left: 0.5em;
+    margin-bottom: -0.2em;
+    background-image: url(check-white.svg);
+    background-size: 1em;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-color: #00af89;
+    border-radius: 50%;
 }
 
 .table .bars-header:before {
