@@ -95,13 +95,13 @@
           {# HACK: overwriting variables within loops doesn't work in Jinja, but updating dicts does #}
           {% set winnerPercent = {'percent': 100} %}
           {% for choice, round in rcv_results.rcv_summary() %}
-            {# TODO use choice.winner when available #}
-            <tr {%- if loop.first %} class="winner"{% endif -%}>
-              <td class="text-cell title">{{ choice.ballot_title|translate }}{%- if choice.is_successful %}*{% endif -%}</td>
+            <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
+              <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
               <td>{{ round.votes }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
-              {%- if loop.first -%}
+              {# HACK: this assumes the winner is the first candidate, and that there is only one winner #}
+              {%- if choice.is_successful -%}
                 {%- if winnerPercent.update({'percent': round.percent}) -%}{%- endif -%}
               {%- endif -%}
               <td class="bars-row">
@@ -124,9 +124,8 @@
       </thead>
       <tbody class="choices">
         {% for choice in contest.choices %}
-        {# TODO: Make choice.winner exist/work #}
-          <tr {%- if choice.is_successful %} class="winner"{% endif -%}>
-            <td class="text-cell">{{ choice.ballot_title|translate }}{%- if choice.is_successful %}*{% endif -%}</td>
+          <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
+            <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
             {% for v in contest.summary_results(choice) %}
               <td>{{ v }}</td>
             {% endfor %}

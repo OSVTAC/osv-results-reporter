@@ -20,8 +20,9 @@
     text-align: inherit;
 }
 
-.table .winner .title {
+.table .successful .title {
     font-weight: bold;
+    background-color: lightgreen;
 }
 
 .table .bars-header:before {
@@ -39,7 +40,7 @@
     background-color: orange;
 }
 
-.table .winner .percentage-bar {
+.table .successful .percentage-bar {
     background-color: green;
 }
 
