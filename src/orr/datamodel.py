@@ -673,6 +673,10 @@ class Contest:
         yield from sorted(self.choices, reverse=True, key=lambda c: self.summary_results(c, "TO")[0])
 
     @property
+    def total_votes(self):
+        return sum([self.summary_results(c, "TO")[0] for c in self.choices])
+
+    @property
     def reporting_groups(self):
         """
         Create and return a list of ReportingGroup objects.

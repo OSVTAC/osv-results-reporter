@@ -100,14 +100,24 @@
               <td>{{ round.votes|format_number }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
-              {# HACK: this assumes the winner is the first candidate, and that there is only one winner #}
-              {%- if choice.is_successful -%}
+              {# HACK: this assumes the winner is the first candidate #}
+              {%- if choice.is_successful and winnerPercent.percent == 100 -%}
                 {%- if winnerPercent.update({'percent': round.percent}) -%}{%- endif -%}
               {%- endif -%}
               <td class="bars-row">
                   <div class="percentage-bar" style="width: {{ round.percent|compute_percent(winnerPercent.percent) }}%"></div>
-                  <div class="cutoff-line" style="left: calc({{ 50|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+                  {% if winnerPercent.percent >= 50 %}
+                    <div class="cutoff-line" style="left: calc({{ 50|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+                  {% endif %}
               </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tbody class="result-stats">
+          {% for result_stat in contest.result_stats %}
+            <tr>
+              <td class="text-cell">{{ result_stat.heading }}</td>
+              <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}
             </tr>
           {% endfor %}
         </tbody>
@@ -116,19 +126,29 @@
     <table class="table summary-table">
       <thead>
         <tr>
-          <th>&nbsp;</th>
-          {% for vg in contest.voting_groups_from_idlist() %}
-            <th>{{ vg.heading }}</th>
-          {% endfor %}
+          <th></th>
+          <th>Votes</th>
+          <th>Percent</th>
+          <th class="bars-header"></th>
         </tr>
       </thead>
       <tbody class="choices">
+        {% set winnerPercent = {'percent': 100} %}
         {% for choice in contest.choices_sorted %}
+          {% set v = contest.summary_results(choice, "TO")[0] %}
+          {% set p = v|compute_percent(contest.total_votes) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
-            {% for v in contest.summary_results(choice) %}
-              <td>{{ v|format_number }}</td>
-            {% endfor %}
+            <td>{{ v|format_number }}</td>
+            <td>{{ p|format_percent }}</td>
+            {# HACK: this assumes the winner is the first candidate #}
+            {%- if choice.is_successful and winnerPercent.percent == 100 -%}
+              {%- if winnerPercent.update({'percent': p}) -%}{%- endif -%}
+            {%- endif -%}
+            <td class="bars-row">
+                <div class="percentage-bar" style="width: {{ p|compute_percent(winnerPercent.percent) }}%"></div>
+                <div class="cutoff-line" style="left: calc({{ 50|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+            </td>
           </tr>
         {% endfor %}
       </tbody>
@@ -136,9 +156,7 @@
         {% for result_stat in contest.result_stats %}
           <tr>
             <td class="text-cell">{{ result_stat.heading }}</td>
-            {% for v in contest.summary_results(result_stat) %}
-              <td>{{ v|format_number}}</td>
-            {% endfor %}
+            <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}
           </tr>
         {% endfor %}
       </tbody>
