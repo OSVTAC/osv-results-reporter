@@ -479,10 +479,43 @@ def load_object(loader, data, cls_info=None, context=None, strict=False):
 
 #--- Results Data Loading Routines ---
 
-def _set_attributes(
+def _set_obj_attributes(
     data:dict,
     process_attrs:dict, # Dict of processing routines by source attr
-    objects_by_id:dict,     # Dict of objects to overlay by id
+    obj: object,        # Object to set
+):
+    """
+    Set attributes on objects using the given data.
+
+    This method mutates the given objects_data.
+
+    Args:
+      data: the data for a contest, deserialized from a json contest status
+        file.
+      obj: the object to be set.
+    """
+
+    # For each key-value, set an attribute in the obj
+    for attr_name, raw_value in data.items():
+        # Skip if we do not have a processing routine for this attr
+        if attr_name not in process_attrs: continue
+
+        # Invoke the processing routine to convert the raw string.
+        value = process_attrs[attr_name](obj, raw_value)
+
+        # Only set a value if the value is non-trivial and nothing is set yet.
+        # TODO: fix this hack.
+        if value is None and hasattr(obj, attr_name):
+            # Then don't set anything.
+            continue
+
+        setattr(obj, attr_name, value)
+
+
+def _set_attributes_by_id(
+    data:dict,
+    process_attrs:dict, # Dict of processing routines by source attr
+    objects_by_id:dict, # Dict of objects to overlay by id
     id_key:str,
 ):
     """
@@ -507,21 +540,7 @@ def _set_attributes(
         msg = f'object with id {object_id!r} not among: {sorted(objects_by_id)}'
         raise RuntimeError(msg)
 
-    # For each key-value, set an attribute in the obj
-    for attr_name, raw_value in data.items():
-        # Skip if we do not have a processing routine for this attr
-        if attr_name not in process_attrs: continue
-
-        # Invoke the processing routine to convert the raw string.
-        value = process_attrs[attr_name](obj, raw_value)
-
-        # Only set a value if the value is non-trivial and nothing is set yet.
-        # TODO: fix this hack.
-        if value is None and hasattr(obj, attr_name):
-            # Then don't set anything.
-            continue
-
-        setattr(obj, attr_name, value)
+    _set_obj_attributes(data, process_attrs, obj)
 
 
 def process_choice_results(contest, choices_data):
@@ -558,7 +577,10 @@ def load_contest_status(election):
     )
 
     for data in contests_data:
-        _set_attributes(data, process_attrs=process_attrs,
+        if data.get('_id','')=='TURNOUT':
+            _set_obj_attributes(data, process_attrs, election.turnout)
+        else:
+            _set_attributes_by_id(data, process_attrs=process_attrs,
                         objects_by_id=election.contests_by_id, id_key='_id')
 
 
@@ -897,6 +919,42 @@ def make_contest_results_loader(contest_loader, data):
     return load_contest_results
 
 
+class TurnoutLoader:
+
+    model_class = Contest
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('ballot_title', parse_i18n),
+         AutoAttr('result_style', load_contest_result_style,
+            context_keys=('result_styles_by_id',), unpack_context=True, required=True),
+        AutoAttr('voting_district', load_voting_district,
+            context_keys=('areas_by_id',), unpack_context=True, required=True),
+        ('type', parse_as_is),
+    ]
+
+def load_turnout(election_loader, turnout_data, context):
+    """
+    Process the source data for the election turnout item.
+
+    Returns the turnout object.
+
+    Args:
+      election_loader: an ElectionLoader object.
+      turnout_data: the turnout element of the election.
+    """
+    try:
+        type_name = turnout_data.pop('_type')
+    except KeyError:
+        raise RuntimeError(f"key '_type' missing from data: {data}")
+
+    cls_info = dict(type_name=type_name, election=election_loader.model_object,
+        areas_by_id=context['areas_by_id'],
+        voting_groups_by_id=context['voting_groups_by_id'])
+
+    return load_object(TurnoutLoader(), turnout_data, cls_info=cls_info, context=context)
+
+
 class ContestLoader:
 
     model_class = Contest
@@ -926,7 +984,6 @@ class ContestLoader:
         # Pass data_key=False since this does not read from the json data.
         AutoAttr('_load_contest_results_data', make_contest_results_loader, data_key=False),
     ]
-
 
 def load_single_contest(data, election, context):
     """
@@ -1052,8 +1109,11 @@ class ElectionLoader:
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+        AutoAttr('turnout', load_turnout, data_key='turnout',
+            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
         # Pass data_key=False since this does not read from the json data.
         AutoAttr('_load_contest_status_data', make_contest_status_loader, data_key=False),
+
     ]
 
 
