@@ -30,7 +30,7 @@ import logging
 from pathlib import Path
 from textwrap import dedent
 
-from orr.dataloading import INPUT_FILE_NAME
+from orr.dataloading import DEFAULT_RESULTS_DIR_NAME, INPUT_FILE_NAME
 import orr.utils as utils
 from orr.utils import DEFAULT_JSON_DUMPS_ARGS
 
@@ -39,7 +39,10 @@ DEFAULT_TEMPLATE_DIR = 'templates'
 
 DEFAULT_OUTPUT_PARENT_DIR = '_build'
 
-InputDirs = namedtuple('InputDirs', 'data_dir, template_dir, extra_template_dirs')
+# Attributes:
+#   results_dir: an optional directory corresponding to the
+#     --input-results-dir value passed.
+InputDirs = namedtuple('InputDirs', 'data_dir, results_dir, template_dir, extra_template_dirs')
 
 OrrOptions = namedtuple('OrrOptions', 'input_dirs, output_dir, build_time, log_level')
 
@@ -57,6 +60,9 @@ def generate_output_name(dt):
 
 
 def add_common_args(parser):
+    """
+    Add the command options shared by both "orr" and "orr-docker".
+    """
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='enable verbose info printout')
     parser.add_argument('--debug', action='store_true', help='enable debug printout')
@@ -66,6 +72,12 @@ def add_common_args(parser):
     {INPUT_FILE_NAME} file).
     """)
     parser.add_argument('--input-dir', metavar='PATH', help=input_help)
+    results_dir_help = dedent(f"""\
+    optional path to a directory with the detailed results files.
+    Defaults to the "{DEFAULT_RESULTS_DIR_NAME}" subdirectory of the input
+    directory.
+    """)
+    parser.add_argument('--input-results-dir', metavar='PATH', help=results_dir_help)
 
     parser.add_argument('--template-dir', metavar='DIR', default=DEFAULT_TEMPLATE_DIR,
                         help=('directory containing the template files to render. '
@@ -96,6 +108,7 @@ def parse_common_args(ns, default_log_level=None):
 
     build_time = ns.build_time
     input_data_dir = ns.input_dir
+    input_results_dir = ns.input_results_dir
     output_parent = ns.output_parent
     output_subdir = ns.output_subdir
     template_dir = ns.template_dir
@@ -117,6 +130,8 @@ def parse_common_args(ns, default_log_level=None):
         raise RuntimeError('--input-dir not provided')
 
     input_data_dir = Path(input_data_dir)
+    if input_results_dir is not None:
+        input_results_dir = Path(input_results_dir)
 
     if output_parent is None:
         output_parent = DEFAULT_OUTPUT_PARENT_DIR
@@ -132,8 +147,9 @@ def parse_common_args(ns, default_log_level=None):
 
     extra_template_dirs = [Path(path) for path in extra_template_dirs]
 
-    input_dirs = InputDirs(data_dir=input_data_dir, template_dir=template_dir,
-                        extra_template_dirs=extra_template_dirs)
+    input_dirs = InputDirs(data_dir=input_data_dir, results_dir=input_results_dir,
+                           template_dir=template_dir,
+                           extra_template_dirs=extra_template_dirs)
 
     options = OrrOptions(input_dirs, output_dir=output_dir, build_time=build_time,
                     log_level=level)

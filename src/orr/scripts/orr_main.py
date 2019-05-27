@@ -75,12 +75,6 @@ def parse_args():
                         help='test mode, print files to expand')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
-    results_dir_help = dedent(f"""\
-    optional path to a directory with the detailed results files.
-    Defaults to the "{DEFAULT_RESULTS_DIR_NAME}" subdirectory of the input
-    directory.
-    """)
-    parser.add_argument('--input-results-dir', metavar='PATH', help=results_dir_help)
     parser.add_argument('--deterministic', action='store_true',
                         help='make PDF generation deterministic.')
     parser.add_argument('--output-fresh-parent', action='store_true',
@@ -251,13 +245,14 @@ def main():
 
     config_path = ns.config_path
     deterministic = ns.deterministic
-    input_results_dir = ns.input_results_dir
 
     fresh_output = ns.output_fresh_parent
 
     test_mode = ns.test
 
     input_data_dir = input_dirs.data_dir
+    input_results_dir = input_dirs.results_dir
+
     template_dir = input_dirs.template_dir
     extra_template_dirs = input_dirs.extra_template_dirs
 

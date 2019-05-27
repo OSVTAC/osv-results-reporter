@@ -140,8 +140,9 @@ def copy_to_temp(temp_dir, source_dir, rel_dest_dir, desc):
     dest_dir = temp_dir / rel_dest_dir
 
     msg = dedent(f"""\
-    copying {desc} to temp directory:
+    copying directory to temp directory:
 
+          desc: {desc}
        src_dir: {source_dir}
       dest_dir: {dest_dir}
     """)
@@ -156,7 +157,7 @@ def copy_input_dirs(temp_dir, input_dirs):
       rel_input_dirs: input paths relative to the temp directory, as an InputDirs
         object.
     """
-    input_data_dir, template_dir, extra_template_dirs = input_dirs
+    input_data_dir, results_dir, template_dir, extra_template_dirs = input_dirs
 
     rel_input_root = Path('input')
     rel_data_dir = rel_input_root / 'input_data'
@@ -169,6 +170,12 @@ def copy_input_dirs(temp_dir, input_dirs):
         (input_data_dir, rel_data_dir, 'input data directory'),
         (template_dir, rel_template_dir, 'template directory'),
     ]
+    if results_dir is None:
+        rel_results_dir = None
+    else:
+        rel_results_dir = rel_input_root / 'input_results_data'
+        info = (results_dir, rel_results_dir, 'input results directory')
+        dir_infos.append(info)
 
     extra_count = len(extra_template_dirs)
     for i, extra_template_dir in enumerate(extra_template_dirs, start=1):
@@ -184,8 +191,9 @@ def copy_input_dirs(temp_dir, input_dirs):
         copy_to_temp(temp_dir, source_dir=source_dir, rel_dest_dir=rel_dest_dir,
             desc=desc)
 
-    rel_input_dirs = InputDirs(data_dir=rel_data_dir, template_dir=rel_template_dir,
-                            extra_template_dirs=rel_extra_template_dirs)
+    rel_input_dirs = InputDirs(data_dir=rel_data_dir, results_dir=rel_results_dir,
+                               template_dir=rel_template_dir,
+                               extra_template_dirs=rel_extra_template_dirs)
 
     return (rel_input_root, rel_input_dirs)
 
@@ -313,10 +321,13 @@ def main():
     rel_input_root, input_dirs = build_temp_image(image_tag, input_dirs=input_dirs,
                                     container=container_name, temp_tag=temp_tag)
 
-    orr_args.extend([
-        '--input-dir', str(input_dirs.data_dir),
-        '--template-dir', str(input_dirs.template_dir),
-    ])
+    # Add the input directory arguments.
+    orr_args.extend(('--input-dir', str(input_dirs.data_dir)))
+    if input_dirs.results_dir is not None:
+        orr_args.extend(('--input-results-dir', str(input_dirs.results_dir)))
+
+    # Add the template directory arguments.
+    orr_args.extend(('--template-dir', str(input_dirs.template_dir)))
     extra_template_dirs = input_dirs.extra_template_dirs
     if extra_template_dirs:
         orr_args.append('--extra-template-dirs')
