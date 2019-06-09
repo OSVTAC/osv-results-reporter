@@ -39,7 +39,6 @@
   {% endfor %}
   </ul>
 
-  <p>
   {% with %}
     {% for headers, contests in election.contests_with_headers() %}
       {% for level, header in headers %}
@@ -62,21 +61,21 @@
       {% do subtemplate('results-detail.html', rel_path_template) %}
 
     {% set contest_id = contest.contest_name|to_element_id %}
-    <p id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}
-    </p>
+    <p id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}</p>
     {% if contest.vote_for_msg %}
       <p>
         {{ contest.vote_for_msg|translate }}
       </p>
     {% endif %}
-    <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
-    {% if contest.is_rcv %}
-      {% set rcv_path_template = contest|contest_path_template("results-rcv") %}
-      {% set rcv_path = rcv_path_template|format_path %}
-      {% do subtemplate('results-rcv.html', rcv_path_template) %}
-      <a href="{{ rcv_path }}">[RCV rounds]</a>
-    {% endif %}
-    <a href="{{ rel_output_path }}">[Detailed results]</a>
+    <p>
+      {{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
+      {% if contest.is_rcv %}
+        {% set rcv_path_template = contest|contest_path_template("results-rcv") %}
+        {% set rcv_path = rcv_path_template|format_path %}
+        {% do subtemplate('results-rcv.html', rcv_path_template) %}
+        <a href="{{ rcv_path }}">[RCV rounds]</a>
+      {% endif %}
+      <a href="{{ rel_output_path }}">[Detailed results]</a>
     </p>
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
