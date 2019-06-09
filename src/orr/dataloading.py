@@ -797,10 +797,12 @@ class AreaLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('id_ext', parse_id, '_id_ext'),
         ('classification', parse_as_is),
         ('name', parse_i18n),
         ('short_name', parse_i18n),
         ('is_vbm', parse_bool),
+        ('has_no_voters', parse_bool),
         ('consolidated_ids', parse_as_is),
         ('reporting_group_ids', parse_as_is),
     ]
@@ -814,7 +816,9 @@ class HeaderLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('id_ext', parse_id, '_id_ext'),
         ('ballot_title', parse_i18n),
+        ('heading_text', parse_i18n),
         ('classification', parse_as_is),
         # This is needed only while loading.
         # TODO: can we eliminate having to store this as an attribute?
@@ -830,6 +834,8 @@ class ChoiceLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('id_ext', parse_id, '_id_ext'),
+        ('sequence', parse_int),
         ('ballot_title', parse_i18n),
     ]
 
@@ -842,6 +848,8 @@ class CandidateLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('id_ext', parse_id, '_id_ext'),
+        ('sequence', parse_int),
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
         ('candidate_party', parse_i18n),
@@ -966,6 +974,7 @@ class ContestLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('id_ext', parse_id, '_id_ext'),
         ('approval_required', parse_as_is),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
@@ -1123,6 +1132,7 @@ class ElectionLoader:
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
         # Pass data_key=False since this does not read from the json data.
         AutoAttr('_load_contest_status_data', make_contest_status_loader, data_key=False),
+        ('no_voter_precincts', parse_as_is),
 
     ]
 
