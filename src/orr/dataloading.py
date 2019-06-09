@@ -552,7 +552,9 @@ def process_choice_results(contest, choices_data):
 
         success = choice_data.get('success')
         if success:
-            choice.is_successful = success
+            choice.is_successful = True
+
+        choice.winning_status = choice_data.get('winning_status')
 
 
 def load_contest_status(election):
@@ -574,6 +576,8 @@ def load_contest_status(election):
         total_precincts=parse_int,
         precincts_reporting=parse_int,
         rcv_rounds=parse_int,
+        no_voter_precincts=parse_as_is,
+        success=parse_bool,
     )
 
     for data in contests_data:
@@ -841,6 +845,7 @@ class CandidateLoader:
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
         ('candidate_party', parse_i18n),
+        ('is_writein', parse_bool),
     ]
 
 
@@ -961,6 +966,7 @@ class ContestLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        ('approval_required', parse_as_is),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
         # TODO: this should be parsed out.
@@ -971,13 +977,17 @@ class ContestLoader:
         AutoAttr('_header_id', parse_as_is, data_key='header_id'),
         ('instructions_text', parse_as_is),
         ('is_partisan', parse_as_is),
+        ('name', parse_i18n),
         ('number_elected', parse_as_is),
-        ('question_text', parse_as_is),
+        ('max_ranked', parse_int),
+        ('question_text', parse_i18n),
         AutoAttr('result_style', load_contest_result_style,
             context_keys=('result_styles_by_id',), unpack_context=True, required=True),
         AutoAttr('results_mapping', load_results_mapping, data_key=False),
         AutoAttr('voting_district', load_voting_district,
             context_keys=('areas_by_id',), unpack_context=True, required=True),
+        ('runoff_date', parse_date),
+        ('runoff_type', parse_as_is),
         ('type', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
