@@ -20,6 +20,10 @@
     text-align: inherit;
 }
 
+.table .total {
+	font-weight: bold;
+}
+
 .table .successful .title {
     font-weight: bold;
 }

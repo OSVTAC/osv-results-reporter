@@ -1,5 +1,50 @@
 [
     {
+        "_id": "TURNOUT",
+        "no_voter_precincts": [],
+        "precincts_reporting": "604",
+        "reporting_time": "2018-11-27 12:03:50",
+        "result_stats": [
+            {
+                "_id": "RSEli",
+                "heading": "Eligible Voters",
+                "results": [
+                    "660296",
+                    "660296",
+                    "660296"
+                ]
+            },
+            {
+                "_id": "RSReg",
+                "heading": "Registered Voters",
+                "results": [
+                    "500516",
+                    "500516",
+                    "500516"
+                ]
+            },
+            {
+                "_id": "RSCst",
+                "heading": "Ballots Cast",
+                "results": [
+                    "372848",
+                    "127886",
+                    "244962"
+                ]
+            },
+            {
+                "_id": "RSRej",
+                "heading": "Ballots Challenged",
+                "results": [
+                    "0",
+                    "0",
+                    "0"
+                ]
+            }
+        ],
+        "total_precincts": "604"
+    },
+    {
         "_id": "403",
         "choices": [
             {

@@ -16,6 +16,7 @@
   <h2>Contents</h2>
 
   <ul>
+  <li><a href="#turnout">{{ election.turnout.ballot_title|translate }}</a></li>
   {% for headers, contests in election.contests_with_headers() %}
     {% for level, header in headers %}
       {% set header_id = header.ballot_title|to_element_id %}
@@ -37,6 +38,35 @@
     {% endfor %}
   {% endfor %}
   </ul>
+
+  <h3 id="turnout">{{ election.turnout.ballot_title|translate }}</h3>
+  <p>
+    {{ election.turnout.precincts_reporting }} of {{ election.turnout.total_precincts}} Precincts Reporting
+    ({{ election.turnout.precincts_reporting|format_percent2(election.turnout.total_precincts) }})
+  </p>
+  <table class="table summary-table">
+    {% set castStat = election.turnout.results_mapping.get_stat_by_id('RSCst') %}
+    {% set total = election.turnout.summary_results(castStat, 'TO')[0] %}
+    {% set regStat = election.turnout.results_mapping.get_stat_by_id('RSReg') %}
+    {% set registration = election.turnout.summary_results(regStat, 'TO')[0] %}
+    {% for vg in election.turnout.voting_groups_from_idlist('ED MV') %}
+      <tr>
+        <td class="text-cell">{{ vg.heading }}</td>
+        {% set votes = election.turnout.summary_results(castStat, vg.id)[0] %}
+        <td>{{ votes|format_number }}</td>
+        <td>{{ votes|format_percent2(total) }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td class="text-cell">{{ castStat.heading }}</td>
+      <td class="total">{{ total|format_number }}</td>
+      <td class="total">{{ total|format_percent2(registration) }}</td>
+    </tr>
+    <tr>
+      <td class="text-cell">{{ regStat.heading }}</td>
+      <td>{{ registration|format_number }}</td>
+    </tr>
+  </table>
 
   {% with %}
     {% for headers, contests in election.contests_with_headers() %}

@@ -386,7 +386,16 @@
                 "classification": "Measure Category",
                 "header_id": "HDR11"
             }
-        ]
+        ],
+        "turnout": {
+            "_id": "TURNOUT",
+            "_type": "turnout",
+            "ballot_title": {
+                "en": "Registration and Turnout"
+            },
+            "voting_district": "0",
+            "result_style": "EMTE"
+        }
     },
     "languages": [
         "en",
@@ -406,6 +415,10 @@
         {
             "_id": "RSReg",
             "heading": "Registered Voters"
+        },
+        {
+            "_id": "RSEli",
+            "heading": "Eligible Voters"
         },
         {
             "_id": "RSTrn",
@@ -464,6 +477,13 @@
             "description": "RCV voting, subtotal by Election Day/VBM, with writeins",
             "is_rcv": true,
             "result_stat_type_ids": "RSReg RSCst RSTot RSRej RSUnc RSWri RSUnd RSOvr RSExh",
+            "voting_group_ids": "TO ED MV"
+        },
+        {
+            "_id": "EMTE",
+            "description": "Turnout, subtotal by Election Day/VBM, with Eligible",
+            "is_rcv": false,
+            "result_stat_type_ids": "RSEli RSReg RSCst RSRej",
             "voting_group_ids": "TO ED MV"
         }
     ],
