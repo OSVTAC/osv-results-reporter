@@ -114,10 +114,13 @@
         </tbody>
         <tbody class="result-stats">
           {% for result_stat in contest.result_stats %}
-            <tr>
-              <td class="text-cell">{{ result_stat.heading }}</td>
-              <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}
-            </tr>
+            {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes #}
+            {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
+              <tr>
+                <td class="text-cell">{{ result_stat.heading }}</td>
+                <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}</td>
+              </tr>
+            {% endif %}
           {% endfor %}
         </tbody>
       </table>
@@ -153,10 +156,14 @@
       </tbody>
       <tbody class="result-stats">
         {% for result_stat in contest.result_stats %}
-          <tr>
-            <td class="text-cell">{{ result_stat.heading }}</td>
-            <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}
-          </tr>
+          {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes #}
+          {# TODO this is duplicated with the RCV case above #}
+          {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
+            <tr>
+              <td class="text-cell">{{ result_stat.heading }}</td>
+              <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}</td>
+            </tr>
+          {% endif %}
         {% endfor %}
       </tbody>
     </table>
