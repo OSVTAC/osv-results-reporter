@@ -647,6 +647,9 @@ class Contest:
         """
         Return the contest name, as a SubstitutionString object.
         """
+        if hasattr(self, 'name') and self.name:
+            return SubstitutionString( '{}', (self.name, ))
+
         if hasattr(self, 'ballot_subtitle') and self.ballot_subtitle:
             return SubstitutionString('{} - {}', (self.ballot_title, self.ballot_subtitle))
 

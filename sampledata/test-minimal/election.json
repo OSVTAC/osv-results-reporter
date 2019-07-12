@@ -272,6 +272,9 @@
                 "ballot_title": {
                     "en": "3"
                 },
+                "name": {
+                    "en": "Regional Measure 3"
+                },
                 "choice_names": {
                     "en": "YES;NO",
                     "es": "SÍ;NO",
