@@ -350,7 +350,12 @@ def create_pdf(env, rel_path, contests, title=None, translate=None):
     if type(contests) == Undefined:
         raise RuntimeError('contests argument is undefined')
 
-    deterministic = env.globals['options'].deterministic
+    options = env.globals['options']
+    if options.skip_pdf:
+        _log.info(f'skipping PDF generation for path: {rel_path}')
+        return ''
+
+    deterministic = options.deterministic
 
     do_create = functools.partial(pdfwriter.make_pdf, title=title, deterministic=deterministic)
 

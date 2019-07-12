@@ -34,13 +34,15 @@ import orr.utils as utils
 from orr.utils import ENGLISH_LANG, SHA256SUMS_FILENAME
 
 
-def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
+def create_jinja_env(output_dir, template_dirs=None, deterministic=None,
+    skip_pdf=False):
     """
     Create and return the Jinja2 Environment object.
 
     Args:
       output_dir: a path-like object.
       deterministic: for deterministic PDF generation.  Defaults to False.
+      skip_pdf: whether to skip PDF generation.  Defaults to False.
     """
     if template_dirs is None:
         template_dirs = []
@@ -67,6 +69,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None):
     # Initialize with a default of English.
     options['lang'] = ENGLISH_LANG
     options['deterministic'] = deterministic
+    options['skip_pdf'] = skip_pdf
 
     env.globals.update(options=options,
         current_page_link=templating.current_page_link,

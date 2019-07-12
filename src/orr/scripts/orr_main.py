@@ -77,6 +77,8 @@ def parse_args():
                         help='path to the configuration file to use')
     parser.add_argument('--deterministic', action='store_true',
                         help='make PDF generation deterministic.')
+    parser.add_argument('--skip-pdf', action='store_true',
+                        help='skip PDF generation (useful for testing).')
     parser.add_argument('--output-fresh-parent', action='store_true',
                         help=('require that the output parent not already exist. '
                               'This is for running inside a Docker container.'))
@@ -159,7 +161,7 @@ def make_sha256sums_file(dir_path):
 
 def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
     extra_template_dirs=None, output_dir=None, fresh_output=False,
-    test_mode=False, build_time=None, deterministic=None):
+    test_mode=False, build_time=None, deterministic=None, skip_pdf=False):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -173,6 +175,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
       output_dir: the output directory, as a Path object.
       build_time: this is exposed to permit reproducible builds more easily.
       deterministic: for deterministic PDF generation.  Defaults to False.
+      skip_pdf: whether to skip PDF generation.  Defaults to False.
     """
     if build_time is None:
         build_time = datetime.now()
@@ -197,7 +200,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     template_dirs = [template_dir] + extra_template_dirs
     env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs,
-                                     deterministic=deterministic)
+                deterministic=deterministic, skip_pdf=skip_pdf)
 
     if input_dir is None:
         raise RuntimeError('--input-dir not provided')
@@ -245,6 +248,7 @@ def main():
 
     config_path = ns.config_path
     deterministic = ns.deterministic
+    skip_pdf = ns.skip_pdf
 
     fresh_output = ns.output_fresh_parent
 
@@ -260,4 +264,5 @@ def main():
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_dir=output_dir, fresh_output=fresh_output,
         test_mode=test_mode, build_time=build_time,
-        deterministic=deterministic)
+        deterministic=deterministic, skip_pdf=skip_pdf,
+    )
