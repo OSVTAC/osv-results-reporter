@@ -21,21 +21,20 @@
       {% set header_id = header.ballot_title|to_element_id %}
       <li>
         <a href="{{ header_id|to_fragment }}">{{ header.ballot_title|translate }}</a>
-      {%- if not loop.last %}
-      </li>
-      {% endif -%}
+        <ul>
     {% endfor %}
-      <ul>
-        <li>
-          {% for contest in contests %}
-            {% set contest_id = contest.contest_name|to_element_id %}
-            <a href="{{ contest_id|to_fragment }}">
-            {# Prevent contest names from breaking across lines in the table of contents. #}
-            {{ contest.contest_name|translate|escape|nobreak|safe }}</a>{%- if not loop.last %}&nbsp;●{% endif -%}
-          {% endfor %}
-        </li>
-      </ul>
+    <li>
+      {% for contest in contests %}
+        {% set contest_id = contest.contest_name|to_element_id %}
+        <a href="{{ contest_id|to_fragment }}">
+        {# Prevent contest names from breaking across lines in the table of contents. #}
+        {{ contest.contest_name|translate|escape|nobreak|safe }}</a>{%- if not loop.last %}&nbsp;●{% endif -%}
+      {% endfor %}
     </li>
+    {# Close the unbalanced <li><ul> tags we opened in the first headers loop #}
+    {% for level, header in headers %}
+      </ul></li>
+    {% endfor %}
   {% endfor %}
   </ul>
 
