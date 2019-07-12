@@ -593,6 +593,8 @@ class Contest:
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
       results_mapping: a ResultsMapping object.
+      results: a matrix, cols are result stat and choices, rows are subtotal
+      _results_details_loaded: bool indicating if detailed results are present
       rcv_totals: a list of tuples, one for each round, starting with the
         first round.
 
@@ -636,6 +638,7 @@ class Contest:
         self.name = None
         self.parent_header = None
         self.results_mapping = None
+        self._results_details_loaded = False
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
     def __repr__(self):
@@ -662,6 +665,32 @@ class Contest:
         Return whether the contest is an RCV contest.
         """
         return bool(self.rcv_rounds)
+
+    percent_pattern = re.compile(r'^(\d+)%$')
+    fraction_pattern = re.compile(r'^(\d+)/(\d+)$')
+
+    @property
+    def approval_required_fraction(self):
+        """
+        Converts the approval_required string to a fractional number,
+        0.0 if not applicable or .50, .55, .66667 etc for Majority, percent,
+        or fractions.
+        """
+        approval_required = self.get('approval_required',None)
+        if not approval_required:
+            return 0.0
+        if approval_required == "Majority":
+            return 0.5
+
+        m = self.percent_pattern.match(approval_required)
+        if m:
+            return(float(m.group(1))/100.0)
+
+        m = self.fraction_pattern.match(approval_required)
+        if m:
+            return(float(m.group(1))/m.group(2))
+
+        return 0.0
 
     # Also expose the dict values as an ordered list, for convenience.
     @property
@@ -764,7 +793,7 @@ class Contest:
         """
         # We use the results attribute as a marker to tell if the data
         # has already been loaded.  Skip if already loaded.
-        if not hasattr(self, 'results'):
+        if not self._results_details_loaded:
             self._load_contest_results_data(self)
 
         return ''
@@ -777,8 +806,14 @@ class Contest:
 
         The stat_type may be a ResultStatType or Choice object.
         """
-        # Load the results if not already loaded
-        self.load_results_details()
+        # Summary results should be loaded for the election if present
+        if not hasattr(self, 'results'):
+            if self.election._contest_status_loaded:
+                return []
+            self.election.load_contest_statuses()
+            if not self.get('results',[]):
+                return []
+
         table = self.results_mapping
 
         if type(stat_type) == ResultStatType:
@@ -888,6 +923,7 @@ class Election:
         self.input_dir = input_dir
         self.input_results_dir = input_results_dir
 
+        self._contest_status_loaded = self.have_contest_status = False
         self.ballot_title = None
         self.date = None
 
@@ -937,11 +973,11 @@ class Election:
         """
         # We use _contest_status_loaded as a marker to indicate that the
         # data has already been loaded.  Skip if already loaded.
-        if hasattr(self, '_contest_status_loaded'):
+        if getattr(self, '_contest_status_loaded', False):
             return ''
 
         self._load_contest_status_data(self)
 
-        self._contest_status_loaded = True
+        # Set in _load_contest_status_data: self._contest_status_loaded = True
 
         return ''
