@@ -13,7 +13,7 @@
 {%- endmacro %}
 
 {% block content %}
-  <h3>Contents</h3>
+  <h2>Contents</h2>
 
   <ul>
   {% for headers, contests in election.contests_with_headers() %}
@@ -42,11 +42,7 @@
     {% for headers, contests in election.contests_with_headers() %}
       {% for level, header in headers %}
         {% set header_id = header.ballot_title|to_element_id %}
-        {% if level == 1 %}
-          <h3 id="{{ header_id }}">{{ anchored_header(header.ballot_title, header_id) }}</h3>
-        {% else %}
-          <h4 id="{{ header_id }}">{{ anchored_header(header.ballot_title, header_id) }}</h4>
-        {% endif %}
+        <h2 id="{{ header_id }}">{{ anchored_header(header.ballot_title, header_id) }}</h2>
       {% endfor %}
 
     {% for contest in contests %}
@@ -60,7 +56,7 @@
       {% do subtemplate('results-detail.html', rel_path_template) %}
 
     {% set contest_id = contest.contest_name|to_element_id %}
-    <p id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}</p>
+    <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}</h3>
     {% if contest.vote_for_msg %}
       <p>
         {{ contest.vote_for_msg|translate }}
