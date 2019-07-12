@@ -48,7 +48,7 @@
 
 .table .bars-row {
     position: relative;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .table .percentage-bar {
