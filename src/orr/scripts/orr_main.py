@@ -75,10 +75,6 @@ def parse_args():
                         help='test mode, print files to expand')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
                         help='path to the configuration file to use')
-    parser.add_argument('--deterministic', action='store_true',
-                        help='make PDF generation deterministic.')
-    parser.add_argument('--skip-pdf', action='store_true',
-                        help='skip PDF generation (useful for testing).')
     parser.add_argument('--output-fresh-parent', action='store_true',
                         help=('require that the output parent not already exist. '
                               'This is for running inside a Docker container.'))
@@ -243,12 +239,12 @@ def main():
     log_level = options.log_level
     input_dirs = options.input_dirs
     output_dir = options.output_dir
+    deterministic = options.deterministic
+    skip_pdf = options.skip_pdf
 
     logging.basicConfig(level=log_level)
 
     config_path = ns.config_path
-    deterministic = ns.deterministic
-    skip_pdf = ns.skip_pdf
 
     fresh_output = ns.output_fresh_parent
 

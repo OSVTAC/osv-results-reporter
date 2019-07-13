@@ -288,13 +288,18 @@ def make_base_orr_args(ns, options):
     elif options.log_level <= logging.INFO:
         orr_args.append('--verbose')
 
+    if options.deterministic:
+        orr_args.append('--deterministic')
+    if options.skip_pdf:
+        orr_args.append('--skip-pdf')
+
     return orr_args
 
 
 def main():
     ns = parse_args()
 
-    options = scriptcommon.parse_common_args(ns, default_log_level=logging.INFO)
+    options = scriptcommon.parse_common_args(ns, default_log_level=logging.WARNING)
 
     build_time = options.build_time
     log_level = options.log_level

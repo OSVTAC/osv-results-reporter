@@ -44,7 +44,9 @@ DEFAULT_OUTPUT_PARENT_DIR = '_build'
 #     --input-results-dir value passed.
 InputDirs = namedtuple('InputDirs', 'data_dir, results_dir, template_dir, extra_template_dirs')
 
-OrrOptions = namedtuple('OrrOptions', 'input_dirs, output_dir, build_time, log_level')
+OrrOptions = namedtuple('OrrOptions',
+    'input_dirs,output_dir,build_time,log_level,deterministic,skip_pdf',
+)
 
 
 def generate_output_name(dt):
@@ -97,6 +99,10 @@ def add_common_args(parser):
                         help=('the datetime to use as the build time, '
                               'in the format "2018-06-01 20:48:12". '
                               'Defaults to the current datetime.'))
+    parser.add_argument('--deterministic', action='store_true',
+                        help='make PDF generation deterministic.')
+    parser.add_argument('--skip-pdf', action='store_true',
+                        help='skip PDF generation (useful for testing).')
 
 
 def parse_common_args(ns, default_log_level=None):
@@ -113,6 +119,8 @@ def parse_common_args(ns, default_log_level=None):
     output_subdir = ns.output_subdir
     template_dir = ns.template_dir
     extra_template_dirs = ns.extra_template_dirs
+    deterministic = ns.deterministic
+    skip_pdf = ns.skip_pdf
 
     if ns.debug:
         level = logging.DEBUG
@@ -151,8 +159,10 @@ def parse_common_args(ns, default_log_level=None):
                            template_dir=template_dir,
                            extra_template_dirs=extra_template_dirs)
 
-    options = OrrOptions(input_dirs, output_dir=output_dir, build_time=build_time,
-                    log_level=level)
+    options = OrrOptions(
+        input_dirs, output_dir=output_dir, build_time=build_time,
+        log_level=level, deterministic=deterministic, skip_pdf=skip_pdf,
+    )
 
     return options
 
