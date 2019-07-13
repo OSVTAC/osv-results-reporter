@@ -632,8 +632,9 @@ class Contest:
         self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
 
+        self.ballot_subtitle = None
+        self.name = None
         self.parent_header = None
-
         self.results_mapping = None
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
 
@@ -647,10 +648,10 @@ class Contest:
         """
         Return the contest name, as a SubstitutionString object.
         """
-        if hasattr(self, 'name') and self.name:
+        if self.name:
             return SubstitutionString( '{}', (self.name, ))
 
-        if hasattr(self, 'ballot_subtitle') and self.ballot_subtitle:
+        if self.ballot_subtitle:
             return SubstitutionString('{} - {}', (self.ballot_title, self.ballot_subtitle))
 
         return SubstitutionString('{}', (self.ballot_title, ))
