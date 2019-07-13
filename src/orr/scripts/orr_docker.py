@@ -280,6 +280,17 @@ def copy_output_dir(output_dir, container_name):
     run_subprocess(args, desc=desc)
 
 
+def make_base_orr_args(ns, options):
+    orr_args = ns.orr_args or []
+
+    if options.log_level <= logging.DEBUG:
+        orr_args.append('--debug')
+    elif options.log_level <= logging.INFO:
+        orr_args.append('--verbose')
+
+    return orr_args
+
+
 def main():
     ns = parse_args()
 
@@ -292,7 +303,6 @@ def main():
 
     logging.basicConfig(level=log_level)
 
-    orr_args = ns.orr_args or []
     skip_docker_build = ns.skip_docker_build
     source_dir = ns.source_dir
 
@@ -320,6 +330,8 @@ def main():
     temp_tag = 'orr_builder_temp'
     rel_input_root, input_dirs = build_temp_image(image_tag, input_dirs=input_dirs,
                                     container=container_name, temp_tag=temp_tag)
+
+    orr_args = make_base_orr_args(ns, options)
 
     # Add the input directory arguments.
     orr_args.extend(('--input-dir', str(input_dirs.data_dir)))
