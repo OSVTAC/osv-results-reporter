@@ -120,7 +120,10 @@
           {% set winnerPercent = {'percent': 100} %}
           {% for choice, round in rcv_results.rcv_summary() %}
             <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
-              <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
+              <td class="text-cell title">
+                {{- choice.ballot_title|translate -}}
+                {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
+              </td>
               <td>{{ round.votes|format_number }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>

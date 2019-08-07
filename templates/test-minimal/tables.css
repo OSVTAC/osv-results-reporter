@@ -20,6 +20,10 @@
     text-align: inherit;
 }
 
+.table td.text-cell .note {
+	font-style: italic;
+}
+
 .table .total {
 	font-weight: bold;
 }
