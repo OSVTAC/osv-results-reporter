@@ -676,7 +676,7 @@ class Contest:
         0.0 if not applicable or .50, .55, .66667 etc for Majority, percent,
         or fractions.
         """
-        approval_required = self.get('approval_required',None)
+        approval_required = self.approval_required
         if not approval_required:
             return 0.0
         if approval_required == "Majority":
@@ -688,7 +688,7 @@ class Contest:
 
         m = self.fraction_pattern.match(approval_required)
         if m:
-            return(float(m.group(1))/m.group(2))
+            return(float(m.group(1))/float(m.group(2)))
 
         return 0.0
 
