@@ -692,6 +692,17 @@ class Contest:
 
         return 0.0
 
+    @property
+    def approval_required_percentage(self):
+      fraction = self.approval_required_fraction
+      if fraction == 0.0:
+        return ""
+      if fraction == 0.5:
+        return "50%+1"
+      if fraction == 2/3:
+        return "66⅔%"
+      return "{:.2g}%".format(fraction * 100.0)
+
     # Also expose the dict values as an ordered list, for convenience.
     @property
     def choices(self):

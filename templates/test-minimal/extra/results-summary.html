@@ -92,6 +92,11 @@
         {{ contest.vote_for_msg|translate }}
       </p>
     {% endif %}
+    {% if contest.approval_required %}
+      <p>
+        Requires {{ contest.approval_required_percentage }} affirmative votes to pass
+      </p>
+    {% endif %}
     <p>
       {{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
       {% if contest.is_rcv %}
