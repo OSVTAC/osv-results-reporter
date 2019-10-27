@@ -182,7 +182,9 @@
             {%- endif -%}
             <td class="bars-row">
                 <div class="percentage-bar" style="width: {{ p|compute_percent(winnerPercent.percent) }}%"></div>
-                <div class="cutoff-line" style="left: calc({{ 50|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+                {% if contest.approval_required %}
+                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+                {% endif %}
             </td>
           </tr>
         {% endfor %}
