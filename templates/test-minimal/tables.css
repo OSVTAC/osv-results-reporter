@@ -48,6 +48,10 @@
     border-radius: 50%;
 }
 
+.contest.failed .table .successful .title:after {
+	background-color: #d33;
+}
+
 .table .bars-header:before {
     content: ' ';
     display: block;

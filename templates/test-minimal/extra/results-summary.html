@@ -85,6 +85,8 @@
       {% set options.headers = headers %}
       {% do subtemplate('results-detail.html', rel_path_template) %}
 
+    <div class="contest {%- if contest.approval_required %} {% if contest.success -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
+
     {% set contest_id = contest.contest_name|to_element_id %}
     <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}</h3>
     {% if contest.vote_for_msg %}
@@ -209,6 +211,7 @@
       </tbody>
     </table>
     {% endif %}
+    </div> {# End div.contest #}
     {% endfor %} {# End iterating over the contests. #}
     {% endfor %} {# End iterating over (headers, contests) pairs. #}
   {% endwith %}
