@@ -122,7 +122,13 @@
         </thead>
         <tbody class="choices">
           {# HACK: overwriting variables within loops doesn't work in Jinja, but updating dicts does #}
-          {% set winnerPercent = {'percent': 100} %}
+          {% set highestPercent = {'percent': 0} %}
+          {% for choice, round in rcv_results.rcv_summary() %}
+            {%- if round.percent > highestPercent.percent -%}
+              {%- if highestPercent.update({'percent': round.percent}) -%}{%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {% set scalePercent = highestPercent.percent %}
           {% for choice, round in rcv_results.rcv_summary() %}
             <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
               <td class="text-cell title">
@@ -132,14 +138,10 @@
               <td>{{ round.votes|format_number }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
-              {# HACK: this assumes the winner is the first candidate #}
-              {%- if choice.is_successful and winnerPercent.percent == 100 -%}
-                {%- if winnerPercent.update({'percent': round.percent}) -%}{%- endif -%}
-              {%- endif -%}
               <td class="bars-row">
-                  <div class="percentage-bar" style="width: {{ round.percent|compute_percent(winnerPercent.percent) }}%"></div>
-                  {% if winnerPercent.percent >= 50 %}
-                    <div class="cutoff-line" style="left: calc({{ 50|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+                  <div class="percentage-bar" style="width: {{ round.percent|compute_percent(scalePercent) }}%"></div>
+                  {% if scalePercent >= 50 %}
+                    <div class="cutoff-line" style="left: calc({{ 50|compute_percent(scalePercent) }}% - 0.25em)"></div>
                   {% endif %}
               </td>
             </tr>
@@ -168,7 +170,15 @@
         </tr>
       </thead>
       <tbody class="choices">
-        {% set winnerPercent = {'percent': 100} %}
+        {# HACK: overwriting variables within loops doesn't work in Jinja, but updating dicts does #}
+        {% set highestPercent = {'percent': 0} %}
+        {% for choice in contest.choices %}
+          {% set p = contest.summary_results(choice, "TO")[0]|compute_percent(contest.total_votes) %}
+          {%- if p > highestPercent.percent -%}
+            {%- if highestPercent.update({'percent': p}) -%}{%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {% set scalePercent = highestPercent.percent %}
         {% for choice in contest.choices_sorted %}
           {% set v = contest.summary_results(choice, "TO")[0] %}
           {% set p = v|compute_percent(contest.total_votes) %}
@@ -176,14 +186,10 @@
             <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
             <td>{{ v|format_number }}</td>
             <td>{{ p|format_percent }}</td>
-            {# HACK: this assumes the winner is the first candidate #}
-            {%- if choice.is_successful and winnerPercent.percent == 100 -%}
-              {%- if winnerPercent.update({'percent': p}) -%}{%- endif -%}
-            {%- endif -%}
             <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ p|compute_percent(winnerPercent.percent) }}%"></div>
+                <div class="percentage-bar" style="width: {{ p|compute_percent(scalePercent) }}%"></div>
                 {% if contest.approval_required %}
-                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(winnerPercent.percent) }}% - 0.25em)"></div>
+                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(scalePercent) }}% - 0.25em)"></div>
                 {% endif %}
             </td>
           </tr>
