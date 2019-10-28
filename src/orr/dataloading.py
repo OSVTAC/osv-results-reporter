@@ -1046,6 +1046,7 @@ class ContestLoader:
             context_keys=('areas_by_id',), unpack_context=True, required=True),
         ('runoff_date', parse_date),
         ('runoff_type', parse_as_is),
+        ('success', parse_as_is),
         ('type', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
