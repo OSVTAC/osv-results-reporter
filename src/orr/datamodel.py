@@ -714,7 +714,15 @@ class Contest:
         """
         Return the list of choices in descending order of total votes
         """
-        yield from sorted(self.choices, reverse=True, key=lambda c: self.summary_results(c, "TO")[0])
+        def sorter(c):
+          if self.approval_required:
+            # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
+            # The Yes choice is the one whose success status matches the contest's success status.
+            return 1 if c.is_successful == self.success else 0
+          # For other contests, sort by vote total
+          return self.summary_results(c, "TO")[0]
+
+        yield from sorted(self.choices, reverse=True, key=sorter)
 
     @property
     def total_votes(self):

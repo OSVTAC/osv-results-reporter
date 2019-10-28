@@ -178,7 +178,7 @@
             {%- if highestPercent.update({'percent': p}) -%}{%- endif -%}
           {%- endif -%}
         {%- endfor -%}
-        {% set scalePercent = highestPercent.percent %}
+        {% set scalePercent = 100 if contest.approval_required else highestPercent.percent %}
         {% for choice in contest.choices_sorted %}
           {% set v = contest.summary_results(choice, "TO")[0] %}
           {% set p = v|compute_percent(contest.total_votes) %}
