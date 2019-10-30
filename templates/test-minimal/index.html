@@ -15,6 +15,7 @@
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
+    {# TODO: leave off the language suffix for English. #}
     {% set rel_path_template = "results-summary-{}.html" %}
     {% set rel_output_path = rel_path_template|format_path %}
     {% do subtemplate('results-summary.html', rel_path_template) %}
