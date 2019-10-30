@@ -48,6 +48,10 @@
     border-radius: 50%;
 }
 
+.contest.failed .table .successful .title:after {
+	background-color: #d33;
+}
+
 .table .bars-header:before {
     content: ' ';
     display: block;
@@ -66,6 +70,22 @@
 
 .table .successful .percentage-bar {
     background-color: green;
+}
+
+.contest.successful .table .percentage-bar {
+	background-color: red;
+}
+
+.contest.successful .table .successful .percentage-bar {
+	background-color: green;
+}
+
+.contest.failed .table .percentage-bar {
+	background-color: green;
+}
+
+.contest.failed .table .successful .percentage-bar {
+	background-color: red;
 }
 
 .table .cutoff-line {
