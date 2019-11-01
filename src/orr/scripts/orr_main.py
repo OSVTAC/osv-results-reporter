@@ -32,6 +32,7 @@ import logging
 import os
 from pathlib import Path
 from pprint import pprint
+import shutil
 import sys
 from textwrap import dedent
 
@@ -50,6 +51,7 @@ VERSION='0.0.1'     # Program version
 
 ENCODING='utf-8'
 
+STATIC_FILES_DIR = '_static'
 
 #--- Command line arguments: ---
 
@@ -121,8 +123,34 @@ def load_input(data, path):
 
 #--- Top level processing: ---
 
+def initialize_output_dir(template_dir, output_dir):
+    """
+    Create the output directory, copying static files if necessary.
+
+    Args:
+      template_dir: a Path object.
+      output_dir: a Path object.
+    """
+    static_files_dir = template_dir / STATIC_FILES_DIR
+    if not static_files_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return
+
+    if output_dir.exists():
+        # TODO: add a command-line option to bypass this prompt.
+        response = input(
+            'Output directory already exists:\n'
+            f'--> {output_dir.resolve()}\n'
+            'Okay to delete (yes/no)?\n'
+        )
+        if response != 'yes':
+            raise SystemExit('Not okay to delete: aborting.')
+        shutil.rmtree(output_dir)
+
+    shutil.copytree(static_files_dir, output_dir)
+
+
 # TODO: render the directory recursively.
-# TODO: make a "_static" subdirectory that copies files as is.
 # TODO: put the templates in a "templates" subdirectory.
 def render_template_dir(template_dir, output_dir, env, context=None, test_mode=False):
     """
@@ -218,8 +246,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
                                 build_time=build_time)
 
-    # TODO: copy constant files (_static directory).
-    output_dir.mkdir(parents=True, exist_ok=True)
+    initialize_output_dir(template_dir, output_dir=output_dir)
 
     # TODO: allow different locales to be used (e.g. the system's default
     #  locale and/or a locale passed in via the command-line)?
