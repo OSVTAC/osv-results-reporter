@@ -470,10 +470,7 @@ def process_template(env:Environment, template_name:str, default_rel_output_path
         output_dir.mkdir()
 
     context.update({
-        # TODO: choose a better name for this context key.
-        # TODO: store the actual path rather than the default path, and
-        #  simplify current_page_link().
-        'rel_path_template': default_rel_output_path,
+        'default_rel_path': default_rel_output_path,
     })
     rendered = template.render(context)
 

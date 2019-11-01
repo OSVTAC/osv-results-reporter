@@ -169,8 +169,8 @@ def current_page_link(context, lang=None):
       lang: an optional language abbreviation.  Defaults to the context's
         current language.
     """
-    rel_path_template = context['rel_path_template']
-    rel_path = utils.make_lang_path(rel_path_template, context=context, lang=lang)
+    default_rel_path = context['default_rel_path']
+    rel_path = utils.make_lang_path(default_rel_path, context=context, lang=lang)
     filename = rel_path.name
 
     return filename
