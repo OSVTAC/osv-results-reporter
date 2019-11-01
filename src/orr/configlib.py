@@ -26,7 +26,7 @@ Contains functions to help configure ORR.
 from pathlib import Path
 
 import jinja2
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import contextfilter, Environment, FileSystemLoader
 from jinja2.utils import Namespace
 
 import orr.templating as templating
@@ -76,6 +76,7 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None,
         create_pdf=templating.create_pdf,
         create_tsv_files=templating.create_tsv_files,
         create_xlsx=templating.create_xlsx,
+        home_href=templating.get_home_href,
         make_translator=templating.make_translator,
         subtemplate=templating.subtemplate,
         SHASUMS_PATH=SHA256SUMS_FILENAME,

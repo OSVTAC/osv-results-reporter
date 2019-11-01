@@ -27,6 +27,7 @@ import datetime
 import functools
 import json
 import logging
+import os
 from pathlib import Path
 
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
@@ -174,6 +175,27 @@ def current_page_link(context, lang=None):
     filename = rel_path.name
 
     return filename
+
+
+# TODO: test this.
+@contextfunction
+def get_home_href(context):
+    """
+    Return the url to the home page, relative to the current page.
+
+    The linked-to home page should be the version of the home page in the
+    same language as the currently active language.
+    """
+    path = Path()
+    default_rel_path = context['default_rel_path']
+    # If the current page isn't at the top level, then first ascend
+    # to the top
+    for x in range(len(default_rel_path.parts) - 1):
+        path /= os.pardir
+    path /= 'index.html'
+
+    # Now switch to the url to the current language.
+    return utils.make_lang_path(path, context=context)
 
 
 def default_contest_path(contest, dir_path=None):

@@ -11,7 +11,7 @@
   <h1>{{ self.title() }}</h1>
 
   <p>
-    Switch language:
+    [<a href="{{ home_href() }}">Home</a>] Switch language:
   {% for lang in languages %}
     {% with %}
       <a href="{{ current_page_link(lang) }}">{{ lang }}</a> |
