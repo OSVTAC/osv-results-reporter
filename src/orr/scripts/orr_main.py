@@ -122,6 +122,8 @@ def load_input(data, path):
 #--- Top level processing: ---
 
 # TODO: render the directory recursively.
+# TODO: make a "_static" subdirectory that copies files as is.
+# TODO: put the templates in a "templates" subdirectory.
 def render_template_dir(template_dir, output_dir, env, context=None, test_mode=False):
     """
     Render the templates inside the given template directory.
@@ -136,12 +138,13 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
     # Process templates
     for template_path in template_dir.iterdir():
         if template_path.is_dir():
-            # TODO: process directories recursively.
+            # TODO: process directories recursively, but remembering to
+            #  skip directories like the "extra" directory.
             continue
 
         file_name = template_path.name
-        utils.process_template(env, template_name=file_name, rel_path_template=file_name,
-            context=context, test_mode=test_mode)
+        utils.process_template(env, template_name=file_name, context=context,
+            test_mode=test_mode)
 
 
 def make_sha256sums_file(dir_path):
@@ -215,6 +218,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
                                 build_time=build_time)
 
+    # TODO: copy constant files (_static directory).
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # TODO: allow different locales to be used (e.g. the system's default

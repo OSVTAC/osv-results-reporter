@@ -82,13 +82,12 @@
 
     {% for contest in contests %}
       {# Compute detailed results now so we can link to the results file below. #}
-      {% set rel_path_template = contest|contest_path_template("results-detail") %}
-      {% set rel_output_path = rel_path_template|format_path %}
-
       {# Set options so the objects are available within the subtemplate. #}
       {% set options.contest = contest %}
       {% set options.headers = headers %}
-      {% do subtemplate('results-detail.html', rel_path_template) %}
+
+      {% set rel_path_template = contest|default_contest_path("results-detail") %}
+      {% with rel_output_path=subtemplate('results-detail.html', rel_path_template) %}
 
     <div class="contest {%- if contest.approval_required %} {% if contest.success -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
 
@@ -107,10 +106,10 @@
     <p>
       {{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
       {% if contest.is_rcv %}
-        {% set rcv_path_template = contest|contest_path_template("results-rcv") %}
-        {% set rcv_path = rcv_path_template|format_path %}
-        {% do subtemplate('results-rcv.html', rcv_path_template) %}
+        {% set default_rcv_path = contest|default_contest_path("results-rcv") %}
+        {% with rcv_path=subtemplate('results-rcv.html', default_rcv_path) %}
         <a href="{{ rcv_path }}">[RCV rounds]</a>
+        {% endwith %}
       {% endif %}
       <a href="{{ rel_output_path }}">[Detailed results]</a>
     </p>
@@ -217,6 +216,7 @@
     </table>
     {% endif %}
     </div> {# End div.contest #}
+    {% endwith -%} {# End the "results-detail.html" subtemplate. #}
     {% endfor %} {# End iterating over the contests. #}
     {% endfor %} {# End iterating over (headers, contests) pairs. #}
   {% endwith %}

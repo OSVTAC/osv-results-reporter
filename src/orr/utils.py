@@ -228,6 +228,34 @@ def _convert_fragment(char):
     return ELEMENT_ID_SEP
 
 
+def make_lang_path(default_path, context, lang=None):
+    """
+    Create the path for the given language and context, and return a Path object.
+
+    Args:
+      default_path: the path without any language suffix.
+
+    For example:
+
+        >>> make_lang_path('details/contest-1.html', context={}, lang='es')
+        Path('details/contest-1-es.html')
+    """
+    if lang is None:
+        lang = get_language(context)
+
+    # We want the return value to be a Path object.
+    path = Path(default_path)
+
+    # Only add the language code if not English.
+    if lang == ENGLISH_LANG:
+        return path
+
+    name = Path(path.name)
+    name = f'{name.stem}-{lang}{name.suffix}'
+
+    return path.with_name(name)
+
+
 def make_element_id(text):
     """
     Create an element id from text (e.g. to support navigation within a
@@ -396,7 +424,7 @@ def directory_sha256sum(dir_path, exclude_paths=None):
     return text
 
 
-def process_template(env:Environment, template_name:str, rel_path_template:str,
+def process_template(env:Environment, template_name:str, default_rel_output_path:str=None,
     context:dict=None, test_mode:bool=False):
     """
     Write (aka render) a template file to the given relative path.
@@ -406,14 +434,15 @@ def process_template(env:Environment, template_name:str, rel_path_template:str,
     Args:
       env: a Jinja2 Environment object.
       template_name: template to expand.
-      rel_path_template: the output path to which to write the rendered
-        template, as a format string.  The format string should have at most
-        one replacement field -- for a language abbreviation.
-           When formatted, it should be a path relative to the output
-        directory configured in the Jinja2 Environment object.  An example
-        value is "results-detail/contest-403-{}.html".
+      default_rel_output_path: the output path to which to write the rendered
+        template, without any language suffix.  This should be a path
+        relative to the output directory configured in the Jinja2 Environment
+        object.  An example value is: "results-detail/contest-403.html".
       context: optional context data, as a dict or Jinja Context object.
     """
+    if default_rel_output_path is None:
+        default_rel_output_path = template_name
+
     if context is None:
         context = {}
     elif hasattr(context, 'get_exported'):
@@ -430,11 +459,8 @@ def process_template(env:Environment, template_name:str, rel_path_template:str,
             f'Will process_template {template_name} to create {output_path})')
         return
 
-    lang = get_language(context)
-
-    rel_output_path = rel_path_template.format(lang)
+    rel_output_path = make_lang_path(default_rel_output_path, context=context)
     output_path = get_output_path(env, rel_output_path)
-
     _log.debug(f'process_template: {template_name} -> {output_path}')
 
     template = env.get_template(template_name)
@@ -444,7 +470,10 @@ def process_template(env:Environment, template_name:str, rel_path_template:str,
         output_dir.mkdir()
 
     context.update({
-        'rel_path_template': rel_path_template,
+        # TODO: choose a better name for this context key.
+        # TODO: store the actual path rather than the default path, and
+        #  simplify current_page_link().
+        'rel_path_template': default_rel_output_path,
     })
     rendered = template.render(context)
 
@@ -455,4 +484,4 @@ def process_template(env:Environment, template_name:str, rel_path_template:str,
     output_path.write_text(rendered)
     _log.info(f'Created {output_path} from template {template_name}')
 
-    return output_path
+    return rel_output_path

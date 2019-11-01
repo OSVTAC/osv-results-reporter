@@ -15,12 +15,10 @@
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
-    {# TODO: leave off the language suffix for English. #}
-    {% set rel_path_template = "index-{}.html" %}
-    {% set rel_output_path = rel_path_template|format_path %}
-    {% do subtemplate('index.html', rel_path_template) %}
+    {% with rel_output_path=subtemplate('index.html') %}
     <li><a href="{{ rel_output_path }}">{{ rel_output_path }}</a>
       (<code>{{ rel_output_path|secure_hash }}</code>)</li>
+    {% endwith %}
   {% endwith %}
 {% endfor %}
 {% with base_name='sov' %}

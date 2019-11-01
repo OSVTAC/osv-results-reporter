@@ -30,6 +30,8 @@ from textwrap import dedent
 import unittest
 from unittest import TestCase
 
+from jinja2.utils import Namespace
+
 import orr.tests.testhelpers as testhelpers
 import orr.utils as utils
 from orr.utils import IN_DOCKER, US_LOCALE
@@ -151,6 +153,24 @@ class UtilsModuleTest(TestCase):
         for percent, expected in cases:
             with self.subTest(percent=percent):
                 actual = utils.format_percent(percent)
+                self.assertEqual(actual, expected)
+
+    def test_make_lang_path(self):
+        options = Namespace(lang='zh')
+        context = {'options': options}
+
+        cases = [
+            ('en', 'index.html', Path('index.html')),
+            ('es', 'index.html', Path('index-es.html')),
+            # Test defaulting to the context's language.
+            (None, 'index.html', Path('index-zh.html')),
+            # Test some files in a subdirectory.
+            ('en', 'details/contest-1.html', Path('details/contest-1.html')),
+            ('es', 'details/contest-1.html', Path('details/contest-1-es.html')),
+        ]
+        for lang, default_path, expected in cases:
+            with self.subTest(lang=lang):
+                actual = utils.make_lang_path(default_path, context=context, lang=lang)
                 self.assertEqual(actual, expected)
 
     def test_make_element_id(self):

@@ -159,21 +159,6 @@ def to_element_id(context, text):
     return utils.make_element_id(text)
 
 
-@contextfilter
-def format_path(context, path_template, lang=None):
-    """
-    Format a path template, and return a string path.
-
-    Args:
-      path_template: a path as a format string.  The format string should
-        have at most one replacement field -- for a language abbreviation.
-    """
-    if lang is None:
-        lang = utils.get_language(context)
-
-    return path_template.format(lang)
-
-
 @contextfunction
 def current_page_link(context, lang=None):
     """
@@ -185,23 +170,22 @@ def current_page_link(context, lang=None):
         current language.
     """
     rel_path_template = context['rel_path_template']
-    rel_path = Path(format_path(context, path_template=rel_path_template, lang=lang))
+    rel_path = utils.make_lang_path(rel_path_template, context=context, lang=lang)
     filename = rel_path.name
 
     return filename
 
 
-def contest_path_template(contest, dir_path=None):
+def default_contest_path(contest, dir_path=None):
     """
-    Create and return a relative path template for a contest.
+    Create and return the default path for a contest.
 
-    The return value is a format string with the following as an example:
-    "results-detail/contest-403-{}.html".
+    Example return value: "results-detail/contest-403.html".
     """
     if dir_path is None:
         dir_path = ''
 
-    return str(Path(dir_path) / f'contest-{contest.id}-{{}}.html')
+    return str(Path(dir_path) / f'contest-{contest.id}.html')
 
 
 @contextfunction
@@ -210,22 +194,22 @@ def make_translator(context):
 
 
 @contextfunction
-def subtemplate(context, template_name, rel_path_template):
+def subtemplate(context, template_name, default_rel_output_path=None):
     """
     Render a template.
 
     Args:
-      rel_path_template: the output path to which to write the rendered
-        template, as a format string.  The format string should have at most
-        one replacement field -- for a language abbreviation.
-           When formatted, it should be a path relative to the output
-        directory configured in the Jinja2 Environment object.  An example
-        value is "results-detail/contest-403-{}.html".
+      default_rel_output_path: the output path to which to write the rendered
+        template, without any language suffix.  This should be a path
+        relative to the output directory configured in the Jinja2 Environment
+        object.  An example value is: "results-detail/contest-403.html".
     """
     env = context.environment
 
-    utils.process_template(env, template_name=template_name,
-                rel_path_template=rel_path_template, context=context)
+    rel_output_path = utils.process_template(env, template_name=template_name,
+                default_rel_output_path=default_rel_output_path, context=context)
+
+    return rel_output_path
 
 
 # TODO: turn this into a generator-iterator so not all data needs to be
