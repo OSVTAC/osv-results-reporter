@@ -200,7 +200,9 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
         templates (e.g. for the subtemplate tag).  This should be a list
         of path-like objects.
       output_dir: the output directory, as a Path object.
-      build_time: this is exposed to permit reproducible builds more easily.
+      build_time: the current time, as a naive datetime object in the local
+        timezone. This is exposed for testing and reproducibility purposes.
+        Defaults to `datetime.now()`.
       deterministic: for deterministic PDF generation.  Defaults to False.
       skip_pdf: whether to skip PDF generation.  Defaults to False.
     """

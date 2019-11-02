@@ -117,6 +117,24 @@ def format_date_medium(context, day):
     return _format_date(context, day, format_='medium')
 
 
+@contextfilter
+def format_datetime(context, dt):
+    """
+    Format a datetime in a "long" form, e.g. "November 1, 2019 5:34:12 PM".
+
+    Args:
+      dt: a naive datetime object.
+    """
+    formatted_date = _format_date(context, date=dt)
+
+    # Get the integer hour between 1 and 12 (not padded with zeros).
+    hour = int(dt.strftime('%I'))
+    # TODO: use a time format derived from the language and/or locale.
+    formatted_time = dt.strftime(f'{hour}:%M:%S %p')
+
+    return f'{formatted_date} {formatted_time}'
+
+
 def choose_translation(translations, lang):
     try:
         text = translations[lang]

@@ -17,6 +17,8 @@
       <a href="{{ current_page_link(lang) }}">{{ lang }}</a> |
     {% endwith %}
   {% endfor %}
+  <p>
+    Last published: {{ build_time|format_datetime }}
 
   <h2>{{ election.date|format_date }} -
     {{ election.ballot_title|translate }} -
