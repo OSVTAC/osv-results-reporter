@@ -246,8 +246,12 @@ def run_orr(orr_args, image_name, container):
     input_dir = input_dir.resolve()
     docker_input_dir = '/app/input-dir'
 
+    # Set the time zone in the container so the results report's "Last
+    # published" time will be in San Francisco's time zone instead of UTC.
+    # TODO: let the time zone be specified via a command-line option.
     args = [
-        'docker', 'run', '--name', container, image_name,
+        'docker', 'run', '--env', 'TZ=America/Los_Angeles',
+        '--name', container, image_name,
         # These are the arguments to pass to orr.
         '--output-parent', DOCKER_OUTPUT_PARENT,
         '--output-subdir', DOCKER_OUTPUT_DIR_NAME,
