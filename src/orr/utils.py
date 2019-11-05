@@ -425,7 +425,7 @@ def directory_sha256sum(dir_path, exclude_paths=None):
 
 
 def process_template(env:Environment, template_name:str, default_rel_output_path:str=None,
-    context:dict=None, test_mode:bool=False):
+    context:dict=None, test_mode:bool=False, skip_writing=False):
     """
     Write (aka render) a template file to the given relative path.
 
@@ -439,6 +439,9 @@ def process_template(env:Environment, template_name:str, default_rel_output_path
         relative to the output directory configured in the Jinja2 Environment
         object.  An example value is: "results-detail/contest-403.html".
       context: optional context data, as a dict or Jinja Context object.
+      skip_writing: whether to skip writing the output to a file.
+        This is useful for "control flow" templates whose only purpose
+        is to render other templates.
     """
     if default_rel_output_path is None:
         default_rel_output_path = template_name
@@ -474,11 +477,14 @@ def process_template(env:Environment, template_name:str, default_rel_output_path
     })
     rendered = template.render(context)
 
-    # Strip trailing whitespace as a normalization step to simplify
-    # testing.  For example, this way we don't have to check files in
-    # to our repository that have trailing whitespace.
-    rendered = strip_trailing_whitespace(rendered)
-    output_path.write_text(rendered)
-    _log.info(f'Created {output_path} from template {template_name}')
+    if skip_writing:
+        _log.info(f'Processed template {template_name} and skipping writing to: {output_path}')
+    else:
+        # Strip trailing whitespace as a normalization step to simplify
+        # testing.  For example, this way we don't have to check files in
+        # to our repository that have trailing whitespace.
+        rendered = strip_trailing_whitespace(rendered)
+        output_path.write_text(rendered)
+        _log.info(f'Processed template {template_name} and wrote to: {output_path}')
 
     return rel_output_path

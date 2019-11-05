@@ -171,8 +171,10 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
             continue
 
         file_name = template_path.name
+        # TODO: provide a way to control the skip_writing argument on
+        #  a per template-file basis.
         utils.process_template(env, template_name=file_name, context=context,
-            test_mode=test_mode)
+            test_mode=test_mode, skip_writing=True)
 
 
 def make_sha256sums_file(dir_path):
@@ -184,6 +186,11 @@ def make_sha256sums_file(dir_path):
     contents = utils.directory_sha256sum(dir_path, exclude_paths=exclude_paths)
     sha256sums_path = dir_path / shasums_file
     sha256sums_path.write_text(contents)
+
+
+def finalize_output_dir(output_dir):
+    make_sha256sums_file(output_dir)
+    # TODO: add a zip of the directory.
 
 
 def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
@@ -256,7 +263,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
         render_template_dir(template_dir, output_dir=output_dir, env=env,
             context=context, test_mode=test_mode)
 
-    make_sha256sums_file(output_dir)
+    finalize_output_dir(output_dir)
 
     output_data = scriptcommon.print_result(output_dir, build_time=build_time)
 

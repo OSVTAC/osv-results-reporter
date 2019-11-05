@@ -6,21 +6,20 @@
 <body>
 {{ election.load_contest_statuses() }}
 {% with report_title="Minimal Test" %}
-<h1>{{ report_title }}</h1>
-<p>
-  Build time: {{ build_time }}
-<p>
-  Languages (SHA-256 of file contents shown in parentheses):
 <ul>
 {% for lang in languages %}
   {% with %}
     {% set options.lang = lang %}
     {% with rel_output_path=subtemplate('index.html') %}
-    <li><a href="{{ rel_output_path }}">{{ rel_output_path }}</a>
-      (<code>{{ rel_output_path|secure_hash }}</code>)</li>
+    <li><a href="{{ rel_output_path }}">{{ rel_output_path }}</a></li>
+    {% endwith %}
+    {% with rel_output_path=subtemplate('detailed-reports.html') %}
+    <li><a href="{{ rel_output_path }}">{{ rel_output_path }}</a></li>
     {% endwith %}
   {% endwith %}
 {% endfor %}
+
+{# Only generate the PDF Statement of Vote once (and in one language). #}
 {% with base_name='sov' %}
   {% set options.lang = "en" %}
   {% set translator = make_translator() %}
@@ -29,7 +28,6 @@
   {% endwith %}
 {% endwith %}
 
-  <li><a href="{{ SHASUMS_PATH }}"><code>{{ SHASUMS_PATH }}</code></a></li>
 </ul>
 {% endwith %}
 </body>
