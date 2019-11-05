@@ -33,8 +33,10 @@ from setuptools import setup, find_packages
 PACKAGE_DATA_EXTS = [
     # Include the empty extension for the file "SHA256SUMS".
     '',
+    '.css',
     '.html',
     '.xlsx',
+    '.svg',
 ]
 
 
