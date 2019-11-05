@@ -18,8 +18,11 @@
       <a href="{{ current_page_link(lang) }}">{{ lang }}</a> |
     {% endwith %}
   {% endfor %}
+  </p>
   <p>
     Last published: {{ build_time|format_datetime }}
+  </p>
+  {# The line below inserts the string from the "title" block above. #}
   <h2>{{ self.title() }}</h2>
   <div>
     {% block content %}{% endblock %}
