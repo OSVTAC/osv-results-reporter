@@ -258,7 +258,7 @@ class UtilsModuleTest(TestCase):
             self.assertEqual(actual, expected)
 
     # TODO: also test files inside directories.
-    def test_directory_sha256sum(self):
+    def test_compute_sha256sum(self):
         file_infos = [
             ('a.txt', 'aaa'),
             ('b.txt', 'bbb'),
@@ -275,5 +275,5 @@ class UtilsModuleTest(TestCase):
                 path = Path(temp_dir) / rel_path
                 path.write_text(text)
 
-            actual = utils.directory_sha256sum(temp_dir, exclude_paths=exclude_paths)
+            actual = utils.compute_sha256sum(temp_dir, exclude_paths=exclude_paths)
             self.assertEqual(actual, expected)

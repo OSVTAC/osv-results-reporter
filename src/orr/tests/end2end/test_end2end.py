@@ -29,14 +29,16 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 import orr.scripts.orr_main as main
-from orr.utils import SHA256SUMS_FILENAME
+from orr.utils import SHASUMS_PATH
 
 
 def get_paths_inside(dir_path, exclude_exts=None):
     """
-    Return the paths to all files in the given directory, recursively.
+    Return the paths to all files in the given directory, including
+    subdirectories.
 
-    The paths returned are relative to the given directory, and sorted.
+    The paths are returned as a sorted list of strings, with the paths
+    relative to the given directory.
 
     Args:
       exclude_exts: an iterable of extensions to exclude (where the leading
@@ -75,6 +77,7 @@ class EndToEndTest(TestCase):
         # Exclude generated PDF files so we don't have to store binary
         # files in source control.  The file's contents are already being
         # checked by virtue of the path being listed in the SHA256SUMS file.)
+        # Each iterable is a list of strings (not Path objects).
         actual_rel_paths, expected_rel_paths = (
             get_paths_inside(dir_path, exclude_exts=['.pdf']) for dir_path in dirs
         )
@@ -84,8 +87,8 @@ class EndToEndTest(TestCase):
         # Move the files that contain secure file hashes to the end of the
         # list so that the file diff we see is more informative (i.e.
         # not just a difference in hash values).
-        # In particular, make SHA256SUMS_FILENAME the very last file checked.
-        for name in ('index.html', SHA256SUMS_FILENAME):
+        # In particular, make SHASUMS_PATH the very last file checked.
+        for name in ('index.html', str(SHASUMS_PATH)):
             if name in actual_rel_paths:
                 actual_rel_paths.remove(name)
                 actual_rel_paths.append(name)

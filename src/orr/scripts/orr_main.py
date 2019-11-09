@@ -42,7 +42,7 @@ from orr.dataloading import DEFAULT_RESULTS_DIR_NAME
 import orr.scripts.scriptcommon as scriptcommon
 import orr.templating as templating
 import orr.utils as utils
-from orr.utils import SHA256SUMS_FILENAME, US_LOCALE
+from orr.utils import SHASUMS_PATH, US_LOCALE
 
 
 _log = logging.getLogger(__name__)
@@ -178,13 +178,17 @@ def render_template_dir(template_dir, output_dir, env, context=None, test_mode=F
 
 
 def make_sha256sums_file(dir_path):
-    shasums_file = SHA256SUMS_FILENAME
+    """
+    Args:
+      dir_path: the directory for which to compute the SHASUMS file.
+    """
+    shasums_path = SHASUMS_PATH
     # Don't include SHA256SUMS because its hash will necessarily be incorrect
     # after SHA256SUMS is updated.
-    exclude_paths = [shasums_file]
+    exclude_paths = [shasums_path]
 
-    contents = utils.directory_sha256sum(dir_path, exclude_paths=exclude_paths)
-    sha256sums_path = dir_path / shasums_file
+    contents = utils.compute_sha256sum(dir_path, exclude_paths=exclude_paths)
+    sha256sums_path = dir_path / shasums_path
     sha256sums_path.write_text(contents)
 
 

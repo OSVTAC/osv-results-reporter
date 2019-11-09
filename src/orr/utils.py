@@ -65,7 +65,10 @@ HASH_BYTES = 2 ** 12  # 4K
 # Our options for pretty-printing JSON for increased human readability.
 DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
 
-SHA256SUMS_FILENAME = 'SHA256SUMS'
+# We use a txt extension as opposed to no extension to make the file
+# viewable from a browser.  When no extension is used, browsing to the
+# file prompts for download rather than displaying it for viewing.
+SHASUMS_PATH = Path('SHA256SUMS.txt')
 
 
 def get_language(context):
@@ -387,7 +390,7 @@ def get_sha256sum_args():
 
 
 # TODO: also expose a function to check a SHA256SUMS file.
-def directory_sha256sum(dir_path, exclude_paths=None):
+def compute_sha256sum(dir_path, exclude_paths=None):
     """
     Run sha256sum (or shasum on Mac OS X) on the files in a directory, and
     return the result as a string.

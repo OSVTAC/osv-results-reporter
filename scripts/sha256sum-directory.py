@@ -19,8 +19,8 @@
 #
 
 """
-Helper script to generate a SHA256SUMS file of all the files inside a
-directory (and its subdirectories, etc).
+Helper script to compute SHA256SUMS for all files inside a directory,
+recursively.
 
 Usage: python scripts/sha256sum-directory.py DIR
 
@@ -46,7 +46,7 @@ def main():
     except IndexError:
         raise RuntimeError('path not provided')
 
-    text = utils.directory_sha256sum(dir_path)
+    text = utils.compute_sha256sum(dir_path)
 
     print(text)
 

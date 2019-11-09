@@ -31,7 +31,7 @@ from jinja2.utils import Namespace
 
 import orr.templating as templating
 import orr.utils as utils
-from orr.utils import ENGLISH_LANG, SHA256SUMS_FILENAME
+from orr.utils import ENGLISH_LANG, SHASUMS_PATH
 
 
 def create_jinja_env(output_dir, template_dirs=None, deterministic=None,
@@ -79,7 +79,8 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None,
         home_href=templating.get_home_href,
         make_translator=templating.make_translator,
         subtemplate=templating.subtemplate,
-        SHASUMS_PATH=SHA256SUMS_FILENAME,
+        # Convert from a Path object to a string.
+        SHASUMS_PATH=str(SHASUMS_PATH),
     )
 
     filters = dict(
