@@ -91,7 +91,11 @@
     <div class="contest {%- if contest.approval_required %} {% if contest.success -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
 
     {% set contest_id = contest.contest_name|to_element_id %}
-    <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}</h3>
+    <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}
+    {% if contest.short_description %}
+       - {{ contest.short_description|translate }}
+    {% endif %}
+    </h3>
     {% if contest.vote_for_msg %}
       <p>
         {{ contest.vote_for_msg|translate }}

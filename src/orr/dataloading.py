@@ -1036,6 +1036,7 @@ class ContestLoader:
         ('instructions_text', parse_as_is),
         ('is_partisan', parse_as_is),
         ('name', parse_i18n),
+        ('short_description', parse_i18n),
         ('number_elected', parse_as_is),
         ('max_ranked', parse_int),
         ('question_text', parse_i18n),
