@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %}RCV Rounds -
-{{ options.contest.contest_name|translate }}{% endblock %}
+{{ options.contest.contest_name|translate }}
+{%- if options.contest.short_description %} - {{ options.contest.short_description|translate }}
+{%- endif -%}
+{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="../static/tables.css">

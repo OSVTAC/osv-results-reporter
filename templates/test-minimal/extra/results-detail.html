@@ -22,6 +22,8 @@
         {% endif %}
       {% endfor %}
     <p>{{ contest.contest_name|translate }}
+        {%- if contest.short_description %} - {{ contest.short_description|translate }}
+        {%- endif -%}
     </p>
     {% if contest.vote_for_msg %}
       <p>

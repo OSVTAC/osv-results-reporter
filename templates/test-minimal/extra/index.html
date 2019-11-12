@@ -92,9 +92,8 @@
 
     {% set contest_id = contest.contest_name|to_element_id %}
     <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}
-    {% if contest.short_description %}
-       - {{ contest.short_description|translate }}
-    {% endif %}
+    {%- if contest.short_description %} - {{ contest.short_description|translate }}
+    {%- endif -%}
     </h3>
     {% if contest.vote_for_msg %}
       <p>
