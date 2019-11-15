@@ -254,29 +254,29 @@ def subtemplate(context, template_name, default_rel_output_path=None):
 
 # TODO: turn this into a generator-iterator so not all data needs to be
 #  loaded into memory at once.
-def make_contest_pairs(contests, translate=None):
+def make_contest_triples(contests, translate=None):
     """
-    Return an iterable of pairs (contest_name, rows).
+    Return an iterable of triples (contest_name, rows).
 
     Args:
       contests: an iterable of Contest objects.
       translate: a function that has the same signature as our
         translate() contextfilter.
     """
-    pairs = []
+    triples = []
     for contest in contests:
         names = translate(contest.ballot_title)
         headings = contest.detail_headings(translate=translate)
         rows = [headings]
         rows.extend(contest.detail_rows('CHOICES *'))
-        pair = (names, rows)
-        pairs.append(pair)
+        triple = (contest.id, names, rows)
+        triples.append(triple)
 
-    return pairs
+    return triples
 
 
-@environmentfunction
-def create_tsv_files(env, rel_dir, contests):
+@contextfunction
+def create_tsv_files(context, rel_dir, contests):
     """
     Create a TSV file of row data, one for each contest.
 
@@ -284,8 +284,8 @@ def create_tsv_files(env, rel_dir, contests):
       rel_dir: a directory relative to the output path configured in the
         given Jinja2 environment.
     """
-    output_dir = utils.get_output_dir(env)
-    contests = make_contest_pairs(contests)
+    output_dir = utils.get_output_dir(context.environment)
+    contests = make_contest_triples(contests, translate=make_translator(context))
 
     yield from tsvwriting.make_tsv_directory(output_dir, rel_dir, contests)
 
@@ -311,7 +311,7 @@ def create_file(do_create, rel_path, contests, type_name, ext, env, translate=No
     rel_path = rel_path.with_suffix(ext)
     output_path = utils.get_output_path(env, rel_path)
 
-    contests = make_contest_pairs(contests, translate=translate)
+    contests = make_contest_triples(contests, translate=translate)
 
     do_create(output_path, contests=contests)
 
@@ -340,7 +340,7 @@ def create_xlsx(env, rel_path, contests):
         # TODO: convert to with-block syntax.
         try:
             book = XLSXBook(output_path)
-            for contest_name, rows in contests:
+            for contest_id, contest_name, rows in contests:
                 book.add_sheet(contest_name, rows)
         finally:
             book.close()
@@ -349,7 +349,6 @@ def create_xlsx(env, rel_path, contests):
                         type_name='Excel', ext='.xlsx', env=env)
 
     return rel_path
-
 
 @environmentfunction
 def create_pdf(env, rel_path, contests, title=None, translate=None):

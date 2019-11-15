@@ -67,8 +67,8 @@ def make_tsv_directory(root_dir, rel_dir, contests):
     # It's okay if the directory already exists.
     (root_dir / rel_dir).mkdir(parents=True, exist_ok=True)
 
-    for contest_name, rows in contests:
-        rel_path = make_tsv_path(rel_dir, contest_name)
+    for contest_id, contest_name, rows in contests:
+        rel_path = make_tsv_path(rel_dir, f'contest-{contest_id}.tsv')
         path = root_dir / rel_path
         make_tsv_file(path, rows)
 

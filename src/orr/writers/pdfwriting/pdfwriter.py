@@ -543,7 +543,7 @@ class DocumentTemplate(SimpleDocTemplate):
         # Create a CanvasState for the real build() stage.
         make_table = functools.partial(make_orr_table, canvas_state=canvas_state)
 
-        for contest_name, rows in canvas_state.contests:
+        for contest_id, contest_name, rows in canvas_state.contests:
             assert contest_name is not None
             data = prepare_table_data(rows, text_wrapper=text_wrapper)
             for flowable in iter_table_story(data, available, make_table=make_table, table_name=contest_name):
@@ -586,7 +586,7 @@ def make_pdf(path, contests, title=None, deterministic=None):
     """
     Args:
       path: a path-like object.
-      contests: an iterator of pairs (contest_name, rows).
+      contests: an iterator of triples (contest_id, contest_name, rows).
       title: an optional title to set on the PDF's properties.
       deterministic: for deterministic PDF generation.  Defaults to False.
     """

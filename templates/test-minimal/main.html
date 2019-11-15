@@ -28,6 +28,15 @@
   {% endwith %}
 {% endwith %}
 
+{# Generate TSVs #}
+{% with base_name='tsv' %}
+  {% set options.lang = "en" %}
+  {% set translator = make_translator() %}
+  {% for output_path in create_tsv_files(base_name, election.contests) %}
+    <li><a href="{{ output_path }}">{{ output_path }}</a></li>
+  {% endfor %}
+{% endwith %}
+
 </ul>
 {% endwith %}
 </body>
