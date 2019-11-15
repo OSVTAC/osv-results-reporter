@@ -78,6 +78,10 @@ def parse_args():
 
 
 def run_subprocess(args, check=True, desc=None, capture_stdout=False, **kwargs):
+    """
+    Run the given command in a subprocess, redirecting stdout to stderr if
+    stdout isn't being captured.
+    """
     command = ' '.join(shlex.quote(arg) for arg in args)
     if desc is None:
         desc = ''
@@ -90,15 +94,20 @@ def run_subprocess(args, check=True, desc=None, capture_stdout=False, **kwargs):
     """)
     _log.warning(msg)
 
-    if capture_stdout:
-        stdout = subprocess.PIPE
-    else:
-        stdout = None
-
     # TODO: simplify this.
-    with Popen(args, stdout=stdout, encoding=UTF8_ENCODING, **kwargs) as proc:
-        # Wait for the child process to terminate.
-        proc.wait()
+    with Popen(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING, **kwargs) as proc:
+        if capture_stdout:
+            # Wait for the child process to terminate.
+            proc.wait()
+        else:
+            # Otherwise, write stdout to stderr so as not to interfere
+            # with the stdout API.
+            while True:
+                line = proc.stdout.readline()
+                if not line:
+                    # Then the subprocess is done.
+                    break
+                sys.stderr.write(line)
 
         if check and proc.returncode:
             msg = f'subprocess ended with return code: {proc.returncode}'
