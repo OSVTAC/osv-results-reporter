@@ -37,6 +37,7 @@ PACKAGE_DATA_EXTS = [
     '.html',
     '.xlsx',
     '.svg',
+    '.tsv',
 ]
 
 
