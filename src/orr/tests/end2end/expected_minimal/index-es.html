@@ -1,9 +1,11 @@
-<html lang="es">
+<html class="client-nojs" lang="es">
 <head>
   <meta charset="utf-8">
   <title>5 jun. 2018 -
 Summary Results</title>
+  <script>document.documentElement.className="client-js";</script>
 <link rel="stylesheet" href="static/tables.css">
+<link rel="stylesheet" href="static/summary.css">
 </head>
 <body>
   <h1>5 de junio de 2018 -
@@ -299,6 +301,14 @@ Summary Results</title>
 
     <h3 id="regional-measure-3">Regional Measure 3
   <a class="headerlink" href="#regional-measure-3" title="Permalink to this header">¶</a></h3>
+      <div class="question-text">
+        <a href="#">
+          <span class="collapse">▼</span>
+          <span class="expand">►</span>
+          Question text
+        </a>
+        <p>PLAN PARA DISMINUIR EL TRÁFICO EN EL ÁREA DE LA BAHÍA. ¿Deben autorizar los votantes un plan para disminuir el tráfico de camiones y automóviles, disminuir el congestionamiento en BART, descongestionar los embotellamientos en las autopistas y mejorar los servicios de autobuses, transbordadores, BART y ferrovías suburbanas según lo especificado en el plan en este folleto para el votante, con un aumento de $1 efectivo en 2019, un aumento de $1 en 2022 y un aumento de $1 en 2025, en todos los puentes de peaje del Área de la Bahía, excepto el Puente Golden Gate, con una supervisión independiente de todos los fondos?</p>
+      </div>
       <p>
         Requires 50%+1 affirmative votes to pass
       </p>
@@ -351,5 +361,14 @@ Summary Results</title>
       </tbody>
     </table>
     </div>     </div>
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+<script>
+$( function () {
+  $( '.question-text a' ).click( function () {
+    $( this ).closest( '.question-text' ).toggleClass( 'expanded' );
+    return false;
+  } );
+} );
+</script>
 </body>
 </html>

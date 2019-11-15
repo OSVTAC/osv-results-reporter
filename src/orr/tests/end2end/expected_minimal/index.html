@@ -1,9 +1,11 @@
-<html lang="en">
+<html class="client-nojs" lang="en">
 <head>
   <meta charset="utf-8">
   <title>Jun 5, 2018 -
 Summary Results</title>
+  <script>document.documentElement.className="client-js";</script>
 <link rel="stylesheet" href="static/tables.css">
+<link rel="stylesheet" href="static/summary.css">
 </head>
 <body>
   <h1>June 5, 2018 -
@@ -299,6 +301,14 @@ Summary Results</title>
 
     <h3 id="regional-measure-3">Regional Measure 3
   <a class="headerlink" href="#regional-measure-3" title="Permalink to this header">¶</a></h3>
+      <div class="question-text">
+        <a href="#">
+          <span class="collapse">▼</span>
+          <span class="expand">►</span>
+          Question text
+        </a>
+        <p>BAY AREA TRAFFIC RELIEF PLAN. Shall voters authorize a plan to reduce auto and truck traffic, relieve crowding on BART, unclog freeway bottlenecks, and improve bus, ferry, BART and commuter rail service as specified in the plan in this voter pamphlet, with a $1 toll increase effective in 2019, a $1 increase in 2022, and a $1 increase in 2025, on all Bay Area toll bridges except the Golden Gate Bridge, with independent oversight of all funds?</p>
+      </div>
       <p>
         Requires 50%+1 affirmative votes to pass
       </p>
@@ -351,5 +361,14 @@ Summary Results</title>
       </tbody>
     </table>
     </div>     </div>
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+<script>
+$( function () {
+  $( '.question-text a' ).click( function () {
+    $( this ).closest( '.question-text' ).toggleClass( 'expanded' );
+    return false;
+  } );
+} );
+</script>
 </body>
 </html>

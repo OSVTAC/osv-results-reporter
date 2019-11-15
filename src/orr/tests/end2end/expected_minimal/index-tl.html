@@ -1,9 +1,11 @@
-<html lang="tl">
+<html class="client-nojs" lang="tl">
 <head>
   <meta charset="utf-8">
   <title>Hun 5, 2018 -
 Summary Results</title>
+  <script>document.documentElement.className="client-js";</script>
 <link rel="stylesheet" href="static/tables.css">
+<link rel="stylesheet" href="static/summary.css">
 </head>
 <body>
   <h1>Hunyo 5, 2018 -
@@ -299,6 +301,14 @@ Summary Results</title>
 
     <h3 id="regional-measure-3">Regional Measure 3
   <a class="headerlink" href="#regional-measure-3" title="Permalink to this header">¶</a></h3>
+      <div class="question-text">
+        <a href="#">
+          <span class="collapse">▼</span>
+          <span class="expand">►</span>
+          Question text
+        </a>
+        <p>PLANO SA PAGPAPAHUPA NG TRAPIKO SA BAY AREA. Dapat bang pahintulutan ng mga botante ang isang planong bawasan ang trapiko ng auto at trak, bawasan ang siksikan sa BART, ayusin ang daloy sa mga pagsisiksikan sa freeway, at pabutihin ang serbisyo ng bus, ferry, BART at commuter rail alinsunod sa nakasaad sa plano sa librito ng botante na ito, sa pamamagitan ng $1 na dagdag sa toll simula 2019, $1 na dagdag sa 2022, at $1 na dagdag sa 2025, sa lahat ng tulay ng toll sa Bay Area maliban sa Golden Gate Bridge, na may independiyenteng pagbabantay sa lahat ng pondo?</p>
+      </div>
       <p>
         Requires 50%+1 affirmative votes to pass
       </p>
@@ -351,5 +361,14 @@ Summary Results</title>
       </tbody>
     </table>
     </div>     </div>
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+<script>
+$( function () {
+  $( '.question-text a' ).click( function () {
+    $( this ).closest( '.question-text' ).toggleClass( 'expanded' );
+    return false;
+  } );
+} );
+</script>
 </body>
 </html>

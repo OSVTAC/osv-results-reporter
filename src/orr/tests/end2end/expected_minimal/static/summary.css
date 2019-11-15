@@ -1,0 +1,24 @@
+.question-text {
+	max-width: 40%;
+}
+
+.client-nojs .question-text a {
+	display: none;
+}
+
+.client-js .question-text p {
+	display: none;
+}
+
+.client-js .question-text.expanded p {
+	display: block;
+}
+
+.client-js .question-text a .collapse,
+.client-js .question-text.expanded a .expand {
+	display: none;
+}
+
+.client-js .question-text.expanded a .collapse {
+	display: inline;
+}
