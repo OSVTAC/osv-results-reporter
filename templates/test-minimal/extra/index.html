@@ -4,6 +4,19 @@
 
 {% block styles %}
 <link rel="stylesheet" href="static/tables.css">
+<link rel="stylesheet" href="static/summary.css">
+{% endblock %}
+
+{% block bottomScripts %}
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+<script>
+$( function () {
+  $( '.question-text a' ).click( function () {
+    $( this ).closest( '.question-text' ).toggleClass( 'expanded' );
+    return false;
+  } );
+} );
+</script>
 {% endblock %}
 
 {% macro anchored_header(text, element_id) -%}
@@ -95,6 +108,16 @@
     {%- if contest.short_description %} - {{ contest.short_description|translate }}
     {%- endif -%}
     </h3>
+    {% if contest.question_text %}
+      <div class="question-text">
+        <a href="#">
+          <span class="collapse">▼</span>
+          <span class="expand">►</span>
+          Question text
+        </a>
+        <p>{{ contest.question_text|translate }}</p>
+      </div>
+    {% endif %}
     {% if contest.vote_for_msg %}
       <p>
         {{ contest.vote_for_msg|translate }}

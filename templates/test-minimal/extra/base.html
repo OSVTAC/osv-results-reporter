@@ -1,10 +1,11 @@
-<html lang="{{ options.lang }}">
+<html class="client-nojs" lang="{{ options.lang }}">
 <head>
   <meta charset="utf-8">
   <title>
     {{- election.date|format_date_medium }} -
     {% block title %}{% endblock -%}
   </title>
+  <script>document.documentElement.className="client-js";</script>
   {% block styles %}{% endblock %}
 </head>
 <body>
@@ -27,5 +28,6 @@
   <div>
     {% block content %}{% endblock %}
   </div>
+  {% block bottomScripts %}{% endblock %}
 </body>
 </html>
