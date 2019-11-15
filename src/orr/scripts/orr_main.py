@@ -42,7 +42,7 @@ from orr.dataloading import DEFAULT_RESULTS_DIR_NAME
 import orr.scripts.scriptcommon as scriptcommon
 import orr.templating as templating
 import orr.utils as utils
-from orr.utils import SHASUMS_PATH, US_LOCALE
+from orr.utils import SHASUMS_PATH, US_LOCALE, ZIP_FILE_BASE
 
 
 _log = logging.getLogger(__name__)
@@ -192,9 +192,15 @@ def make_sha256sums_file(dir_path):
     sha256sums_path.write_text(contents)
 
 
-def finalize_output_dir(output_dir):
+def finalize_output_dir(output_dir, zip_file_base):
+    """
+    Add to the output directory: a SHASUMS file and a gzip of the directory.
+    """
+    # Make the SHASUMS file before zipping the directory.
     make_sha256sums_file(output_dir)
-    # TODO: add a zip of the directory.
+    # The source_dir is the same as the output_dir since we're adding the
+    # gzip file to the directory being gzipped.
+    utils.gzip_directory_to(output_dir, output_dir=output_dir, zip_file_base=zip_file_base)
 
 
 def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
@@ -239,8 +245,13 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     _log.debug(f'using template directory: {template_dir}')
 
     template_dirs = [template_dir] + extra_template_dirs
+
+    zip_file_base = ZIP_FILE_BASE
+    zip_file_path = utils.make_zip_file_name(zip_file_base)
+
     env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs,
-                deterministic=deterministic, skip_pdf=skip_pdf)
+                deterministic=deterministic, gzip_path=zip_file_path,
+                skip_pdf=skip_pdf)
 
     if input_dir is None:
         raise RuntimeError('--input-dir not provided')
@@ -267,11 +278,12 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
         render_template_dir(template_dir, output_dir=output_dir, env=env,
             context=context, test_mode=test_mode)
 
-    finalize_output_dir(output_dir)
+    finalize_output_dir(output_dir, zip_file_base=zip_file_base)
 
-    output_data = scriptcommon.print_result(output_dir, build_time=build_time)
+    output_data, output = scriptcommon.format_output(output_dir, build_time=build_time,
+                                zip_file_path=zip_file_path)
 
-    return output_data
+    return output_data, output
 
 
 def main():
@@ -300,9 +312,13 @@ def main():
     template_dir = input_dirs.template_dir
     extra_template_dirs = input_dirs.extra_template_dirs
 
-    run(config_path=config_path, input_dir=input_data_dir, input_results_dir=input_results_dir,
+    output_data, output = run(config_path=config_path, input_dir=input_data_dir,
+        input_results_dir=input_results_dir,
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_dir=output_dir, fresh_output=fresh_output,
         test_mode=test_mode, build_time=build_time,
         deterministic=deterministic, skip_pdf=skip_pdf,
     )
+
+    # TODO: allow suppressing stdout?
+    print(output)

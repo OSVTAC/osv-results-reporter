@@ -35,13 +35,14 @@ from orr.utils import ENGLISH_LANG, SHASUMS_PATH
 
 
 def create_jinja_env(output_dir, template_dirs=None, deterministic=None,
-    skip_pdf=False):
+    gzip_path=None, skip_pdf=False):
     """
     Create and return the Jinja2 Environment object.
 
     Args:
       output_dir: a path-like object.
       deterministic: for deterministic PDF generation.  Defaults to False.
+      gzip_path: the path the tar.gz file will be written to.
       skip_pdf: whether to skip PDF generation.  Defaults to False.
     """
     if template_dirs is None:
@@ -79,8 +80,9 @@ def create_jinja_env(output_dir, template_dirs=None, deterministic=None,
         home_href=templating.get_home_href,
         make_translator=templating.make_translator,
         subtemplate=templating.subtemplate,
-        # Convert from a Path object to a string.
-        SHASUMS_PATH=str(SHASUMS_PATH),
+        # Convert the Path objects to strings.
+        gzip_path=str(gzip_path),
+        shasums_path=str(SHASUMS_PATH),
     )
 
     filters = dict(

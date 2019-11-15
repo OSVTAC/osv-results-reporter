@@ -33,6 +33,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tarfile
+import tempfile
 import unicodedata
 import urllib.parse
 
@@ -69,6 +71,7 @@ DEFAULT_JSON_DUMPS_ARGS = dict(sort_keys=True, indent=4, ensure_ascii=False)
 # viewable from a browser.  When no extension is used, browsing to the
 # file prompts for download rather than displaying it for viewing.
 SHASUMS_PATH = Path('SHA256SUMS.txt')
+ZIP_FILE_BASE = 'full-results'
 
 
 def get_language(context):
@@ -334,6 +337,31 @@ def read_json(filepath):
         data = json.load(f)
 
     return data
+
+
+def make_zip_file_name(zip_file_base):
+    return f'{zip_file_base}.tar.gz'
+
+
+# TODO: test this.
+def create_tar_gz(source_dir, output_path, zip_file_base):
+    with tarfile.open(output_path, 'w:gz') as tar:
+        # The "arcname" is what the name of the directory will be after unzipping.
+        tar.add(source_dir, arcname=zip_file_base)
+
+
+# TODO: test this.
+def gzip_directory_to(source_dir, output_dir, zip_file_base):
+    zip_file_name = make_zip_file_name(zip_file_base)
+
+    # Add a zip of the directory to the directory.
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+        initial_zip, final_zip = (
+            dir_path / zip_file_name for dir_path in (temp_dir, output_dir)
+        )
+        create_tar_gz(source_dir, initial_zip, zip_file_base=zip_file_base)
+        initial_zip.rename(final_zip)
 
 
 # TODO: support other hash algorithms.

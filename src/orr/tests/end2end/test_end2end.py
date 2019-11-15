@@ -70,7 +70,7 @@ class EndToEndTest(TestCase):
         except Exception:
             raise RuntimeError(f'expected path at: {expected_path}')
 
-    def check_directories(self, actual_dir, expected_dir):
+    def check_directories(self, actual_dir, expected_dir, zip_file_path):
         dirs = (actual_dir, expected_dir)
 
         # First check the file names.
@@ -79,10 +79,19 @@ class EndToEndTest(TestCase):
         # checked by virtue of the path being listed in the SHA256SUMS file.)
         # Each iterable is a list of strings (not Path objects).
         actual_rel_paths, expected_rel_paths = (
-            get_paths_inside(dir_path, exclude_exts=['.pdf']) for dir_path in dirs
+            get_paths_inside(dir_path) for dir_path in dirs
         )
 
+        # We don't store the binary files in source control, so we need to
+        # (1) add them to the expected list manually, and (2) skip them
+        # when checking contents.
+        files_not_to_check = [zip_file_path, 'sov.pdf']
+        expected_rel_paths = sorted(expected_rel_paths + files_not_to_check)
+
         self.assertEqual(actual_rel_paths, expected_rel_paths)
+
+        for name in files_not_to_check:
+            actual_rel_paths.remove(name)
 
         # Move the files that contain secure file hashes to the end of the
         # list so that the file diff we see is more informative (i.e.
@@ -100,13 +109,11 @@ class EndToEndTest(TestCase):
     def render(self, input_dir, template_dir, extra_template_dirs, output_dir,
         build_time):
 
-        output_data = main.run(input_dir=input_dir,
+        output_data, output = main.run(input_dir=input_dir,
             template_dir=template_dir, extra_template_dirs=extra_template_dirs,
             output_dir=output_dir, build_time=build_time, deterministic=True)
 
-        output_dir = Path(output_data['output_dir'])
-
-        return output_dir
+        return output_data
 
     def test_minimal(self):
         input_dir = Path('sampledata') / 'test-minimal'
@@ -115,12 +122,16 @@ class EndToEndTest(TestCase):
         expected_dir = Path(__file__).parent / 'expected_minimal'
         # Pass a fixed datetime for build reproducibility.
         build_time = datetime(2018, 6, 1, 20, 48, 12)
+        expected_zip_path = 'full-results.tar.gz'
 
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
             output_dir = temp_dir / 'actual'
-            actual_dir = self.render(input_dir=input_dir,
+            output_data = self.render(input_dir=input_dir,
                 template_dir=template_dir, extra_template_dirs=extra_template_dirs,
                 output_dir=output_dir, build_time=build_time)
 
-            self.check_directories(actual_dir, expected_dir)
+            self.assertEqual(expected_zip_path, output_data['zip_file'])
+            actual_dir = Path(output_data['output_dir'])
+
+            self.check_directories(actual_dir, expected_dir, zip_file_path=expected_zip_path)

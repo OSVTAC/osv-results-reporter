@@ -4,5 +4,7 @@ __pycache__/
 _build/
 .DS_Store
 .python-version
-# We don't want to accidentally store PDF's in source control.
+# Ignore binary files like PDF's and .tar.gz files so we don't accidentally
+# store them in source control.
 *.pdf
+*.tar.gz

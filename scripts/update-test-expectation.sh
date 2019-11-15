@@ -47,6 +47,13 @@ else
         || { echo 'running orr failed' ; exit 1; }
 fi
 
+# Remove the binary files so they're not accidentally stored in source control.
+rm src/orr/tests/end2end/expected_minimal/sov.pdf \
+    || { echo 'removing sov.pdf file failed' ; exit 1; }
+
+rm src/orr/tests/end2end/expected_minimal/full-results.tar.gz \
+    || { echo 'removing tar.gz file failed' ; exit 1; }
+
 git add src/orr/tests/end2end/expected_minimal/ \
     || { echo 'git-add failed' ; exit 1; }
 

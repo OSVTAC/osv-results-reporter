@@ -167,19 +167,17 @@ def parse_common_args(ns, default_log_level=None):
     return options
 
 
-def print_result(output_dir, build_time):
+def format_output(output_dir, build_time, zip_file_path):
     """
     Print and return the output data.
     """
     output_data = dict(
         build_time=build_time.isoformat(),
         output_dir=str(output_dir),
+        zip_file=str(zip_file_path),
     )
 
     # TODO: allow changing the stdout output format (e.g. YAML or text)?
     output = json.dumps(output_data, **DEFAULT_JSON_DUMPS_ARGS)
 
-    # TODO: allow suppressing stdout?
-    print(output)
-
-    return output_data
+    return (output_data, output)

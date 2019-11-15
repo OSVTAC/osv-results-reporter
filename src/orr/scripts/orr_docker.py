@@ -24,6 +24,7 @@ Entry-point script to run ORR using Docker.
 """
 
 import argparse
+import json
 import logging
 import os
 from pathlib import Path
@@ -76,7 +77,7 @@ def parse_args():
     return ns
 
 
-def run_subprocess(args, check=True, desc=None, **kwargs):
+def run_subprocess(args, check=True, desc=None, capture_stdout=False, **kwargs):
     command = ' '.join(shlex.quote(arg) for arg in args)
     if desc is None:
         desc = ''
@@ -87,24 +88,25 @@ def run_subprocess(args, check=True, desc=None, **kwargs):
 
         $ {command}
     """)
-    _log.info(msg)
-    # Redirect stderr to stdout, and capture stdout.
-    with Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-               encoding=UTF8_ENCODING, **kwargs) as proc:
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                # Then the subprocess is done.
-                break
-            # Write the output to stderr so as not to interfere with stdout.
-            sys.stderr.write(line)
+    _log.warning(msg)
 
+    if capture_stdout:
+        stdout = subprocess.PIPE
+    else:
+        stdout = None
+
+    # TODO: simplify this.
+    with Popen(args, stdout=stdout, encoding=UTF8_ENCODING, **kwargs) as proc:
         # Wait for the child process to terminate.
         proc.wait()
 
         if check and proc.returncode:
             msg = f'subprocess ended with return code: {proc.returncode}'
             raise RuntimeError(msg)
+
+        if capture_stdout:
+            text = proc.stdout.read()
+            return text
 
 
 def make_docker_path(rel_path):
@@ -257,7 +259,10 @@ def run_orr(orr_args, image_name, container):
         '--output-subdir', DOCKER_OUTPUT_DIR_NAME,
     ]
     args.extend(orr_args)
-    run_subprocess(args)
+    text = run_subprocess(args, capture_stdout=True)
+    data = json.loads(text)
+
+    return data
 
 
 def copy_output_dir(output_dir, container_name):
@@ -354,10 +359,13 @@ def main():
         orr_args.append('--extra-template-dirs')
         orr_args.extend(str(extra_dir) for extra_dir in extra_template_dirs)
 
-    run_orr(orr_args, image_name=temp_tag, container=container_name)
+    data = run_orr(orr_args, image_name=temp_tag, container=container_name)
+    zip_file_path = data['zip_file']
 
     copy_output_dir(output_dir, container_name=container_name)
 
-    output_data = scriptcommon.print_result(output_dir, build_time=build_time)
+    output_data, output = scriptcommon.format_output(output_dir, build_time=build_time, zip_file_path=zip_file_path)
+
+    print(output)
 
     _log.info(f'done: {image_tag}')
