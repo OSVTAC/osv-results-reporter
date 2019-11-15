@@ -116,8 +116,8 @@ class EndToEndTest(TestCase):
         return output_data
 
     def test_minimal(self):
-        input_dir = Path('sampledata') / 'test-minimal'
-        template_dir = Path('templates') / 'test-minimal'
+        input_dir = Path('sampledata') / 'minimal-test'
+        template_dir = Path('templates') / 'demo-template'
         extra_template_dirs = [template_dir / 'extra']
         expected_dir = Path(__file__).parent / 'expected_minimal'
         # Pass a fixed datetime for build reproducibility.

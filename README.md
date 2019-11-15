@@ -36,13 +36,13 @@ $ orr -h
 For a small HTML example demonstrating much of the functionality:
 
 ```
-$ orr -v --input-dir sampledata/test-minimal \
-      --template-dir templates/test-minimal \
-      --extra-template templates/test-minimal/extra \
-      --output-subdir minimal
+$ orr -v --input-dir sampledata/minimal-test \
+      --template-dir templates/demo-template \
+      --extra-template templates/demo-template/extra \
+      --output-subdir minimal-test
 ```
 
-Then open `_build/minimal/index.html` in a browser. The example above
+Then open `_build/minimal-test/index.html` in a browser. The example above
 includes:
 
 * 3 contests
@@ -61,7 +61,7 @@ See the `doc` directory for more info.
 ### To run tests
 
 The following runs the test suite, including an "end-to-end" test of a
-non-trivial template directory (the "test-minimal" one):
+non-trivial template directory (the "demo-template" one):
 
 ```
 $ python -m unittest discover orr
@@ -99,10 +99,10 @@ $ orr-docker -h
 To render a template directory to the build directory using Docker:
 
 ```
-$ orr-docker --input-dir sampledata/test-minimal \
-        --template-dir templates/test-minimal \
-        --extra-template templates/test-minimal/extra \
-        --output-subdir minimal
+$ orr-docker --input-dir sampledata/minimal-test \
+        --template-dir templates/demo-template \
+        --extra-template templates/demo-template/extra \
+        --output-subdir minimal-test
 ```
 
 To run tests:
