@@ -51,7 +51,7 @@ VERSION='0.0.1'     # Program version
 
 ENCODING='utf-8'
 
-STATIC_FILES_DIR = '_static'
+_INITIAL_FILES_DIR = '_initial'
 
 #--- Command line arguments: ---
 
@@ -131,8 +131,8 @@ def initialize_output_dir(template_dir, output_dir):
       template_dir: a Path object.
       output_dir: a Path object.
     """
-    static_files_dir = template_dir / STATIC_FILES_DIR
-    if not static_files_dir.exists():
+    initial_files_dir = template_dir / _INITIAL_FILES_DIR
+    if not initial_files_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
         return
 
@@ -147,7 +147,7 @@ def initialize_output_dir(template_dir, output_dir):
             raise SystemExit('Not okay to delete: aborting.')
         shutil.rmtree(output_dir)
 
-    shutil.copytree(static_files_dir, output_dir)
+    shutil.copytree(initial_files_dir, output_dir)
 
 
 # TODO: render the directory recursively.
