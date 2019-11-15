@@ -67,12 +67,12 @@ class TsvWritingModuleTest(TestCase):
     def test_make_tsv_directory(self):
         rel_dir = 'my/path'
         contests = [
-            ('President', [('A', 'B'), (1, 2)]),
-            ('Vice President', [('C', 'D'), (3, 4)]),
+            (1, 'President', [('A', 'B'), (1, 2)]),
+            (2, 'Vice President', [('C', 'D'), (3, 4)]),
         ]
         expected = [
-            Path('my/path/President.tsv'),
-            Path('my/path/Vice President.tsv'),
+            Path('my/path/contest-1.tsv'),
+            Path('my/path/contest-2.tsv'),
         ]
         with TemporaryDirectory() as temp_dir:
             paths = list(tsvwriting.make_tsv_directory(temp_dir, rel_dir=rel_dir,
