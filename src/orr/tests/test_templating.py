@@ -24,7 +24,7 @@ Test the orr.templating module.
 """
 
 from datetime import date
-from pathlib import Path
+from pathlib import Path, PosixPath
 from unittest import TestCase
 
 from jinja2.utils import Namespace
@@ -86,6 +86,44 @@ class TemplatingModuleTest(TestCase):
 
                 actual = templating.format_date_medium(context, day)
                 self.assertEqual(actual, expected)
+
+    def test_get_relative_href(self):
+        cases = [
+            (('summary.html', 'new.html', 'en'), 'new.html'),
+            # Test a rel_path "above" the top level.
+            (('summary.html', '../new.html', 'en'), '../new.html'),
+            # Test a current page down one level.
+            (('details/contest.html', 'new.html', 'en'), '../new.html'),
+            # Test a rel_path "above" the top level.
+            (('details/contest.html', '../new.html', 'en'), '../../new.html'),
+        ]
+        for (current_path, rel_path, lang), expected in cases:
+            with self.subTest(rel_path=rel_path, lang=lang):
+                context = {
+                    'default_rel_path': Path(current_path),
+                    'options': Namespace(lang=lang),
+                }
+
+                actual = templating.get_relative_href(context, rel_path, lang=lang)
+                self.assertEqual(type(actual), PosixPath)
+                self.assertEqual(str(actual), expected)
+
+    def test_get_home_href(self):
+        cases = [
+            (('summary.html', 'en'), 'index.html'),
+            (('details/contest.html', 'en'), '../index.html'),
+            (('details/contest.html', 'es'), '../index-es.html'),
+        ]
+        for (rel_path, lang), expected in cases:
+            with self.subTest(rel_path=rel_path, lang=lang):
+                context = {
+                    'default_rel_path': Path(rel_path),
+                    'options': Namespace(lang=lang),
+                }
+
+                actual = templating.get_home_href(context)
+                self.assertEqual(type(actual), PosixPath)
+                self.assertEqual(str(actual), expected)
 
     def test_default_contest_path(self):
         class Contest:

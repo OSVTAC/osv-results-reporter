@@ -131,7 +131,17 @@ class EndToEndTest(TestCase):
                 template_dir=template_dir, extra_template_dirs=extra_template_dirs,
                 output_dir=output_dir, build_time=build_time)
 
-            self.assertEqual(expected_zip_path, output_data['zip_file'])
-            actual_dir = Path(output_data['output_dir'])
+            expected_keys = [
+                'build_time', 'output_dir', 'zip_file_hash', 'zip_file_path',
+            ]
+            actual_keys = sorted(output_data)
+            try:
+                self.assertEqual(actual_keys, expected_keys)
+            except KeyError:
+                raise RuntimeError(output_data)
 
+            zip_file_path = output_data['zip_file_path']
+            self.assertEqual(expected_zip_path, zip_file_path)
+
+            actual_dir = Path(output_data['output_dir'])
             self.check_directories(actual_dir, expected_dir, zip_file_path=expected_zip_path)

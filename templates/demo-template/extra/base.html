@@ -28,6 +28,17 @@
   <div>
     {% block content %}{% endblock %}
   </div>
+  <hr>
+  <p>
+    This is a
+    {# Link to the root demo page, which is one level up from the report's home page. #}
+    <a href="{{ get_relative_href('../index.html', lang='en') }}">demonstration</a>
+    of the <a href="https://github.com/OSVTAC/osv-results-reporter">Open
+    Source Voting Results Reporter</a> (ORR) of the San Francisco
+    Elections Commission's
+    <a href="https://osvtac.github.io/">Open Source Voting System Technical
+    Advisory Committee</a> (OSVTAC).
+  <p>
   {% block bottomScripts %}{% endblock %}
 </body>
 </html>

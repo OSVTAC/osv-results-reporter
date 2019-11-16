@@ -195,7 +195,27 @@ def current_page_link(context, lang=None):
     return filename
 
 
-# TODO: test this.
+@contextfunction
+def get_relative_href(context, rel_path, lang=None):
+    """
+    Create and return for the given page a relative url (relative to the
+    current page).
+
+    Args:
+      lang: if None, defaults to the currently active language.
+    """
+    path = Path()
+    default_rel_path = context['default_rel_path']
+    # If the current page isn't at the top level, then first ascend
+    # to the top
+    for x in range(len(default_rel_path.parts) - 1):
+        path /= os.pardir
+    path /= rel_path
+
+    # Now switch to the url to the current language.
+    return utils.make_lang_path(path, context=context, lang=lang)
+
+
 @contextfunction
 def get_home_href(context):
     """
@@ -204,16 +224,7 @@ def get_home_href(context):
     The linked-to home page should be the version of the home page in the
     same language as the currently active language.
     """
-    path = Path()
-    default_rel_path = context['default_rel_path']
-    # If the current page isn't at the top level, then first ascend
-    # to the top
-    for x in range(len(default_rel_path.parts) - 1):
-        path /= os.pardir
-    path /= 'index.html'
-
-    # Now switch to the url to the current language.
-    return utils.make_lang_path(path, context=context)
+    return get_relative_href(context, rel_path='index.html')
 
 
 def default_contest_path(contest, dir_path=None):
