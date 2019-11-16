@@ -368,13 +368,12 @@ def main():
         orr_args.append('--extra-template-dirs')
         orr_args.extend(str(extra_dir) for extra_dir in extra_template_dirs)
 
-    data = run_orr(orr_args, image_name=temp_tag, container=container_name)
-    zip_file_path = data['zip_file']
+    initial_data = run_orr(orr_args, image_name=temp_tag, container=container_name)
 
     copy_output_dir(output_dir, container_name=container_name)
 
-    output_data, output = scriptcommon.format_output(output_dir, build_time=build_time, zip_file_path=zip_file_path)
-
+    output_data, output = scriptcommon.format_output(output_dir, build_time=build_time,
+                                        initial_data=initial_data)
     print(output)
 
     _log.info(f'done: {image_tag}')

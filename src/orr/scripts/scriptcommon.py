@@ -167,14 +167,30 @@ def parse_common_args(ns, default_log_level=None):
     return options
 
 
-def format_output(output_dir, build_time, zip_file_path):
+# TODO: include the election name / report title in the data.
+def format_output(output_dir, build_time, zip_file_path=None, initial_data=None):
     """
     Print and return the output data.
     """
-    output_data = dict(
+    if initial_data is None:
+        initial_data = {}
+
+    output_dir = Path(output_dir)
+    # Rename the variable for clarity.
+    output_data = initial_data
+
+    if zip_file_path is not None:
+        path = output_dir / zip_file_path
+        zip_hash = utils.hash_file(path)
+
+        output_data.update({
+            'zip_file_path': str(zip_file_path),
+            'zip_file_hash': str(zip_hash),
+        })
+
+    output_data.update(
         build_time=build_time.isoformat(),
         output_dir=str(output_dir),
-        zip_file=str(zip_file_path),
     )
 
     # TODO: allow changing the stdout output format (e.g. YAML or text)?
