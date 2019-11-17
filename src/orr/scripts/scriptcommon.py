@@ -168,7 +168,8 @@ def parse_common_args(ns, default_log_level=None):
 
 
 # TODO: include the election name / report title in the data.
-def format_output(output_dir, build_time, zip_file_path=None, initial_data=None):
+def format_output(output_dir, build_time, rel_home_page=None, zip_file_path=None,
+    initial_data=None):
     """
     Print and return the output data.
     """
@@ -179,14 +180,19 @@ def format_output(output_dir, build_time, zip_file_path=None, initial_data=None)
     # Rename the variable for clarity.
     output_data = initial_data
 
+    if rel_home_page is not None:
+        output_data['rel_home_page'] = rel_home_page
+
     if zip_file_path is not None:
         path = output_dir / zip_file_path
+        zip_size = path.stat().st_size
         zip_hash = utils.hash_file(path)
 
-        output_data.update({
-            'zip_file_path': str(zip_file_path),
-            'zip_file_hash': str(zip_hash),
-        })
+        output_data['zip_file'] = {
+            'path': str(zip_file_path),
+            'bytes': zip_size,
+            'hash': str(zip_hash),
+        }
 
     output_data.update(
         build_time=build_time.isoformat(),

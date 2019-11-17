@@ -115,6 +115,13 @@ class EndToEndTest(TestCase):
 
         return output_data
 
+    def check_keys(self, data, expected_keys):
+        actual_keys = sorted(data)
+        try:
+            self.assertEqual(actual_keys, expected_keys)
+        except KeyError:
+            raise RuntimeError(data)
+
     def test_minimal(self):
         input_dir = Path('sampledata') / 'minimal-test'
         template_dir = Path('templates') / 'demo-template'
@@ -131,16 +138,16 @@ class EndToEndTest(TestCase):
                 template_dir=template_dir, extra_template_dirs=extra_template_dirs,
                 output_dir=output_dir, build_time=build_time)
 
-            expected_keys = [
-                'build_time', 'output_dir', 'zip_file_hash', 'zip_file_path',
-            ]
-            actual_keys = sorted(output_data)
-            try:
-                self.assertEqual(actual_keys, expected_keys)
-            except KeyError:
-                raise RuntimeError(output_data)
+            self.check_keys(output_data, [
+                'build_time', 'output_dir', 'rel_home_page', 'zip_file',
+            ])
 
-            zip_file_path = output_data['zip_file_path']
+            self.assertEqual(output_data['rel_home_page'], 'index.html')
+
+            zip_info = output_data['zip_file']
+            self.check_keys(zip_info, ['bytes', 'hash', 'path'])
+
+            zip_file_path = zip_info['path']
             self.assertEqual(expected_zip_path, zip_file_path)
 
             actual_dir = Path(output_data['output_dir'])

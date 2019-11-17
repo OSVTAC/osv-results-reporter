@@ -246,6 +246,8 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     template_dirs = [template_dir] + extra_template_dirs
 
+    # TODO: don't hard-code this?
+    rel_home_page = 'index.html'
     zip_file_base = ZIP_FILE_BASE
     zip_file_path = utils.make_zip_file_name(zip_file_base)
 
@@ -280,8 +282,9 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     finalize_output_dir(output_dir, zip_file_base=zip_file_base)
 
-    output_data, output = scriptcommon.format_output(output_dir, build_time=build_time,
-                                zip_file_path=zip_file_path)
+    output_data, output = scriptcommon.format_output(output_dir,
+                                rel_home_page=rel_home_page, zip_file_path=zip_file_path,
+                                build_time=build_time)
 
     return output_data, output
 
