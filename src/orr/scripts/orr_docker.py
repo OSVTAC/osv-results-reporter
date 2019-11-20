@@ -98,8 +98,9 @@ def run_subprocess(args, check=True, desc=None, capture_stdout=False, **kwargs):
     with Popen(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING, **kwargs) as proc:
         if capture_stdout:
             # Wait for the child process to terminate.
-            proc.wait()
+            stdout, stderr = proc.communicate()
         else:
+            stdout = None
             # Otherwise, write stdout to stderr so as not to interfere
             # with the stdout API.
             while True:
@@ -113,9 +114,7 @@ def run_subprocess(args, check=True, desc=None, capture_stdout=False, **kwargs):
             msg = f'subprocess ended with return code: {proc.returncode}'
             raise RuntimeError(msg)
 
-        if capture_stdout:
-            text = proc.stdout.read()
-            return text
+        return stdout
 
 
 def make_docker_path(rel_path):
