@@ -139,8 +139,14 @@ class EndToEndTest(TestCase):
                 output_dir=output_dir, build_time=build_time)
 
             self.check_keys(output_data, [
-                'build_time', 'output_dir', 'rel_home_page', 'zip_file',
+                'build_time', 'output_dir', 'rel_home_page', 'report_title', 'zip_file',
             ])
+
+            report_title = output_data['report_title']
+            self.assertEqual(sorted(report_title), ['en', 'es', 'tl', 'zh'])
+            self.assertEqual(report_title['en'],
+                'June 5, 2018 - Consolidated Statewide Direct Primary Election - City and County of San Francisco'
+            )
 
             self.assertEqual(output_data['rel_home_page'], 'index.html')
 

@@ -9,9 +9,7 @@
   {% block styles %}{% endblock %}
 </head>
 <body>
-  <h1>{{ election.date|format_date }} -
-    {{ election.ballot_title|translate }} -
-    {{ election.election_area|translate }}</h1>
+  <h1>{{ report_title|translate }}</h1>
   <p>
     [<a href="{{ home_href() }}">Home</a>] Switch language:
   {% for lang in languages %}

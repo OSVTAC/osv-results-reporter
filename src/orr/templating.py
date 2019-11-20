@@ -83,8 +83,9 @@ def secure_hash(env, rel_path):
     return sha
 
 
-def _format_date(context, date, format_=None):
-    lang = utils.get_language(context)
+def _format_date(context, date, format_=None, lang=None):
+    if lang is None:
+        lang = utils.get_language(context)
 
     try:
         return utils.format_date(date, lang=lang, format_=format_)
@@ -93,7 +94,7 @@ def _format_date(context, date, format_=None):
 
 
 @contextfilter
-def format_date(context, day, format_=None):
+def format_date(context, day, format_=None, lang=None):
     """
     Format a date in the form "February 5, 2018" (internationalized).
 
@@ -103,7 +104,7 @@ def format_date(context, day, format_=None):
         "medium", "long", or "full" (default is "long"), or a pattern in
         the Locale Data Markup Language specification.
     """
-    return _format_date(context, day, format_=format_)
+    return _format_date(context, day, format_=format_, lang=lang)
 
 
 @contextfilter
@@ -133,6 +134,19 @@ def format_datetime(context, dt):
     formatted_time = dt.strftime(f'{hour}:%M:%S %p')
 
     return f'{formatted_date} {formatted_time}'
+
+
+def make_translation(languages, make_text):
+    """
+    Return a translation dict, which maps language key to translated word
+    or phrase.
+
+    Args:
+      languages: a list of language keys (e.g. "en").
+      make_text: a function with signature `make_text(lang)` that returns
+        a string.
+    """
+    return {lang: make_text(lang) for lang in languages}
 
 
 def choose_translation(translations, lang):

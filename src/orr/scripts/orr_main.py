@@ -121,7 +121,21 @@ def load_input(data, path):
     _log.info(f'loaded data from {path}')
 
 
-#--- Top level processing: ---
+def make_report_title(context):
+    election = context['election']
+    languages = context['languages']
+
+    def make_text(lang):
+        return '{} - {} - {}'.format(
+            templating.format_date(context, election.date, lang=lang),
+            templating.translate(context, election.ballot_title, lang=lang),
+            templating.translate(context, election.election_area, lang=lang),
+        )
+
+    report_title = templating.make_translation(languages, make_text=make_text)
+
+    return report_title
+
 
 def initialize_output_dir(template_dir, output_dir):
     """
@@ -272,6 +286,9 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
                                 build_time=build_time)
 
+    report_title = make_report_title(context)
+    context['report_title'] = report_title
+
     initialize_output_dir(template_dir, output_dir=output_dir)
 
     # TODO: allow different locales to be used (e.g. the system's default
@@ -282,7 +299,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     finalize_output_dir(output_dir, zip_file_base=zip_file_base)
 
-    output_data, output = scriptcommon.format_output(output_dir,
+    output_data, output = scriptcommon.format_output(output_dir, report_title=report_title,
                                 rel_home_page=rel_home_page, zip_file_path=zip_file_path,
                                 build_time=build_time)
 

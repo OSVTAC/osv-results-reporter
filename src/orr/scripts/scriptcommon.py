@@ -167,9 +167,9 @@ def parse_common_args(ns, default_log_level=None):
     return options
 
 
-# TODO: include the election name / report title in the data.
-def format_output(output_dir, build_time, rel_home_page=None, zip_file_path=None,
-    initial_data=None):
+def format_output(output_dir, build_time, report_title=None, rel_home_page=None,
+    zip_file_path=None, initial_data=None,
+):
     """
     Print and return the output data.
     """
@@ -179,6 +179,9 @@ def format_output(output_dir, build_time, rel_home_page=None, zip_file_path=None
     output_dir = Path(output_dir)
     # Rename the variable for clarity.
     output_data = initial_data
+
+    if report_title is not None:
+        output_data['report_title'] = report_title
 
     if rel_home_page is not None:
         output_data['rel_home_page'] = rel_home_page
