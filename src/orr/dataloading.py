@@ -610,10 +610,26 @@ def load_contest_status(election):
         election.have_contest_status = False
         return
 
-    contests_data = utils.read_json(path)
+    contest_status_data = utils.read_json(path)
+
+    if isinstance(contest_status_data, list):
+        # Convert from contest_status_format 0.1
+        contests_data = contest_status_data
+        contest_status_data = dict(
+            contest_status_format="0.1",
+            turnout=contests_data.pop(0),
+            contests=contests_data,
+            )
 
     # TODO: this should be converted to the object model style.
-    process_attrs = dict(
+
+    process_election_attrs = dict(
+        reporting_time=parse_date_time,
+        results_id=parse_as_is,
+        results_title=parse_as_is,
+        )
+
+    process_contest_attrs = dict(
         reporting_time=parse_date_time,
         result_stats=process_contest_result_stats,
         choices=process_choice_results,
@@ -623,14 +639,21 @@ def load_contest_status(election):
         no_voter_precincts=parse_as_is,
         success=parse_bool,
     )
-    election.have_contest_status = False
-    for data in contests_data:
+
+    _set_obj_attributes(contest_status_data, process_election_attrs, election)
+
+    data = contest_status_data.get('turnout',None)
+    if data:
+        _set_obj_attributes(data, process_contest_attrs, election.turnout)
+
+    election.have_contest_status = True
+    for data in contest_status_data.get("contests",[]):
         _id = data.get('_id','')
         if _id=='TURNOUT':
            # Reset results array
-            _set_obj_attributes(data, process_attrs, election.turnout)
+            _set_obj_attributes(data, process_contest_attrs, election.turnout)
         else:
-            _set_attributes_by_id(data, process_attrs=process_attrs,
+            _set_attributes_by_id(data, process_attrs=process_contest_attrs,
                         objects_by_id=election.contests_by_id, id_key='_id')
             contest = election.contests_by_id[_id]
 
