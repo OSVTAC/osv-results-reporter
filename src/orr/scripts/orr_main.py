@@ -136,7 +136,8 @@ def get_main_titles(context):
         )
 
     election_title = templating.make_translation(languages, make_text=make_text)
-    results_title = election.results_title
+    # TODO: eliminate having to use getattr() here.
+    results_title = getattr(election, 'results_title', None)
 
     return (election_title, results_title)
 
