@@ -51,8 +51,8 @@ INPUT_FILE_NAME = 'election.json'
 # relative to the input directory.
 DEFAULT_RESULTS_DIR_NAME = 'resultdata'
 
-# The name of the contest status file, inside the input results directory.
-CONTEST_STATUS_FILE_NAME = 'contest-status.json'
+# The name of the results file, inside the input results directory.
+RESULTS_FILE_NAME = 'results.json'
 
 # The format string for the name of the file in the results directory
 # containing the detailed results for a contest.
@@ -484,6 +484,7 @@ def _set_obj_attributes(
     data:dict,
     process_attrs:dict, # Dict of processing routines by source attr
     obj: object,        # Object to set
+    trim_underscore:bool=False,  #
 ):
     """
     Set attributes on objects using the given data.
@@ -491,7 +492,7 @@ def _set_obj_attributes(
     This method mutates the given objects_data.
 
     Args:
-      data: the data for a contest, deserialized from a json contest status
+      data: the data for a contest, deserialized from a json results
         file.
       obj: the object to be set.
     """
@@ -505,6 +506,8 @@ def _set_obj_attributes(
 
         # Invoke the processing routine to convert the raw string.
         value = handler(obj, data[attr_name])
+        if trim_underscore and attr_name[0] == '_' and attr_name != '_id':
+            attr_name = attr_name[1:]
 
         # Only set a value if the value is non-trivial and nothing is set yet.
         # TODO: fix this hack.
@@ -527,7 +530,7 @@ def _set_attributes_by_id(
     This method mutates the given objects_data.
 
     Args:
-      data: the data for a contest, deserialized from a json contest status
+      data: the data for a contest, deserialized from a json results
         file.
       id_key: the key for the contest id in the given data.
     """
@@ -562,7 +565,7 @@ def append_results_col(contest, results_col):
 
 def process_contest_result_stats(contest, result_stats_data):
     """
-    Process the contest-status.json 'result_stats' list of result summary data
+    Process the results.json 'result_stats' list of result summary data
     in a contest or turnout.
     """
     for result_stat in result_stats_data:
@@ -575,7 +578,7 @@ def process_contest_result_stats(contest, result_stats_data):
 
 def process_choice_results(contest, choices_data):
     """
-    Process the contest-status.json 'choices' list of vote summary data
+    Process the results.json 'choices' list of vote summary data
     in a contest or turnout.
     """
     choices_by_id = contest.choices_by_id
@@ -596,27 +599,27 @@ def process_choice_results(contest, choices_data):
         choice.winning_status = choice_data.get('winning_status')
 
 
-def load_contest_status(election):
+def load_results(election):
     """
-    Load contest results statuses from the contest status file.
+    Load contest results statuses from the results file.
 
     Args:
       election: an Election object.
     """
-    election._contest_status_loaded = True
+    election._results_loaded = True
     input_results_dir = election.input_results_dir
-    path = input_results_dir / CONTEST_STATUS_FILE_NAME
+    path = input_results_dir / RESULTS_FILE_NAME
     if not path.exists():
-        election.have_contest_status = False
+        election.have_results = False
         return
 
-    contest_status_data = utils.read_json(path)
+    results_data = utils.read_json(path)
 
-    if isinstance(contest_status_data, list):
-        # Convert from contest_status_format 0.1
-        contests_data = contest_status_data
-        contest_status_data = dict(
-            contest_status_format="0.1",
+    if isinstance(results_data, list):
+        # Convert from results_format 0.1
+        contests_data = results_data
+        results_data = dict(
+            _results_format="0.1",
             turnout=contests_data.pop(0),
             contests=contests_data,
             )
@@ -624,9 +627,9 @@ def load_contest_status(election):
     # TODO: this should be converted to the object model style.
 
     process_election_attrs = dict(
-        reporting_time=parse_date_time,
-        results_id=parse_as_is,
-        results_title=parse_as_is,
+        _reporting_time=parse_date_time,
+        _results_id=parse_as_is,
+        _results_title=parse_as_is,
         )
 
     process_contest_attrs = dict(
@@ -640,14 +643,14 @@ def load_contest_status(election):
         success=parse_bool,
     )
 
-    _set_obj_attributes(contest_status_data, process_election_attrs, election)
+    _set_obj_attributes(results_data, process_election_attrs, election, True)
 
-    data = contest_status_data.get('turnout',None)
+    data = results_data.get('turnout',None)
     if data:
         _set_obj_attributes(data, process_contest_attrs, election.turnout)
 
-    election.have_contest_status = True
-    for data in contest_status_data.get("contests",[]):
+    election.have_results = True
+    for data in results_data.get("contests",[]):
         _id = data.get('_id','')
         if _id=='TURNOUT':
            # Reset results array
@@ -1182,22 +1185,22 @@ def load_contests(election_loader, contests_data, context):
     return contests_by_id
 
 
-# Not currently used - supports lazy load of contest status
-def make_contest_status_loader(election_loader, data):
+# Not currently used - supports lazy load of results
+def make_results_loader(election_loader, data):
     """
-    Return the function to set as election._load_contest_status_data.
+    Return the function to set as election._load_results_data.
     """
-    return load_contest_status
+    return load_results
 
 
-# Always load contest status if it exists
-def run_contest_status_loader(election_loader, data):
+# Always load results if it exists
+def run_results_loader(election_loader, data):
     """
-    Call the load_contest_status and also:
-    Return the function to set as election._load_contest_status_data.
+    Call the load_results and also:
+    Return the function to set as election._load_results_data.
     """
-    load_contest_status(election_loader.model_object)
-    return load_contest_status
+    load_results(election_loader.model_object)
+    return load_results
 
 
 class ElectionLoader:
@@ -1216,7 +1219,7 @@ class ElectionLoader:
         AutoAttr('turnout', load_turnout, data_key='turnout',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
         # Pass data_key=False since this does not read from the json data.
-        AutoAttr('_load_contest_status_data', run_contest_status_loader, data_key=False),
+        AutoAttr('_load_results_data', run_results_loader, data_key=False),
         ('no_voter_precincts', parse_as_is),
 
     ]

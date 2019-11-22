@@ -827,9 +827,9 @@ class Contest:
         """
         # Summary results should be loaded for the election if present
         if not hasattr(self, 'results'):
-            if self.election._contest_status_loaded:
+            if self.election._results_loaded:
                 return []
-            self.election.load_contest_statuses()
+            self.election.load_results()
             if not self.get('results',[]):
                 return []
 
@@ -923,7 +923,7 @@ class Election:
       contests_by_id:
 
     Private attributes:
-      _load_contest_status_data: a function that loads the contest results
+      _load_results_data: a function that loads the contest results
         status data into each contest.  The function should have signature:
           load(election).
     """
@@ -942,7 +942,7 @@ class Election:
         self.input_dir = input_dir
         self.input_results_dir = input_results_dir
 
-        self._contest_status_loaded = self.have_contest_status = False
+        self._results_loaded = self.have_results = False
         self.ballot_title = None
         self.date = None
 
@@ -983,20 +983,20 @@ class Election:
 
             yield (headers, contests)
 
-    def load_contest_statuses(self):
+    def load_results(self):
         """
         Loads the contest results status data into each contest.
 
         Returns '' so this can be called from templates. No action is taken
         if the contest status has been loaded.
         """
-        # We use _contest_status_loaded as a marker to indicate that the
+        # We use _results_loaded as a marker to indicate that the
         # data has already been loaded.  Skip if already loaded.
-        if getattr(self, '_contest_status_loaded', False):
+        if getattr(self, '_results_loaded', False):
             return ''
 
-        self._load_contest_status_data(self)
+        self._load_results_data(self)
 
-        # Set in _load_contest_status_data: self._contest_status_loaded = True
+        # Set in _load_results_data: self._results_loaded = True
 
         return ''

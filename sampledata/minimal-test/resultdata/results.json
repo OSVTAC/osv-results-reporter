@@ -1,5 +1,9 @@
-[
-    {
+{
+    "_reporting_time": "2019-11-14 15:00:54",
+    "_results_format": "0.2",
+    "_results_id": "20191114",
+    "_results_title": "Preliminary Report 12",
+    "turnout":  {
         "_id": "TURNOUT",
         "no_voter_precincts": [],
         "precincts_reporting": "604",
@@ -44,6 +48,7 @@
         ],
         "total_precincts": "604"
     },
+    "contests": [
     {
         "_id": "403",
         "choices": [
@@ -405,4 +410,5 @@
         ],
         "total_precincts": 597
     }
-]
+  ]
+}
