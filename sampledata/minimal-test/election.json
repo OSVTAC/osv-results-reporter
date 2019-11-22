@@ -48,10 +48,7 @@
     ],
     "election": {
         "ballot_title": {
-            "en": "Consolidated Statewide Direct Primary Election",
-            "es": "Elecciones Estatales Primarias Directas Consolidadas",
-            "tl": "Pinagsamang Pambuong-Estado na Tuwirang Primaryang Eleksyon",
-            "zh": "全州聯合直接初選"
+            "en": "Minimal Demo Election"
         },
         "contests": [
             {

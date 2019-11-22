@@ -145,7 +145,7 @@ class EndToEndTest(TestCase):
             report_title = output_data['report_title']
             self.assertEqual(sorted(report_title), ['en', 'es', 'tl', 'zh'])
             self.assertEqual(report_title['en'],
-                'June 5, 2018 - Consolidated Statewide Direct Primary Election - City and County of San Francisco'
+                'June 5, 2018 - Minimal Demo Election - City and County of San Francisco'
             )
 
             self.assertEqual(output_data['rel_home_page'], 'index.html')
