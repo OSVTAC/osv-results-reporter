@@ -139,15 +139,17 @@ class EndToEndTest(TestCase):
                 output_dir=output_dir, build_time=build_time)
 
             self.check_keys(output_data, [
-                'build_time', 'output_dir', 'rel_home_page', 'report_title', 'zip_file',
+                'build_time', 'election_title', 'output_dir', 'rel_home_page',
+                'results_title', 'zip_file',
             ])
 
-            report_title = output_data['report_title']
-            self.assertEqual(sorted(report_title), ['en', 'es', 'tl', 'zh'])
-            self.assertEqual(report_title['en'],
+            election_title = output_data['election_title']
+            self.assertEqual(sorted(election_title), ['en', 'es', 'tl', 'zh'])
+            self.assertEqual(election_title['en'],
                 'June 5, 2018 - Minimal Demo Election - City and County of San Francisco'
             )
 
+            self.assertEqual(output_data['results_title'], 'Preliminary Report 12')
             self.assertEqual(output_data['rel_home_page'], 'index.html')
 
             zip_info = output_data['zip_file']

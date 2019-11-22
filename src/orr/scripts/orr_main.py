@@ -121,7 +121,10 @@ def load_input(data, path):
     _log.info(f'loaded data from {path}')
 
 
-def make_report_title(context):
+def get_main_titles(context):
+    """
+    Create or get, and return: (election_title, results_title).
+    """
     election = context['election']
     languages = context['languages']
 
@@ -132,9 +135,10 @@ def make_report_title(context):
             templating.translate(context, election.election_area, lang=lang),
         )
 
-    report_title = templating.make_translation(languages, make_text=make_text)
+    election_title = templating.make_translation(languages, make_text=make_text)
+    results_title = election.results_title
 
-    return report_title
+    return (election_title, results_title)
 
 
 def initialize_output_dir(template_dir, output_dir):
@@ -286,8 +290,8 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
                                 build_time=build_time)
 
-    report_title = make_report_title(context)
-    context['report_title'] = report_title
+    election_title, results_title = get_main_titles(context)
+    context['election_title'] = election_title
 
     initialize_output_dir(template_dir, output_dir=output_dir)
 
@@ -299,7 +303,8 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
 
     finalize_output_dir(output_dir, zip_file_base=zip_file_base)
 
-    output_data, output = scriptcommon.format_output(output_dir, report_title=report_title,
+    output_data, output = scriptcommon.format_output(output_dir,
+                                election_title=election_title, results_title=results_title,
                                 rel_home_page=rel_home_page, zip_file_path=zip_file_path,
                                 build_time=build_time)
 
