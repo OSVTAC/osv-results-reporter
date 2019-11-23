@@ -9,7 +9,10 @@
   {% block styles %}{% endblock %}
 </head>
 <body>
-  <h1>{{ election_title|translate }}</h1>
+  <h1>{{ election_title|translate }}
+    {%- if election.results_title %} - {{ election.results_title|translate|upper }}
+    {%- endif -%}
+  </h1>
   <p>
     [<a href="{{ home_href() }}">Home</a>] Switch language:
   {% for lang in languages %}
