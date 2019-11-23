@@ -149,7 +149,7 @@ class EndToEndTest(TestCase):
                 'June 5, 2018 - Minimal Demo Election - City and County of San Francisco'
             )
 
-            self.assertEqual(output_data['results_title'], 'Preliminary Report 12')
+            self.assertEqual(output_data['results_title'], {'en': 'Demo Report'})
             self.assertEqual(output_data['rel_home_page'], 'index.html')
 
             zip_info = output_data['zip_file']

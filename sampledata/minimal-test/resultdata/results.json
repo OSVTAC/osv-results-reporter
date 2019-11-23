@@ -2,7 +2,9 @@
     "_reporting_time": "2019-11-14 15:00:54",
     "_results_format": "0.2",
     "_results_id": "20191114",
-    "_results_title": "Preliminary Report 12",
+    "_results_title": {
+        "en": "Demo Report"
+    },
     "contests": [
         {
             "_id": "403",
