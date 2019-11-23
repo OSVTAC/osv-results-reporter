@@ -27,6 +27,7 @@ Prints the normalized json to stdout.
 """
 
 import json
+from pathlib import Path
 import sys
 
 import orr.utils as utils
@@ -39,11 +40,13 @@ def main():
     except IndexError:
         raise RuntimeError('path not provided')
 
+    path = Path(path)
     data = utils.read_json(path)
 
     serialized = json.dumps(data, **DEFAULT_JSON_DUMPS_ARGS)
+    path.write_text(serialized)
 
-    print(serialized)
+    print(f'wrote json to: {path}', file=sys.stderr)
 
 
 if __name__ == '__main__':
