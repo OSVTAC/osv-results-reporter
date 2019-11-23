@@ -629,7 +629,7 @@ def load_results(election):
     process_election_attrs = dict(
         _reporting_time=parse_date_time,
         _results_id=parse_as_is,
-        _results_title=parse_as_is,
+        _results_title=parse_i18n,
         )
 
     process_contest_attrs = dict(
