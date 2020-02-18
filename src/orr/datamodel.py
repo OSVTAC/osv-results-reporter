@@ -983,6 +983,32 @@ class Election:
 
             yield (headers, contests)
 
+    def contests_structured(self):
+        """
+        Yield all headers as pairs (header, items), where--
+          header: a Header object
+          items: list of items under this header; each item is either a Contest
+            or a (header, items) pair
+        """
+        headerStack = []
+        for headers, contests in self.contests_with_headers():
+            for level, header in headers:
+                # Close out headers with an equal or higher level than level
+                while len(headerStack) >= level:
+                    closedHeaderStructure = headerStack.pop()
+                    if len(headerStack) == 0:
+                        yield closedHeaderStructure
+
+                newHeaderStructure = (header, [])
+                if len(headerStack) > 0:
+                    headerStack[-1][1].append(newHeaderStructure)
+                headerStack.append(newHeaderStructure)
+
+            headerStack[-1][1].extend(contests)
+
+        if len(headerStack) > 0:
+          yield headerStack[0]
+
     def load_results(self):
         """
         Loads the contest results status data into each contest.

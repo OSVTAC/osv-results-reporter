@@ -1,3 +1,46 @@
+.navigation {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 25vw;
+	padding-top: 2em;
+}
+
+.main-wrapper {
+	margin-left: 25vw;
+}
+
+.navigation,
+.main-wrapper {
+	height: 100%;
+	box-sizing: border-box;
+	overflow-y: auto;
+}
+
+.nav-contest:hover,
+.nav-group-header:hover {
+	background-color: #eaecf0;
+}
+
+.nav-contest a,
+.nav-group-header a {
+	display: block;
+	padding: 0.5em;
+	color: black;
+	text-decoration: none;
+}
+
+.nav-group-items {
+	margin-left: 1em;
+}
+
+h2:target .anchored-header,
+h3:target .anchored-header,
+.nav-contest a.nav-current,
+.nav-group-header a.nav-current {
+	background-color: #eaf3ff;
+}
+
 .question-text {
 	max-width: 40%;
 }

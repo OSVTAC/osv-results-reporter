@@ -9,54 +9,58 @@
 
 {% block bottomScripts %}
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
-<script>
-$( function () {
-  $( '.question-text a' ).click( function () {
-    $( this ).closest( '.question-text' ).toggleClass( 'expanded' );
-    return false;
-  } );
-} );
-</script>
+<script src="static/summary.js"></script>
 {% endblock %}
 
 {% macro anchored_header(text, element_id) -%}
-{{ text|translate }}
+<span class="anchored-header">
+  {{ text|translate }}
   <a class="headerlink" href="{{ element_id|to_fragment }}" title="Permalink to this header">¶</a>
+</span>
 {%- endmacro %}
 
-{% block content %}
+{% macro render_nav_for_header(header, items) -%}
+  <div class="nav-group">
+    <div class="nav-group-header">
+      <a href="{{ header.ballot_title|to_element_id|to_fragment }}">
+        {{ header.ballot_title|translate }}
+      </a>
+    </div>
+    <div class="nav-group-items">
+      {% for item in items %}
+        {# HACK: we can't directly test if item is a tuple or a Contest #}
+        {% if item is iterable %}
+          {{ render_nav_for_header(*item) }}
+        {% else %}
+          <div class="nav-contest">
+            <a href="{{ item.contest_name|to_element_id|to_fragment }}">
+              {{ item.contest_name|translate }}
+            </a>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+{%- endmacro %}
 
+{% block bodyTop %}
+<div class="navigation">
+  <div class="nav-contest">
+    <a href="#turnout">{{ election.turnout.ballot_title|translate }}</a>
+  </div>
+
+  {% for header, items in election.contests_structured() %}
+    {{ render_nav_for_header(header, items) }}
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block content %}
   <p>
     [<a href="detailed-reports.html">Detailed reports and downloads</a>]
   </p>
 
-  <h2>Contents</h2>
-
-  <ul>
-  <li><a href="#turnout">{{ election.turnout.ballot_title|translate }}</a></li>
-  {% for headers, contests in election.contests_with_headers() %}
-    {% for level, header in headers %}
-      {% set header_id = header.ballot_title|to_element_id %}
-      <li>
-        <a href="{{ header_id|to_fragment }}">{{ header.ballot_title|translate }}</a>
-        <ul>
-    {% endfor %}
-    <li>
-      {% for contest in contests %}
-        {% set contest_id = contest.contest_name|to_element_id %}
-        <a href="{{ contest_id|to_fragment }}">
-        {# Prevent contest names from breaking across lines in the table of contents. #}
-        {{ contest.contest_name|translate|escape|nobreak|safe }}</a>{%- if not loop.last %}&nbsp;●{% endif -%}
-      {% endfor %}
-    </li>
-    {# Close the unbalanced <li><ul> tags we opened in the first headers loop #}
-    {% for level, header in headers %}
-      </ul></li>
-    {% endfor %}
-  {% endfor %}
-  </ul>
-
-  <h3 id="turnout">{{ election.turnout.ballot_title|translate }}</h3>
+  <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
   <p>
     {{ election.turnout.precincts_reporting }} of {{ election.turnout.total_precincts}} Precincts Reporting
     ({{ election.turnout.precincts_reporting|format_percent2(election.turnout.total_precincts) }})
