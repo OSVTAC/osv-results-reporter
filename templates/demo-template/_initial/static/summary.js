@@ -14,6 +14,7 @@ $( function () {
 		$( '.nav-current' ).removeClass( 'nav-current' );
 		if ( matchingNav ) {
 			$( matchingNav ).addClass( 'nav-current' );
+			matchingNav.scrollIntoView( { block: 'nearest' } );
 		}
 	}
 
@@ -46,7 +47,10 @@ $( function () {
 		matchingNav = navMap[ $currentHeader.attr( 'id' ) ];
 		if ( matchingNav !== $current[ 0 ] ) {
 			$current.removeClass( 'nav-current' );
-			$( matchingNav ).addClass( 'nav-current' );
+			if ( matchingNav ) {
+				$( matchingNav ).addClass( 'nav-current' );
+				matchingNav.scrollIntoView( { block: 'nearest' } );
+			}
 		}
 	} );
 
