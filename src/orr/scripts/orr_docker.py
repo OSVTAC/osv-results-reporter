@@ -94,7 +94,7 @@ def run_subprocess(args, check=True, desc=None, capture_stdout=False, **kwargs):
     """)
     _log.warning(msg)
 
-    # TODO: simplify this.
+    # TODO: simplify this by passing stdout=sys.stderr.
     with Popen(args, stdout=subprocess.PIPE, encoding=UTF8_ENCODING, **kwargs) as proc:
         if capture_stdout:
             # Wait for the child process to terminate.
