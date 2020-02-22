@@ -2,8 +2,7 @@
 <head>
   <meta charset="utf-8">
   <title>
-    {{- election.date|format_date_medium }} -
-    {% block title %}{% endblock -%}
+    {{- election.date|format_date_medium }} - {% block title %}{% endblock -%}
   </title>
   <script>document.documentElement.className="client-js";</script>
   {% block styles %}{% endblock %}
