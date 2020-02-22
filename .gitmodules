@@ -1,0 +1,3 @@
+[submodule "submodules/osv-translations"]
+	path = submodules/osv-translations
+	url = https://github.com/OSVTAC/osv-translations.git
