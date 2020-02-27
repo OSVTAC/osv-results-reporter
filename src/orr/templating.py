@@ -161,7 +161,7 @@ def choose_translation(translations, lang):
 
 
 @contextfilter
-def template_translate(context, phrase_id):
+def template_translate(context, phrase_id, lang=None):
     """
     Translate the given phrase into the currently active language.
 
@@ -169,7 +169,8 @@ def template_translate(context, phrase_id):
     translations are taken from the template directory's `translations.json`
     file (as opposed to the election-specific input json data).
     """
-    lang = utils.get_language(context)
+    if lang is None:
+        lang = utils.get_language(context)
 
     translation_data = context['translation_data']
     translations = translation_data[phrase_id]
