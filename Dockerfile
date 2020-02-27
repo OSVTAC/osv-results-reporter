@@ -33,6 +33,9 @@ RUN cp debian/locale.gen /etc/locale.gen \
 COPY sampledata/ sampledata/
 COPY scripts/ scripts/
 COPY src/ src/
+# Copy the submodules directory since it contains the translations.json
+# file needed for our template rendering.
+COPY submodules/ submodules/
 COPY templates/ templates/
 
 # Add a marker file so we can check from within Python whether we
