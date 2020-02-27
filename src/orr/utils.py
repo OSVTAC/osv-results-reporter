@@ -76,7 +76,7 @@ ZIP_FILE_BASE = 'full-results'
 
 def get_language(context):
     """
-    Return the language stored in the current context.
+    Return the currently active language, as a 2-letter language code (e.g. "en").
     """
     if 'options' not in context:
         return ENGLISH_LANG

@@ -222,6 +222,15 @@ def finalize_output_dir(output_dir, zip_file_base):
     utils.gzip_directory_to(output_dir, output_dir=output_dir, zip_file_base=zip_file_base)
 
 
+def load_translation_data(template_dir):
+    path = template_dir / 'translations.json'
+    _log.debug(f'loading translations.json: {path}')
+    translation_data = utils.read_json(path)
+    translation_data = translation_data['translations']
+
+    return translation_data
+
+
 def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
     extra_template_dirs=None, output_dir=None, fresh_output=False,
     test_mode=False, build_time=None, deterministic=None, skip_pdf=False):
@@ -262,6 +271,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     # Convert the path to an absolute paths to simplify troubleshooting.
     template_dir = Path(template_dir)
     _log.debug(f'using template directory: {template_dir}')
+    translation_data = load_translation_data(template_dir)
 
     template_dirs = [template_dir] + extra_template_dirs
 
@@ -271,8 +281,8 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     zip_file_path = utils.make_zip_file_name(zip_file_base)
 
     env = configlib.create_jinja_env(output_dir=output_dir, template_dirs=template_dirs,
-                deterministic=deterministic, gzip_path=zip_file_path,
-                skip_pdf=skip_pdf)
+        translation_data=translation_data, deterministic=deterministic,
+        gzip_path=zip_file_path, skip_pdf=skip_pdf)
 
     if input_dir is None:
         raise RuntimeError('--input-dir not provided')

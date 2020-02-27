@@ -23,7 +23,7 @@
     {% endfor %}
     </p>
     <p>
-      Last published: {{ build_time|format_datetime }}
+      {{ "last_updated"|TT }}: {{ build_time|format_datetime }}
     </p>
     {# The line below inserts the string from the "title" block above. #}
     <h2>{{ self.title() }}</h2>
