@@ -57,7 +57,7 @@
 
 {% block content %}
   <p>
-    [<a href="detailed-reports.html">Detailed reports and downloads</a>]
+    [<a href="{{ get_relative_href('detailed-reports.html') }}">Detailed reports and downloads</a>]
   </p>
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
