@@ -69,23 +69,23 @@
 }
 
 .table .successful .percentage-bar {
-    background-color: green;
+    background-color: #00af89;
 }
 
 .contest.successful .table .percentage-bar {
-	background-color: red;
+	background-color: #d33;
 }
 
 .contest.successful .table .successful .percentage-bar {
-	background-color: green;
+	background-color: #00af89;
 }
 
 .contest.failed .table .percentage-bar {
-	background-color: green;
+	background-color: #00af89;
 }
 
 .contest.failed .table .successful .percentage-bar {
-	background-color: red;
+	background-color: #d33;
 }
 
 .table .cutoff-line {
