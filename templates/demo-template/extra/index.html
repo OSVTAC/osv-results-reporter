@@ -56,9 +56,11 @@
 {% endblock %}
 
 {% block content %}
-  <p>
-    [<a href="{{ get_relative_href('detailed-reports.html') }}">Detailed reports and downloads</a>]
-  </p>
+  <ul>
+    <li>
+      <a href="{{ get_relative_href('detailed-reports.html') }}">{{ "detailed_reports_and_downloads"|TT }}</a>
+    </li>
+  </ul>
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
   <p>
