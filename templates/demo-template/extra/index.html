@@ -220,7 +220,10 @@
           {% set v = contest.summary_results(choice, "TO")[0] %}
           {% set p = v|compute_percent(contest.total_votes) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
-            <td class="text-cell title">{{ choice.ballot_title|translate }}</td>
+            <td class="text-cell title">
+              {{- choice.ballot_title|translate -}}
+              {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
+            </td>
             <td>{{ v|format_number }}</td>
             <td>{{ p|format_percent }}</td>
             <td class="bars-row">
