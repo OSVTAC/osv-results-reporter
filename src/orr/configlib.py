@@ -41,14 +41,16 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
 
     Args:
       output_dir: a path-like object.
-      translation_data: the dict of data read from the template directory's
-        `translations.json`.
+      translation_data: optionally, the dict of data read from the template
+        directory's `translations.json`.
       deterministic: for deterministic PDF generation.  Defaults to False.
       gzip_path: the path the tar.gz file will be written to.
       skip_pdf: whether to skip PDF generation.  Defaults to False.
     """
     if template_dirs is None:
         template_dirs = []
+    if translation_data is None:
+        translation_data = {}
 
     env = Environment(
         loader=FileSystemLoader(template_dirs),
@@ -74,8 +76,8 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
     options['deterministic'] = deterministic
     options['skip_pdf'] = skip_pdf
 
-    languages = translation_data['languages']
-    phrases = translation_data['translations']
+    languages = translation_data.get('languages')
+    phrases = translation_data.get('translations')
 
     env.globals.update(options=options,
         current_page_link=templating.current_page_link,
