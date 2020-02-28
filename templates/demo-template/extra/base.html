@@ -22,7 +22,7 @@
     {% for lang in languages %}
       {% with lang_phrase_id=lang|lang_to_phrase_id %}
         <a href="{{ current_page_link(lang) }}">{{ lang_phrase_id|TT(lang) }}
-          {% if lang_phrase_id|has_TT(lang) %} ({{ lang_phrase_id|TT("en") }})
+          {%- if lang_phrase_id|has_TT(lang) %} ({{ lang_phrase_id|TT("en") }})
           {%- endif -%}</a> |
       {% endwith %}
     {% endfor %}
