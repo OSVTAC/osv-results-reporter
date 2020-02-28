@@ -95,6 +95,8 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
         format_date_medium=templating.format_date_medium,
         format_datetime=templating.format_datetime,
         secure_hash=templating.secure_hash,
+        # Using a double T ("TT") makes it easier to search and find
+        # all usages in our template code.
         TT=templating.template_translate,
         # TODO: rename "translate" to a different 2-letter acronym.
         translate=templating.translate,
