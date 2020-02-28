@@ -437,6 +437,14 @@ class Choice:
     def __repr__(self):
         return f'<Choice id={self.id!r} title={i18n_repr(self.ballot_title)}>'
 
+    def is_yes(self):
+      """
+      Check whether this is the 'yes' choice.
+      If the contest is not a yes/no contest (=does not have an approval threshold),
+      this always returns False.
+      """
+      return self.contest.approval_required and bool(self.is_successful) == bool(self.contest.success)
+
 
 class Candidate(Choice):
 
@@ -717,8 +725,7 @@ class Contest:
         def sorter(c):
           if self.approval_required:
             # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
-            # The Yes choice is the one whose success status matches the contest's success status.
-            return 1 if c.is_successful == self.success else 0
+            return 1 if c.is_yes() else 0
           # For other contests, sort by vote total
           return self.summary_results(c, "TO")[0]
 

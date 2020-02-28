@@ -226,7 +226,7 @@
             <td class="bars-row">
                 <div class="percentage-bar" style="width: {{ p|compute_percent(scalePercent) }}%"></div>
                 {# Only show the cutoff line for the "yes" choice #}
-                {% if contest.approval_required and contest.success == choice.is_successful %}
+                {% if contest.approval_required and choice.is_yes() %}
                   <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(scalePercent) }}% - 0.25em)"></div>
                 {% endif %}
             </td>
