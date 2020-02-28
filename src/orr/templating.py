@@ -171,11 +171,37 @@ def lang_to_phrase_id(context, lang_code):
     return language_data['phrase_id']
 
 
-def _get_template_translation(context, phrase_id, lang_code):
+def _get_template_format_translation(context, phrase_id, lang_code):
+    """
+    Return a phrase translation, without inserting replacement field values.
+
+    Args:
+      lang_code: a 2-letter language code.
+
+    The return value can be either a format string, or a simple string
+    with no replacement fields.
+    """
     phrases_data = context['phrases_data']
     translations = phrases_data[phrase_id]
 
     return translations[lang_code]
+
+
+def _get_template_translation(context, phrase_id, *params, lang_code=None):
+    """
+    Args:
+      params: the format string parameters, if needed.
+      lang_code: a 2-letter language code.
+    """
+    phrases_data = context['phrases_data']
+    translations = phrases_data[phrase_id]
+
+    format_str = _get_template_format_translation(context, phrase_id, lang_code=lang_code)
+
+    try:
+        return format_str.format(*params)
+    except Exception:
+        raise RuntimeError(format_str, params)
 
 
 @contextfilter
@@ -189,13 +215,16 @@ def has_template_translation(context, phrase_id, lang):
         # in non-English translations.
         return False
 
-    return bool(_get_template_translation(context, phrase_id, lang_code=lang))
+    return bool(_get_template_format_translation(context, phrase_id, lang_code=lang))
 
 
 @contextfilter
-def template_translate(context, phrase_id, lang=None):
+def template_translate(context, phrase_id, *params, lang=None):
     """
     Translate the given phrase into the currently active language.
+
+    Args:
+      params: the format string parameters, if needed.
 
     The currently active language is read from the context, and the
     translations are taken from the template directory's `translations.json`
@@ -204,12 +233,11 @@ def template_translate(context, phrase_id, lang=None):
     if lang is None:
         lang = utils.get_language(context)
 
-    translation = _get_template_translation(context, phrase_id=phrase_id, lang_code=lang)
+    translation = _get_template_translation(context, phrase_id, *params, lang_code=lang)
     if translation:
         return translation
 
-    translation = _get_template_translation(context, phrase_id=phrase_id,
-        lang_code=ENGLISH_LANG)
+    translation = _get_template_translation(context, phrase_id, *params, lang_code=ENGLISH_LANG)
 
     # Put brackets around words that are missing a translation,
     # so we can see visually.

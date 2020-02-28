@@ -64,7 +64,7 @@
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
   <p>
-    {{ election.turnout.precincts_reporting }} of {{ election.turnout.total_precincts}} Precincts Reporting
+    {{ "precincts_reporting"|TT(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
     ({{ election.turnout.precincts_reporting|format_percent2(election.turnout.total_precincts) }})
   </p>
   <table class="table summary-table">
