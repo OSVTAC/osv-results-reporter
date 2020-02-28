@@ -14,8 +14,14 @@
       {%- if election.results_title %} - {{ election.results_title|translate|upper }}
       {%- endif -%}
     </h1>
+    {# Only show the "back" link if we're not already on the summary page #}
+    {# home_href() returns a Path, but current_page_link() returns a string #}
+    {% if home_href().name != current_page_link() %}
+      <p>
+        <a href="{{ home_href() }}">&lArr; Back to summary results</a>
+      </p>
+    {% endif %}
     <p>
-      [<a href="{{ home_href() }}">Home</a>]
       {{ "switch_language"|TT }}
       {%- if options.lang != "en" %} ({{ "switch_language"|TT("en") }})
       {%- endif -%}:
