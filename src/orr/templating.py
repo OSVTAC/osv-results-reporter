@@ -161,6 +161,38 @@ def choose_translation(translations, lang):
 
 
 @contextfilter
+def lang_to_phrase_id(context, lang_code):
+    """
+    Convert a language code to a phrase id (e.g. "en" -> "language_english").
+    """
+    languages_data = context['languages_data']
+    language_data = languages_data[lang_code]
+
+    return language_data['phrase_id']
+
+
+def _get_template_translation(context, phrase_id, lang_code):
+    phrases_data = context['phrases_data']
+    translations = phrases_data[phrase_id]
+
+    return translations[lang_code]
+
+
+@contextfilter
+def has_template_translation(context, phrase_id, lang):
+    """
+    Return whether the given phrase has a translation into the given
+    (non-English) language.
+    """
+    if lang == ENGLISH_LANG:
+        # Don't consider English a translation as we're only interested
+        # in non-English translations.
+        return False
+
+    return bool(_get_template_translation(context, phrase_id, lang_code=lang))
+
+
+@contextfilter
 def template_translate(context, phrase_id, lang=None):
     """
     Translate the given phrase into the currently active language.
@@ -172,11 +204,16 @@ def template_translate(context, phrase_id, lang=None):
     if lang is None:
         lang = utils.get_language(context)
 
-    translation_data = context['translation_data']
-    translations = translation_data[phrase_id]
-    translation = translations[lang]
+    translation = _get_template_translation(context, phrase_id=phrase_id, lang_code=lang)
+    if translation:
+        return translation
 
-    return translation
+    translation = _get_template_translation(context, phrase_id=phrase_id,
+        lang_code=ENGLISH_LANG)
+
+    # Put brackets around words that are missing a translation,
+    # so we can see visually.
+    return f'[{translation}]'
 
 
 @contextfilter

@@ -226,7 +226,6 @@ def load_translation_data(template_dir):
     path = template_dir / 'translations.json'
     _log.debug(f'loading translations.json: {path}')
     translation_data = utils.read_json(path)
-    translation_data = translation_data['translations']
 
     return translation_data
 
