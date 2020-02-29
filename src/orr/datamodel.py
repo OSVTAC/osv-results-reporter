@@ -377,6 +377,18 @@ class ReportingGroup:
 
         return text
 
+class Party:
+
+    """
+    Attributes:
+
+      id:
+      heading:
+    """
+
+    def __init__(self, _id=None, heading=None):
+        self.id = _id
+        self.heading = heading
 
 # --- Ballot Item definitions
 

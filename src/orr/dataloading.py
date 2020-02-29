@@ -77,6 +77,7 @@ def load_context(input_dir, input_results_dir, build_time):
       build_time:
       election:
       languages:
+      parties_by_id:
       result_stat_types_by_id:
       result_styles_by_id:
       translations:
@@ -881,6 +882,16 @@ class AreaLoader:
         ('reporting_group_ids', parse_as_is),
     ]
 
+# Party loading
+
+class PartyLoader:
+
+    model_class = datamodel.Party
+
+    auto_attrs = [
+        ('id', parse_id, '_id'),
+        ('heading', parse_i18n),
+    ]
 
 # Header loading
 
@@ -998,6 +1009,9 @@ def load_results_mapping(contest_loader, data):
 def load_voting_district(contest_loader, value, areas_by_id):
     return areas_by_id[value]
 
+def load_party(contest_loader, value, parties_by_id):
+    return parties_by_id[value]
+
 
 def make_contest_results_loader(contest_loader, data):
     """
@@ -1056,6 +1070,8 @@ class ContestLoader:
         # TODO: this should be parsed out.
         ('choice_names', parse_as_is),
         ('choices_by_id', load_choices, 'choices'),
+        AutoAttr('contest_party', load_party, data_key='contest_party_id',
+          context_keys=('parties_by_id',), unpack_context=True),
         # This is needed only while loading.
         # TODO: can we eliminate having to store this as an attribute?
         AutoAttr('_header_id', parse_as_is, data_key='header_id'),
@@ -1215,7 +1231,7 @@ class ElectionLoader:
         # the headers but not vice versa.
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
-            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+            context_keys=('areas_by_id', 'parties_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
         AutoAttr('turnout', load_turnout, data_key='turnout',
             context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
         # Pass data_key=False since this does not read from the json data.
@@ -1301,6 +1317,13 @@ def load_areas(root_loader, areas_data):
     return areas_by_id
 
 
+def load_parties(root_loader, party_data):
+    def load_data(data):
+      return load_object(PartyLoader(), data)
+
+    return load_objects_to_mapping(load_data, party_data)
+
+
 def load_election(root_loader, election_data, context):
     """
     Args:
@@ -1327,8 +1350,9 @@ class RootLoader:
         AutoAttr('result_styles_by_id', load_result_styles, data_key='result_styles',
             context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
         ('areas_by_id', load_areas, 'areas'),
+        ('parties_by_id', load_parties, 'party_names'),
         AutoAttr('election', load_election,
-            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+            context_keys=('areas_by_id', 'parties_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
     ]
 
     def __init__(self, input_dir, input_results_dir):
