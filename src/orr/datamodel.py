@@ -672,12 +672,20 @@ class Contest:
         Return the contest name, as a SubstitutionString object.
         """
         if self.name:
-            return SubstitutionString( '{}', (self.name, ))
+            nameWithoutParty = SubstitutionString( '{}', (self.name, ))
+        elif self.ballot_subtitle:
+            nameWithoutParty = SubstitutionString('{} - {}', (self.ballot_title, self.ballot_subtitle))
+        else:
+            nameWithoutParty = SubstitutionString('{}', (self.ballot_title, ))
 
-        if self.ballot_subtitle:
-            return SubstitutionString('{} - {}', (self.ballot_title, self.ballot_subtitle))
+        if self.contest_party:
+            return SubstitutionString(
+                nameWithoutParty[0] + ' ({})',
+                # HACK: Party isn't translated, but it should be
+                (*nameWithoutParty[1], {utils.ENGLISH_LANG: self.contest_party.heading})
+            )
 
-        return SubstitutionString('{}', (self.ballot_title, ))
+        return nameWithoutParty
 
     @property
     def is_rcv(self):
