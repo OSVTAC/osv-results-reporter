@@ -22,21 +22,30 @@
       </p>
     {% endif %}
     <p>
-      {{ "switch_language"|TT }}
+      {{ "switch_language"|TT -}}
       {%- if options.lang != "en" %} ({{ "switch_language"|TT(lang="en") }})
       {%- endif -%}:
     {% for lang in languages %}
       {% with lang_phrase_id=lang|lang_to_phrase_id %}
-        {%- if lang == options.lang -%}
+        {% if lang == options.lang -%}
           <strong>
+            {#-
+              Show the name of the current language in the current language,
+              and in English in parentheses (if not already English).
+            -#}
+            {{- lang_phrase_id|TT -}}
+            {%- if lang != "en" %} ({{ lang_phrase_id|TT(lang="en") }}){%- endif -%}
+          </strong>
         {%- else -%}
           <a href="{{ current_page_link(lang) }}">
+            {#-
+              Show other languages in the other language, and in the
+              current language in parentheses.
+            -#}
+            {{- lang_phrase_id|TT(lang=lang) }} ({{ lang_phrase_id|TT }})</a>
         {%- endif -%}
-        {{ lang_phrase_id|TT(lang=lang) }}
-        {%- if lang_phrase_id|has_TT(lang) %} ({{ lang_phrase_id|TT(lang="en") }})
-        {%- endif -%}
-        {%- if lang == options.lang -%} </strong> {%- else -%} </a> {%- endif -%}
-        {%- if loop.index < loop.length %} | {% endif -%}
+        {%- if not loop.last %} |{% endif %}
+
       {% endwith %}
     {% endfor %}
     </p>
