@@ -1,0 +1,4 @@
+{% macro show_precincts_reporting(reporting_count, total_count) -%}
+{{ "precincts_reporting"|TT(reporting_count, total_count) }} (
+  {{- reporting_count|format_percent2(total_count) }})
+{%- endmacro -%}

@@ -30,7 +30,9 @@
         {{ contest.vote_for_msg|translate }}
       </p>
     {% endif %}
-    <p>{{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})</p>
+    <p>
+      {{ show_precincts_reporting(contest.precincts_reporting, contest.total_precincts) }}
+    </p>
     <table class="table detail-table sticky-table">
       <thead><tr>{% with headings=contest.detail_headings(translate=translator) %}<th>{{ headings|first }}</th>
       {% for heading in headings[1:] %}

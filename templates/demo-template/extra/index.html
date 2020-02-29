@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% from 'macros.html' import show_precincts_reporting %}
+
 {% block title %}Summary Results{% endblock %}
 
 {% block styles %}
@@ -64,8 +66,7 @@
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
   <p>
-    {{ "precincts_reporting"|TT(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
-    ({{ election.turnout.precincts_reporting|format_percent2(election.turnout.total_precincts) }})
+    {{ show_precincts_reporting(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
   </p>
   <table class="table summary-table">
     {% set castStat = election.turnout.results_mapping.get_stat_by_id('RSCst') %}
@@ -135,7 +136,7 @@
       </p>
     {% endif %}
     <p>
-      {{ contest.precincts_reporting }} of {{ contest.total_precincts}} Precincts Reporting ({{ contest.precincts_reporting|format_percent2(contest.total_precincts) }})
+      {{ show_precincts_reporting(contest.precincts_reporting, contest.total_precincts) }}
       {% if contest.is_rcv %}
         {% set default_rcv_path = contest|default_contest_path("results-rcv") %}
         {% with rcv_path=subtemplate('results-rcv.html', default_rcv_path) %}
