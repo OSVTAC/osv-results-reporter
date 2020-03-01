@@ -2,7 +2,7 @@
 
 {% from 'macros.html' import show_precincts_reporting %}
 
-{% block title %}Summary Results{% endblock %}
+{% block title %}{{ "summary_results_header"|TT }}{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="static/tables.css">
@@ -143,7 +143,7 @@
         <a href="{{ rcv_path }}">[RCV rounds]</a>
         {% endwith %}
       {% endif %}
-      <a href="{{ rel_output_path }}">[Detailed results]</a>
+      <a href="{{ rel_output_path }}">[{{ "detailed_results_label"|TT }}]</a>
     </p>
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
