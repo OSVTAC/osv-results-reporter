@@ -152,7 +152,9 @@ class VotingGroup:
 
     def __init__(self, id_=None, heading=None):
         self.id = id_
+        # TODO: remove self.heading.
         self.heading = heading
+        self.text = None
 
 
 class ResultStatType:
@@ -172,7 +174,9 @@ class ResultStatType:
 
     def __init__(self, _id=None, heading=None):
         self.id = _id
+        # TODO: remove self.heading.
         self.heading = heading
+        self.text = None
 
 
 class ResultStyle:
@@ -820,7 +824,7 @@ class Contest:
 
         results_mapping = self.results_mapping
         stats = results_mapping.result_stats_by_id(stat_idlist)
-        headings.extend(stat.heading for stat in stats)
+        headings.extend(translate(stat.text) for stat in stats)
 
         return headings
 

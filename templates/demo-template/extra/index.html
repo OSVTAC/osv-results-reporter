@@ -75,19 +75,19 @@
     {% set registration = election.turnout.summary_results(regStat, 'TO')[0] %}
     {% for vg in election.turnout.voting_groups_from_idlist('ED MV') %}
       <tr>
-        <td class="text-cell">{{ vg.heading }}</td>
+        <td class="text-cell">{{ vg.text|translate }}</td>
         {% set votes = election.turnout.summary_results(castStat, vg.id)[0] %}
         <td>{{ votes|format_number }}</td>
         <td>{{ votes|format_percent2(total) }}</td>
       </tr>
     {% endfor %}
     <tr>
-      <td class="text-cell">{{ castStat.heading }}</td>
+      <td class="text-cell">{{ castStat.text|translate }}</td>
       <td class="total">{{ total|format_number }}</td>
       <td class="total">{{ total|format_percent2(registration) }}</td>
     </tr>
     <tr>
-      <td class="text-cell">{{ regStat.heading }}</td>
+      <td class="text-cell">{{ regStat.text|translate }}</td>
       <td>{{ registration|format_number }}</td>
     </tr>
   </table>
@@ -190,7 +190,7 @@
             {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes #}
             {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
               <tr>
-                <td class="text-cell">{{ result_stat.heading }}</td>
+                <td class="text-cell">{{ result_stat.text|translate }}</td>
                 <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}</td>
               </tr>
             {% endif %}
@@ -243,7 +243,7 @@
           {# TODO this is duplicated with the RCV case above #}
           {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
             <tr>
-              <td class="text-cell">{{ result_stat.heading }}</td>
+              <td class="text-cell">{{ result_stat.text|translate }}</td>
               <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}</td>
             </tr>
           {% endif %}

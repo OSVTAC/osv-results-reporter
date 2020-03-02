@@ -776,6 +776,7 @@ class VotingGroupLoader:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('heading', parse_i18n),
+        ('text', parse_i18n),
     ]
 
 
@@ -790,6 +791,7 @@ class ResultStatTypeLoader:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('heading', parse_i18n),
+        ('text', parse_i18n),
         ('is_percent', parse_bool),
     ]
 
