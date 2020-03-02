@@ -235,11 +235,11 @@
                     },
                     {
                         "_id": "9912",
-                        "ballot_title": {
-                            "en": "ANTOINE R. ROGERS"
-                        },
                         "ballot_designation": {
                             "en": "Write-In"
+                        },
+                        "ballot_title": {
+                            "en": "ANTOINE R. ROGERS"
                         },
                         "is_writein": true
                     }
@@ -266,11 +266,9 @@
             {
                 "_id": "617",
                 "_type": "measure",
+                "approval_required": "Majority",
                 "ballot_title": {
                     "en": "3"
-                },
-                "name": {
-                    "en": "Regional Measure 3"
                 },
                 "choice_names": {
                     "en": "YES;NO",
@@ -298,8 +296,10 @@
                         }
                     }
                 ],
-                "approval_required": "Majority",
                 "header_id": "HDR13",
+                "name": {
+                    "en": "Regional Measure 3"
+                },
                 "question_text": {
                     "en": "BAY AREA TRAFFIC RELIEF PLAN. Shall voters authorize a plan to reduce auto and truck traffic, relieve crowding on BART, unclog freeway bottlenecks, and improve bus, ferry, BART and commuter rail service as specified in the plan in this voter pamphlet, with a $1 toll increase effective in 2019, a $1 increase in 2022, and a $1 increase in 2025, on all Bay Area toll bridges except the Golden Gate Bridge, with independent oversight of all funds?",
                     "es": "PLAN PARA DISMINUIR EL TRÁFICO EN EL ÁREA DE LA BAHÍA. ¿Deben autorizar los votantes un plan para disminuir el tráfico de camiones y automóviles, disminuir el congestionamiento en BART, descongestionar los embotellamientos en las autopistas y mejorar los servicios de autobuses, transbordadores, BART y ferrovías suburbanas según lo especificado en el plan en este folleto para el votante, con un aumento de $1 efectivo en 2019, un aumento de $1 en 2022 y un aumento de $1 en 2025, en todos los puentes de peaje del Área de la Bahía, excepto el Puente Golden Gate, con una supervisión independiente de todos los fondos?",
@@ -391,8 +391,8 @@
             "ballot_title": {
                 "en": "Registration and Turnout"
             },
-            "voting_district": "0",
-            "result_style": "EMTE"
+            "result_style": "EMTE",
+            "voting_district": "0"
         }
     },
     "languages": [
