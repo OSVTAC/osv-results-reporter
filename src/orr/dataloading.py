@@ -771,22 +771,19 @@ def load_all_results_details(election, filedir=None, filename_format=None):
 
     return ''
 
-# VotingGroup loading
 
 class VotingGroupLoader:
 
-    model_class = datamodel.ResultStatType
+    model_class = datamodel.VotingGroup
 
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('heading', parse_i18n),
-        ('text', parse_i18n),
+        # Save the dict to a private attribute so "text" can be a property.
+        # TODO: make this public after heading is removed.
+        ('_text', parse_i18n, 'text'),
     ]
 
-
-#--- Loaders for datamodel Classes ---
-
-# ResultStatType loading
 
 class ResultStatTypeLoader:
 
@@ -795,7 +792,9 @@ class ResultStatTypeLoader:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('heading', parse_i18n),
-        ('text', parse_i18n),
+        # Save the dict to a private attribute so "text" can be a property.
+        # TODO: make this public after heading is removed.
+        ('_text', parse_i18n, 'text'),
         ('is_percent', parse_bool),
     ]
 
@@ -1291,24 +1290,32 @@ def load_result_stat_types(root_loader, types_data):
 
 def load_voting_groups(root_loader, groups_data):
     """
+    Create and return an OrderedDict mapping VotingGroup id to VotingGroup object.
+
     Args:
       root_loader: a RootLoader object.
     """
     def load_data(data):
         return load_object(VotingGroupLoader(), data)
 
-    return load_objects_to_mapping(load_data, groups_data)
+    voting_groups_by_id = load_objects_to_mapping(load_data, groups_data)
+
+    return voting_groups_by_id
 
 
 def load_result_styles(root_loader, styles_data, context):
     """
+    Create and return an OrderedDict mapping ResultStyle id to ResultStyle object.
+
     Args:
       root_loader: a RootLoader object.
     """
     def load_data(data):
         return load_object(ResultStyleLoader(), data, context=context)
 
-    return load_objects_to_mapping(load_data, styles_data)
+    result_styles_by_id = load_objects_to_mapping(load_data, styles_data)
+
+    return result_styles_by_id
 
 
 def load_areas(root_loader, areas_data):

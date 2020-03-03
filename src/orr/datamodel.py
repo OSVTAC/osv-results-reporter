@@ -35,7 +35,7 @@ import re
 
 from orr.models.rcvresults import RCVResults
 import orr.utils as utils
-from orr.utils import truncate
+from orr.utils import truncate, ENGLISH_LANG
 
 _log = logging.getLogger(__name__)
 
@@ -154,7 +154,18 @@ class VotingGroup:
         self.id = id_
         # TODO: remove self.heading.
         self.heading = heading
-        self.text = None
+        self._text = None
+
+    def __repr__(self):
+        return f'<VotingGroup id={self.id!r}>'
+
+    @property
+    def text(self):
+        if self._text is None:
+            # TODO: remove this fallback after heading is removed.
+            return {ENGLISH_LANG: self.heading}
+
+        return self._text
 
 
 class ResultStatType:
@@ -176,7 +187,18 @@ class ResultStatType:
         self.id = _id
         # TODO: remove self.heading.
         self.heading = heading
-        self.text = None
+        self._text = None
+
+    def __repr__(self):
+        return f'<ResultStatType id={self.id!r}>'
+
+    @property
+    def text(self):
+        if self._text is None:
+            # TODO: remove this fallback after heading is removed.
+            return {ENGLISH_LANG: self.heading}
+
+        return self._text
 
 
 class ResultStyle:
@@ -204,6 +226,9 @@ class ResultStyle:
         return f'<ResultStyle id={self.id!r}>'
 
     def get_voting_group_by_id(self, id_):
+        """
+        Look up and return a `VotingGroup` object.
+        """
         index = self.voting_group_indexes_by_id[id_]
         voting_group = self.voting_groups[index]
 
