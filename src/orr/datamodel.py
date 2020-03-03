@@ -696,6 +696,7 @@ class Contest:
         self.results_mapping = None
         self._results_details_loaded = False
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
+        self.url_state_results = None
 
     def __repr__(self):
         return f'<Contest {self.type_name!r}: id={self.id!r}>'
@@ -1007,6 +1008,7 @@ class Election:
         self._results_loaded = self.have_results = False
         self.ballot_title = None
         self.date = None
+        self.url_state_results = None
 
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'

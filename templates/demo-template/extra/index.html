@@ -62,6 +62,11 @@
     <li>
       <a href="{{ get_relative_href('detailed-reports.html') }}">{{ "detailed_reports_and_downloads"|TT }}</a>
     </li>
+    {% if election.url_state_results %}
+    <li>
+      <a href="{{ election.url_state_results }}">CA State results</a> &rArr;
+    </li>
+    {% endif %}
   </ul>
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
@@ -144,6 +149,9 @@
         {% endwith %}
       {% endif %}
       <a href="{{ rel_output_path }}">[{{ "detailed_results_label"|TT }}]</a>
+      {% if contest.url_state_results %}
+        <a href="{{ contest.url_state_results }}">[CA State results &rArr;]</a>
+      {% endif %}
     </p>
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}

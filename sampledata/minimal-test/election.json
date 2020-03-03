@@ -110,6 +110,7 @@
                 "is_partisan": "Y",
                 "number_elected": 1,
                 "result_style": "EMS",
+                "url_state_results": "https://osvtac.github.io/past-meetings",
                 "vote_for_msg": {
                     "en": "Vote for One",
                     "es": "Vote por uno",
@@ -393,7 +394,8 @@
             },
             "result_style": "EMTE",
             "voting_district": "0"
-        }
+        },
+        "url_state_results": "https://osvtac.github.io/"
     },
     "languages": [
         "en",

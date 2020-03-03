@@ -1093,6 +1093,7 @@ class ContestLoader:
         ('runoff_type', parse_as_is),
         ('success', parse_as_is),
         ('type', parse_as_is),
+        ('url_state_results', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
         # Pass data_key=False since this does not read from the json data.
@@ -1229,6 +1230,7 @@ class ElectionLoader:
         ('ballot_title', parse_i18n),
         ('date', parse_date, 'election_date'),
         ('election_area', parse_i18n),
+        ('url_state_results', parse_as_is),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', load_headers, 'headers'),
