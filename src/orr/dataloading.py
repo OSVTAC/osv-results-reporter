@@ -724,7 +724,11 @@ def load_contest_results(contest):
         # We could validate the header if we like later
         if tsv_stream.num_columns != 2 + contest.result_stat_count + contest.choice_count:
             raise RuntimeError(
-                f'Mismatched column heading in {path}: {tsv_stream.line} stats={contest.result_stat_count} choices={contest.choice_count}')
+                f'Mismatched column heading in {path}:\n'
+                f'* columns={tsv_stream.num_columns!r} stats={contest.result_stat_count} choices={contest.choice_count}\n'
+                f'* line={tsv_stream.line!r}\n'
+                f'* contest.choices_by_id={dict(contest.choices_by_id)!r}'
+            )
 
         # The RCV rounds are first, starting with the last round.
         rcv_totals = list(read_rcv_totals(tsv_stream, iter_rows, rounds=contest.rcv_rounds))
