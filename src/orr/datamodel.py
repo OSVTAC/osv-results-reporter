@@ -659,6 +659,7 @@ class Contest:
         self.all_voting_groups_by_id = voting_groups_by_id
 
         self.ballot_subtitle = None
+        self.contest_party = None
         self.name = None
         self.parent_header = None
         self.results_mapping = None
