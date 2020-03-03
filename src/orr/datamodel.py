@@ -406,6 +406,7 @@ class ReportingGroup:
 
         return text
 
+
 class Party:
 
     """
@@ -415,9 +416,14 @@ class Party:
       heading:
     """
 
-    def __init__(self, _id=None, heading=None):
+    def __init__(self, _id=None):
         self.id = _id
-        self.heading = heading
+        self._name = None
+
+    @property
+    def name(self):
+        return self._name
+
 
 # --- Ballot Item definitions
 
@@ -701,21 +707,20 @@ class Contest:
         """
         Return the contest name, as a SubstitutionString object.
         """
+        format_str = '{}'
         if self.name:
-            nameWithoutParty = SubstitutionString( '{}', (self.name, ))
-        elif self.ballot_subtitle:
-            nameWithoutParty = SubstitutionString('{} - {}', (self.ballot_title, self.ballot_subtitle))
+            fields = [self.name]
         else:
-            nameWithoutParty = SubstitutionString('{}', (self.ballot_title, ))
+            fields = [self.ballot_title]
+            if self.ballot_subtitle:
+                format_str += ' - {}'
+                fields.append(self.ballot_subtitle)
 
         if self.contest_party:
-            return SubstitutionString(
-                nameWithoutParty[0] + ' ({})',
-                # HACK: Party isn't translated, but it should be
-                (*nameWithoutParty[1], {utils.ENGLISH_LANG: self.contest_party.heading})
-            )
+            format_str += ' ({})'
+            fields.append(self.contest_party.name)
 
-        return nameWithoutParty
+        return SubstitutionString(format_str, fields)
 
     @property
     def is_rcv(self):

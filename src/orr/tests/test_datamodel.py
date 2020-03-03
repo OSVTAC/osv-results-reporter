@@ -133,7 +133,7 @@ class ContestTest(TestCase):
         contest.ballot_subtitle = 'District 2'
 
         actual = contest.contest_name
-        expected = SubstitutionString('{} - {}', data=('Board Member', 'District 2'))
+        expected = SubstitutionString('{} - {}', data=['Board Member', 'District 2'])
         self.assertEqual(actual, expected)
 
     def test_contest_name__without_subtitle(self):
@@ -141,7 +141,7 @@ class ContestTest(TestCase):
         contest.ballot_title = 'Board Member'
 
         actual = contest.contest_name
-        expected = SubstitutionString('{}', data=('Board Member', ))
+        expected = SubstitutionString('{}', data=['Board Member'])
         self.assertEqual(actual, expected)
 
     def test_make_header_path(self):

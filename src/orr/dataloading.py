@@ -869,8 +869,6 @@ class ResultStyleLoader:
     ]
 
 
-# Area loading
-
 class AreaLoader:
 
     model_class = datamodel.Area
@@ -887,7 +885,6 @@ class AreaLoader:
         ('reporting_group_ids', parse_as_is),
     ]
 
-# Party loading
 
 class PartyLoader:
 
@@ -895,10 +892,10 @@ class PartyLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
-        ('heading', parse_i18n),
+        # Save to a private attribute so we can use a property.
+        ('_name', parse_i18n, 'name'),
     ]
 
-# Header loading
 
 class HeaderLoader:
 
