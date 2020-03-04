@@ -408,8 +408,11 @@
             "_id": "RSTot",
             "heading": "Ballots Counted",
             "text": {
-                "_desc": "RSTot",
-                "en": "Ballots Counted"
+                "_desc": "RSTot: Total votes for choices",
+                "en": "Total Votes",
+                "es": "Total",
+                "tl": "Kabuuan",
+                "zh": "總共"
             }
         },
         {
