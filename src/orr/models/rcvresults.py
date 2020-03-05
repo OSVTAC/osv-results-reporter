@@ -88,7 +88,7 @@ class RCVResults:
         """
         Return the totals index corresponding to the continuing total.
         """
-        return self.results_mapping.get_stat_index(self.continuing_stat)
+        return self.results_mapping.stat_id_to_index[self.continuing_stat.id]
 
     def get_candidate_index(self, candidate):
         """

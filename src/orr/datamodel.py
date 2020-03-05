@@ -543,26 +543,20 @@ class ResultsMapping:
           result_stat_types: an iterable of ResultStatType objects.
           choice_count: the number of choices in the contest.
         """
-        indexes_by_id = make_indexes_by_id(result_stat_types)
+        stat_id_to_index = make_indexes_by_id(result_stat_types)
 
         self.choice_count = choice_count
-        self.indexes_by_id = indexes_by_id
+        self.stat_id_to_index = stat_id_to_index
         self.result_stat_types = result_stat_types
 
     @property
     def result_stat_count(self):
         return len(self.result_stat_types)
 
-    @property
-    def stat_index_by_id(self):
-        return self.indexes_by_id
-
     def get_stat_by_id(self, stat_id):
-        index = self.indexes_by_id[stat_id]
-        return self.result_stat_types[index]
+        stat_index = self.stat_id_to_index[stat_id]
 
-    def get_stat_index(self, stat_type):
-        return self.stat_index_by_id[stat_type.id]
+        return self.result_stat_types[stat_index]
 
     def get_candidate_index(self, candidate):
         return self.result_stat_count + candidate.index
@@ -573,7 +567,7 @@ class ResultsMapping:
           stat_or_choice: a ResultStatType object or Choice object.
         """
         if type(stat_or_choice) == ResultStatType:
-            return self.get_stat_index(stat_or_choice)
+            return self.stat_id_to_index[stat_or_choice.id]
 
         # TODO: provide a good error message if this assertion fails.
         assert isinstance(stat_or_choice, Choice)
@@ -593,7 +587,7 @@ class ResultsMapping:
             return list(range(self.result_stat_count,
                               self.result_stat_count + self.choice_count))
 
-        return [self.stat_index_by_id[label_or_id]]
+        return [self.stat_id_to_index[label_or_id]]
 
     def get_indexes_by_id_list(self, stat_idlist=None):
         """
@@ -623,14 +617,25 @@ class ResultsMapping:
 
         return indices
 
-    def result_stats_by_id(self, stat_idlist=None):
+    def iter_result_stats(self, stat_idlist=None):
         """
-        Return a list of ResultStatType objects, either all or the list
-        matching the space separated IDs.
+        Yield ResultStatType objects.
+
+        Args:
+          stat_idlist: a list of ResultStatType ids, as a space-delimited
+            string, or None to yield all of the ResultStatType objects,
+            in order.
         """
+        result_stat_types = self.result_stat_types
+
+        if stat_idlist is None:
+            # Then yield all of them.
+            yield from result_stat_types
+            return
+
         indices = self.get_indexes_by_id_list(stat_idlist)
-        stat_types = self.result_stat_types
-        return [stat_types[i] for i in indices]
+
+        yield from (result_stat_types[i] for i in indices)
 
 
 class Contest:
@@ -796,6 +801,7 @@ class Contest:
 
     @property
     def total_votes(self):
+        # TODO: use RSTot instead of summing manually?
         return sum(self.get_vote_total(c) for c in self.choices)
 
     @property
@@ -819,12 +825,14 @@ class Contest:
         """
         return len(self.result_style.result_stat_types)
 
-    @property
-    def result_stats(self):
+    def get_stat_by_id(self, stat_id):
+        return self.results_mapping.get_stat_by_id(stat_id)
+
+    def iter_result_stats(self, stat_idlist=None):
         """
-        Helper function to get the result stat object list
+        Yield ResultStatType objects.
         """
-        return self.result_style.result_stat_types
+        yield from self.results_mapping.iter_result_stats(stat_idlist)
 
     def _iter_headers(self):
         item = self
@@ -861,9 +869,9 @@ class Contest:
             heading = translate(choice.ballot_title)
             headings.append(heading)
 
-        results_mapping = self.results_mapping
-        stats = results_mapping.result_stats_by_id(stat_idlist)
-        headings.extend(translate(stat.text) for stat in stats)
+        result_stats = self.iter_result_stats(stat_idlist)
+
+        headings.extend(translate(stat.text) for stat in result_stats)
 
         return headings
 
@@ -921,7 +929,7 @@ class Contest:
 
     def get_round_stat(self, stat_id, round_num):
         ensure_int(round_num, 'round_num')
-        index = self.results_mapping.stat_index_by_id[stat_id]
+        index = self.results_mapping.stat_id_to_index[stat_id]
         return self.get_round_stat_by_index(index, round_num)
 
     def get_round_total(self, choice, round_num):
@@ -938,7 +946,7 @@ class Contest:
         # Convert the choices from a generator to a list before passing
         # to RCVResults.
         candidates = list(self.choices)
-        continuing_stat = self.results_mapping.get_stat_by_id(continuing_stat_id)
+        continuing_stat = self.get_stat_by_id(continuing_stat_id)
         return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
                           candidates=candidates, continuing_stat=continuing_stat)
 

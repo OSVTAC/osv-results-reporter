@@ -74,9 +74,9 @@
     {{ show_precincts_reporting(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
   </p>
   <table class="table summary-table">
-    {% set castStat = election.turnout.results_mapping.get_stat_by_id('RSCst') %}
+    {% set castStat = election.turnout.get_stat_by_id('RSCst') %}
     {% set total = election.turnout.get_vote_total(castStat) %}
-    {% set regStat = election.turnout.results_mapping.get_stat_by_id('RSReg') %}
+    {% set regStat = election.turnout.get_stat_by_id('RSReg') %}
     {% set registration = election.turnout.get_vote_total(regStat) %}
     {% for vg in election.turnout.voting_groups_from_idlist('ED MV') %}
       <tr>
@@ -194,14 +194,12 @@
           {% endfor %}
         </tbody>
         <tbody class="result-stats">
-          {% for result_stat in contest.result_stats %}
-            {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes #}
-            {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
-              <tr>
-                <td class="text-cell">{{ result_stat.text|translate }}</td>
-                <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
-              </tr>
-            {% endif %}
+          {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
+          {% for result_stat in contest.iter_result_stats('RSTot RSUnd RSOvr') %}
+            <tr>
+              <td class="text-cell">{{ result_stat.text|translate }}</td>
+              <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
@@ -246,15 +244,19 @@
         {% endfor %}
       </tbody>
       <tbody class="result-stats">
-        {% for result_stat in contest.result_stats %}
-          {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes #}
-          {# TODO this is duplicated with the RCV case above #}
-          {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
-            <tr>
-              <td class="text-cell">{{ result_stat.text|translate }}</td>
-              <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
-            </tr>
-          {% endif %}
+        {% set totalStat = contest.get_stat_by_id('RSTot') %}
+        <tr>
+          <td class="text-cell">{{ totalStat.text|translate }}</td>
+          {% set totalVote = contest.get_vote_total(totalStat) %}
+          <td>{{ totalVote|format_number }}</td>
+          <td>{{ totalVote|compute_percent(contest.total_votes)|format_percent }}</td>
+        </tr>
+        {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
+        {% for result_stat in contest.iter_result_stats('RSUnd RSOvr') %}
+        <tr>
+          <td class="text-cell">{{ result_stat.text|translate }}</td>
+          <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

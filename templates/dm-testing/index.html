@@ -44,7 +44,7 @@ div.contests {width:500px}
             <td class='votes'>{{v}}</td>
           {%- endfor -%}</tr>
         {% endfor -%}
-        {% for c in bi.result_stats -%}
+        {% for c in bi.iter_result_stats() -%}
           <tr><td class='choice'>{{c.ballot_title}}</td><td class='pct'></td>
           {%- for v in c.vote_subtotals -%}
             <td class='votes'>{{v}}</td>
