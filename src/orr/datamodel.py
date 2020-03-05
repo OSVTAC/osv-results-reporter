@@ -896,6 +896,16 @@ class Contest:
 
         return ''
 
+    def _get_voting_group_totals(self, stat_or_choice, vg_indices):
+        """
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
+        """
+        # TODO: check stat_or_choice_index
+        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
+
+        return [self.results[vg_index][stat_or_choice_index] for vg_index in vg_indices]
+
     def summary_results(self, stat_or_choice, group_idlist=None):
         """
         Returns a list of vote summary values (total votes for each
@@ -913,11 +923,9 @@ class Contest:
             if not self.get('results',[]):
                 return []
 
-        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
+        vg_indices = self.result_style.voting_group_indexes_from_idlist(group_idlist)
 
-        # TODO: check stat_index
-        return [self.results[i][stat_or_choice_index] for i in
-                self.result_style.voting_group_indexes_from_idlist(group_idlist)]
+        return self._get_voting_group_totals(stat_or_choice, vg_indices=vg_indices)
 
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')
