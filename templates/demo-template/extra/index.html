@@ -242,6 +242,21 @@
             </td>
           </tr>
         {% endfor %}
+        {% if contest.has_stat('RSWri') %}
+          {% set writeinStat = contest.get_stat_by_id('RSWri') %}
+          {% set writeinVotes = contest.get_vote_total(writeinStat) %}
+          {% if writeinVotes %}
+            <tr>
+              <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
+              {% set p = writeinVotes|compute_percent(contest.total_votes) %}
+              <td>{{ writeinVotes|format_number }}</td>
+              <td>{{ p|format_percent }}</td>
+              <td class="bars-row">
+                <div class="percentage-bar" style="width: {{ p|compute_percent(scalePercent) }}%"></div>
+              </td>
+            </tr>
+          {% endif %}
+        {% endif %}
       </tbody>
       <tbody class="result-stats">
         {% set totalStat = contest.get_stat_by_id('RSTot') %}

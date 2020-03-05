@@ -553,6 +553,14 @@ class ResultsMapping:
     def result_stat_count(self):
         return len(self.result_stat_types)
 
+    def has_stat(self, stat_id):
+        """
+        Return whether the given ResultStatType is present.
+
+        This is useful e.g. for telling whether "RSWri" is applicable.
+        """
+        return stat_id in self.stat_id_to_index
+
     def get_stat_by_id(self, stat_id):
         stat_index = self.stat_id_to_index[stat_id]
 
@@ -801,8 +809,12 @@ class Contest:
 
     @property
     def total_votes(self):
-        # TODO: use RSTot instead of summing manually?
-        return sum(self.get_vote_total(c) for c in self.choices)
+        """
+        Return the total vote for choices (i.e. "RSTot").
+        """
+        total_stat = self.get_stat_by_id('RSTot')
+
+        return self.get_vote_total(total_stat)
 
     @property
     def reporting_groups(self):
@@ -824,6 +836,14 @@ class Contest:
         Helper function to get the number of result stats
         """
         return len(self.result_style.result_stat_types)
+
+    def has_stat(self, stat_id):
+        """
+        Return whether the given ResultStatType is present.
+
+        This is useful e.g. for telling whether "RSWri" is applicable.
+        """
+        return self.results_mapping.has_stat(stat_id)
 
     def get_stat_by_id(self, stat_id):
         return self.results_mapping.get_stat_by_id(stat_id)
