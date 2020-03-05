@@ -75,13 +75,13 @@
   </p>
   <table class="table summary-table">
     {% set castStat = election.turnout.results_mapping.get_stat_by_id('RSCst') %}
-    {% set total = election.turnout.summary_results(castStat, 'TO')[0] %}
+    {% set total = election.turnout.get_vote_total(castStat) %}
     {% set regStat = election.turnout.results_mapping.get_stat_by_id('RSReg') %}
-    {% set registration = election.turnout.summary_results(regStat, 'TO')[0] %}
+    {% set registration = election.turnout.get_vote_total(regStat) %}
     {% for vg in election.turnout.voting_groups_from_idlist('ED MV') %}
       <tr>
         <td class="text-cell">{{ vg.text|translate }}</td>
-        {% set votes = election.turnout.summary_results(castStat, vg.id)[0] %}
+        {% set votes = election.turnout.get_vote_total(castStat, voting_group=vg) %}
         <td>{{ votes|format_number }}</td>
         <td>{{ votes|format_percent2(total) }}</td>
       </tr>
@@ -199,7 +199,7 @@
             {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
               <tr>
                 <td class="text-cell">{{ result_stat.text|translate }}</td>
-                <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}</td>
+                <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
               </tr>
             {% endif %}
           {% endfor %}
@@ -219,14 +219,14 @@
         {# HACK: overwriting variables within loops doesn't work in Jinja, but updating dicts does #}
         {% set highestPercent = {'percent': 0} %}
         {% for choice in contest.choices %}
-          {% set p = contest.summary_results(choice, "TO")[0]|compute_percent(contest.total_votes) %}
+          {% set p = contest.get_vote_total(choice)|compute_percent(contest.total_votes) %}
           {%- if p > highestPercent.percent -%}
             {%- if highestPercent.update({'percent': p}) -%}{%- endif -%}
           {%- endif -%}
         {%- endfor -%}
         {% set scalePercent = 100 if contest.approval_required else highestPercent.percent %}
         {% for choice in contest.choices_sorted %}
-          {% set v = contest.summary_results(choice, "TO")[0] %}
+          {% set v = contest.get_vote_total(choice) %}
           {% set p = v|compute_percent(contest.total_votes) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
@@ -252,7 +252,7 @@
           {% if result_stat.id in ['RSTot', 'RSUnd', 'RSOvr'] %}
             <tr>
               <td class="text-cell">{{ result_stat.text|translate }}</td>
-              <td>{{ contest.summary_results(result_stat, "TO")[0]|format_number }}</td>
+              <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
             </tr>
           {% endif %}
         {% endfor %}

@@ -849,6 +849,7 @@ def load_result_voting_groups(result_style_loader, ids_text, voting_groups_by_id
     # TODO: remove setting this?
     result_style.voting_group_indexes_by_id = indexes_by_id
 
+    # TODO: make the return value an OrderedDict?
     return voting_groups
 
 

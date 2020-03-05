@@ -215,7 +215,8 @@ class ResultStyle:
       is_rcv:
       result_stat_types:
       voting_group_indexes_by_id:
-      voting_groups:
+      voting_groups: the VotingGroup objects associated with this
+        result style, as a list.
     """
 
     def __init__(self):
@@ -250,16 +251,6 @@ class ResultStyle:
         ids = [id_ for id_ in ids if id_ in self.voting_group_indexes_by_id]
 
         return ids
-
-    def voting_group_indexes_from_idlist(self, idlist):
-        """
-        Returns the list of voting group index values by the
-        space-separated list of ids. Unmatched ids are omitted.
-        """
-        ids = self.voting_group_ids_from_idlist(idlist)
-        indexes = [self.voting_group_indexes_by_id[id_] for id_ in ids]
-
-        return indexes
 
     def voting_groups_from_idlist(self, idlist):
         """
@@ -799,13 +790,13 @@ class Contest:
             # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
             return 1 if c.is_yes() else 0
           # For other contests, sort by vote total
-          return self.summary_results(c, "TO")[0]
+          return self.get_vote_total(c)
 
         yield from sorted(self.choices, reverse=True, key=sorter)
 
     @property
     def total_votes(self):
-        return sum([self.summary_results(c, "TO")[0] for c in self.choices])
+        return sum(self.get_vote_total(c) for c in self.choices)
 
     @property
     def reporting_groups(self):
@@ -896,22 +887,8 @@ class Contest:
 
         return ''
 
-    def _get_voting_group_totals(self, stat_or_choice, vg_indices):
+    def _get_voting_group_total(self, stat_or_choice, vg_index):
         """
-        Args:
-          stat_or_choice: a ResultStatType object or Choice object.
-        """
-        # TODO: check stat_or_choice_index
-        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
-
-        return [self.results[vg_index][stat_or_choice_index] for vg_index in vg_indices]
-
-    def summary_results(self, stat_or_choice, group_idlist=None):
-        """
-        Returns a list of vote summary values (total votes for each
-        VotingGroup defined. If group_idlist is defined it will be
-        interpreted as a space separated list of VotingGroup IDs.
-
         Args:
           stat_or_choice: a ResultStatType object or Choice object.
         """
@@ -923,9 +900,20 @@ class Contest:
             if not self.get('results',[]):
                 return []
 
-        vg_indices = self.result_style.voting_group_indexes_from_idlist(group_idlist)
+        # TODO: check stat_or_choice_index
+        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
 
-        return self._get_voting_group_totals(stat_or_choice, vg_indices=vg_indices)
+        return self.results[vg_index][stat_or_choice_index]
+
+    def get_vote_total(self, stat_or_choice, voting_group=None):
+        if voting_group is None:
+            vg_id = 'TO'
+        else:
+            vg_id = voting_group.id
+
+        vg_index = self.result_style.voting_group_indexes_by_id[vg_id]
+
+        return self._get_voting_group_total(stat_or_choice, vg_index=vg_index)
 
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')
