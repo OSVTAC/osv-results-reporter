@@ -576,6 +576,19 @@ class ResultsMapping:
     def get_candidate_index(self, candidate):
         return self.result_stat_count + candidate.index
 
+    def get_stat_or_choice_index(self, stat_or_choice):
+        """
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
+        """
+        if type(stat_or_choice) == ResultStatType:
+            return self.get_stat_index(stat_or_choice)
+
+        # TODO: provide a good error message if this assertion fails.
+        assert isinstance(stat_or_choice, Choice)
+
+        return self.get_candidate_index(stat_or_choice)
+
     def get_indices_by_id(self, label_or_id):
         """
         Args:
@@ -648,7 +661,10 @@ class Contest:
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
       results_mapping: a ResultsMapping object.
-      results: a matrix, cols are result stat and choices, rows are subtotal
+      results: the results as a matrix, where each column corresponds to
+        either a ResultStatType or Choice object, and each row a subtotal.
+        For example, an entry can be accessed as--
+        `results[i][stat_choice_index]`.
       _results_details_loaded: bool indicating if detailed results are present
       rcv_totals: a list of tuples, one for each round, starting with the
         first round.
@@ -880,13 +896,14 @@ class Contest:
 
         return ''
 
-    def summary_results(self, stat_type, group_idlist=None):
+    def summary_results(self, stat_or_choice, group_idlist=None):
         """
         Returns a list of vote summary values (total votes for each
         VotingGroup defined. If group_idlist is defined it will be
         interpreted as a space separated list of VotingGroup IDs.
 
-        The stat_type may be a ResultStatType or Choice object.
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
         """
         # Summary results should be loaded for the election if present
         if not hasattr(self, 'results'):
@@ -896,17 +913,10 @@ class Contest:
             if not self.get('results',[]):
                 return []
 
-        table = self.results_mapping
-
-        if type(stat_type) == ResultStatType:
-            stat_index = table.get_stat_index(stat_type)
-        else:
-            # TODO: provide a good error message if this assertion fails.
-            assert isinstance(stat_type, Choice)
-            stat_index = table.get_candidate_index(stat_type)
+        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
 
         # TODO: check stat_index
-        return [self.results[i][stat_index] for i in
+        return [self.results[i][stat_or_choice_index] for i in
                 self.result_style.voting_group_indexes_from_idlist(group_idlist)]
 
     def get_round_stat_by_index(self, index, round_num):
