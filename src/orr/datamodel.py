@@ -50,7 +50,7 @@ VOTING_GROUP_ID_ALL = 'TO'
 # "vote for 3", if only 1 choice was made, there would be 2 undervotes,
 # and if 4 or more choices were made, there would be 3 overvotes
 VOTING_STATS = OrderedDict([
-    ('RSTot', 'Ballots Counted'),   # Sum of valid votes reported
+    ('RSTot', 'Total Votes'),       # Sum of valid votes reported
     ('RSCst', 'Ballots Cast'),      # Ballot sheets submitted by voters
     ('RSReg', 'Registered Voters'), # Voters registered for computing turnout
     ('RSTrn', 'Voter Turnout'),     # (SVCst/SVReg)*100
