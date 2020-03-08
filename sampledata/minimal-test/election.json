@@ -408,7 +408,7 @@
             "_id": "RSTot",
             "heading": "Ballots Counted",
             "text": {
-                "_desc": "RSTot: Total votes for choices",
+                "_desc": "RSTot: Label for the number of valid votes (i.e. votes for candidates, and not including undervotes and overvotes).",
                 "en": "Total Votes",
                 "es": "Total",
                 "tl": "Kabuuan",
@@ -431,14 +431,17 @@
             "heading": "Registered Voters",
             "text": {
                 "_desc": "RSReg",
-                "en": "Registered Voters"
+                "en": "Registered Voters",
+                "es": "Electores inscritos",
+                "tl": "Rehistradong Botante",
+                "zh": "登記選民人數"
             }
         },
         {
             "_id": "RSEli",
             "heading": "Eligible Voters",
             "text": {
-                "_desc": "RSEli",
+                "_desc": "RSEli: Label for the number of people eligible to register to vote.",
                 "en": "Eligible Voters"
             }
         },
@@ -447,7 +450,7 @@
             "heading": "Voter Turnout",
             "is_percent": true,
             "text": {
-                "_desc": "RSTrn",
+                "_desc": "RSTrn: Label for the number of people that voted",
                 "en": "Voter Turnout"
             }
         },
@@ -471,8 +474,8 @@
             "_id": "RSWri",
             "heading": "Writein Votes",
             "text": {
-                "_desc": "RSWri",
-                "en": "Writein Votes"
+                "_desc": "RSWri: Label for the number of write-in votes",
+                "en": "Write-in Votes"
             }
         },
         {
@@ -501,7 +504,7 @@
             "_id": "RSExh",
             "heading": "Exhausted Ballots",
             "text": {
-                "_desc": "RSExh",
+                "_desc": "RSExh: Exhausted votes, for use in RCV contests.",
                 "en": "Exhausted Ballots"
             }
         }
