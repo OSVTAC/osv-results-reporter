@@ -268,10 +268,10 @@
         </tr>
         {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
         {% for result_stat in contest.iter_result_stats('RSUnd RSOvr') %}
-        <tr>
-          <td class="text-cell">{{ result_stat.text|translate }}</td>
-          <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
-        </tr>
+          <tr>
+            <td class="text-cell">{{ result_stat.text|translate }}</td>
+            <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>
