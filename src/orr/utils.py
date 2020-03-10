@@ -196,8 +196,10 @@ def compute_percent(numer, denom):
         return 0
 
     if numer == denom:
-        # Special-casing equality ensures e.g. that 100 is returned instead
-        # of 99.99999999999 in certain floating-point edge cases (like 1/3).
+        # Special-casing equality ensures that 100 is returned instead
+        # of 99.99999999999 in certain floating-point edge cases, e.g.
+        #  >>> 100 * (1/3) / (1/3)
+        #  99.99999999999999
         quotient = 1
     else:
         quotient = numer / denom
@@ -214,6 +216,9 @@ def format_percent(percent):
     """
     if percent is None:
         return ''
+    if percent == 100:
+        return '100%'
+
     return f'{percent:.2f}%'
 
 

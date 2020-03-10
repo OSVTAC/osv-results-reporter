@@ -66,7 +66,10 @@ class EndToEndTest(TestCase):
         """
         try:
             actual_text, expected_text = (path.read_text() for path in (actual_path, expected_path))
-            self.assertEqual(actual_text, expected_text)
+            # Pass actual_text second so "+" will precede new lines
+            # introduced by actual_text in case of differences (as rendered
+            # by unittest's `assertMultiLineEqual()`).
+            self.assertEqual(expected_text, actual_text)
         except Exception:
             raise RuntimeError(f'expected path at: {expected_path}')
 
