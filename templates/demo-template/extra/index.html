@@ -70,31 +70,57 @@
   </ul>
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
+
+  <h4>{{ "registration_header"|TT }}</h4>
+
+  <table class="table summary-table">
+    {% set regStat = election.turnout.get_stat_by_id('RSReg') %}
+    {% set eligibleStat = election.turnout.get_stat_by_id('RSEli') %}
+    {% set regCount = election.turnout.get_vote_total(regStat) %}
+    {% set eligibleCount = election.turnout.get_vote_total(eligibleStat) %}
+    <tr>
+      <td class="text-cell">{{ regStat.text|translate }}</td>
+      <td>{{ regCount|format_number }}</td>
+    </tr>
+    <tr>
+      <td class="text-cell">{{ eligibleStat.text|translate }} <span class="note">(estimated)</span></td>
+      <td>{{ eligibleCount|format_number }}</td>
+    </tr>
+  </table>
+
+  <h4>{{ "turnout_header"|TT }}</h4>
+
   <p>
     {{ show_precincts_reporting(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
   </p>
+
   <table class="table summary-table">
-    {% set castStat = election.turnout.get_stat_by_id('RSCst') %}
-    {% set total = election.turnout.get_vote_total(castStat) %}
-    {% set regStat = election.turnout.get_stat_by_id('RSReg') %}
-    {% set registration = election.turnout.get_vote_total(regStat) %}
+    {% set turnoutStat = election.turnout.get_stat_by_id('RSCst') %}
+    {% set turnoutCount = election.turnout.get_vote_total(turnoutStat) %}
+
     {% for vg in election.turnout.voting_groups_from_idlist('ED MV') %}
       <tr>
         <td class="text-cell">{{ vg.text|translate }}</td>
-        {% set votes = election.turnout.get_vote_total(castStat, voting_group=vg) %}
-        <td>{{ votes|format_number }}</td>
-        <td>{{ votes|format_percent2(total) }}</td>
+        {% set turnoutSubtotal = election.turnout.get_vote_total(turnoutStat, voting_group=vg) %}
+        <td>{{ turnoutSubtotal|format_number }}</td>
+        <td>{{ turnoutSubtotal|format_percent2(turnoutCount) }}</td>
       </tr>
     {% endfor %}
-    <tr>
-      <td class="text-cell">{{ castStat.text|translate }}</td>
-      <td class="total">{{ total|format_number }}</td>
-      <td class="total">{{ total|format_percent2(registration) }}</td>
-    </tr>
-    <tr>
-      <td class="text-cell">{{ regStat.text|translate }}</td>
-      <td>{{ registration|format_number }}</td>
-    </tr>
+    <tbody class="result-stats">
+      <tr>
+        <td class="text-cell total">Total Turnout</td>
+        <td>{{ turnoutCount|format_number }}</td>
+        <td>{{ turnoutCount|format_percent2(turnoutCount) }}</td>
+      </tr>
+      <tr>
+        <td class="text-cell">Percent of Registered Voters</td>
+        <td>{{ turnoutCount|format_percent2(regCount) }}</td>
+      </tr>
+      <tr>
+        <td class="text-cell">Percent of Eligible Voters <span class="note">(estimated)</span></td>
+        <td>{{ turnoutCount|format_percent2(eligibleCount) }}</td>
+      </tr>
+    </tbody>
   </table>
 
   {% with %}
@@ -264,13 +290,17 @@
           <td class="text-cell">{{ totalStat.text|translate }}</td>
           {% set totalVote = contest.get_vote_total(totalStat) %}
           <td>{{ totalVote|format_number }}</td>
-          <td>{{ totalVote|compute_percent(contest.total_votes)|format_percent }}</td>
+          <td>{{ totalVote|format_percent2(contest.total_votes) }}</td>
         </tr>
+        {% set castStat = contest.get_stat_by_id('RSCst') %}
+        {% set castTotal = contest.get_vote_total(castStat) %}
         {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
-        {% for result_stat in contest.iter_result_stats('RSUnd RSOvr') %}
+        {% for result_stat in contest.iter_result_stats('RSUnd RSOvr RSCst') %}
           <tr>
             <td class="text-cell">{{ result_stat.text|translate }}</td>
-            <td>{{ contest.get_vote_total(result_stat)|format_number }}</td>
+            {% set statTotal = contest.get_vote_total(result_stat) %}
+            <td>{{ statTotal|format_number }}</td>
+            <td>{{ statTotal|format_percent2(castTotal) }}</td>
           </tr>
         {% endfor %}
       </tbody>
