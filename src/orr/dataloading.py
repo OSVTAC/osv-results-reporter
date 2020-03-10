@@ -972,6 +972,9 @@ def load_choices(contest_loader, choices_data):
 
     Args:
       contest_loader: a ContestLoader object.
+
+    Returns:
+      choices_by_id: a dict mapping id to Choice object.
     """
     # First determine the loader class to use to load the contest's
     # choices (can be ChoiceLoader or CandidateLoader).
@@ -999,7 +1002,11 @@ def load_contest_result_style(contest_loader, value, result_styles_by_id):
 
 def load_results_mapping(contest_loader, data):
     contest = contest_loader.model_object
-    choice_count = len(getattr(contest, 'choices_by_id', []))
+    if contest.choices_by_id is None:
+        choice_count = 0
+    else:
+        choice_count = len(contest.choices_by_id)
+
     result_style = contest.result_style
 
     return ResultsMapping(result_style.result_stat_types, choice_count=choice_count)

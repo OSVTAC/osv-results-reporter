@@ -240,24 +240,22 @@
         </tr>
       </thead>
       <tbody class="choices">
-        {# HACK: overwriting variables within loops doesn't work in Jinja, but updating dicts does #}
-        {% set highestPercent = {'percent': 0} %}
-        {% for choice in contest.choices %}
-          {% set p = contest.get_summary_total(choice)|compute_percent(contest.total_votes) %}
-          {%- if p > highestPercent.percent -%}
-            {%- if highestPercent.update({'percent': p}) -%}{%- endif -%}
-          {%- endif -%}
-        {%- endfor -%}
-        {% set scalePercent = 100 if contest.approval_required else highestPercent.percent %}
+        {# TODO: use maxVoteFraction instead of scalePercent. -#}
+        {% if contest.approval_required %}
+          {% set scalePercent = 100 %}
+        {% else %}
+          {% set highestVoteTotal = contest.get_max_vote_total() %}
+          {% set scalePercent = highestVoteTotal|compute_percent(contest.total_votes) %}
+        {% endif %}
         {% for choice in contest.choices_sorted %}
-          {% set v = contest.get_summary_total(choice) %}
-          {% set p = v|compute_percent(contest.total_votes) %}
+          {% set voteTotal = contest.get_summary_total(choice) %}
+          {% set p = voteTotal|compute_percent(contest.total_votes) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice.ballot_title|translate -}}
               {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
             </td>
-            <td>{{ v|format_number }}</td>
+            <td>{{ voteTotal|format_number }}</td>
             <td>{{ p|format_percent }}</td>
             <td class="bars-row">
                 <div class="percentage-bar" style="width: {{ p|compute_percent(scalePercent) }}%"></div>

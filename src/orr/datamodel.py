@@ -593,8 +593,11 @@ class ResultsMapping:
 
         return self.result_stat_types[stat_index]
 
-    def get_candidate_index(self, candidate):
-        return self.result_stat_count + candidate.index
+    def get_choice_index(self, choice):
+        """
+        Return the index of a choice's results in each results row.
+        """
+        return self.result_stat_count + choice.index
 
     def get_stat_or_choice_index(self, stat_or_choice):
         """
@@ -607,7 +610,7 @@ class ResultsMapping:
         # TODO: provide a good error message if this assertion fails.
         assert isinstance(stat_or_choice, Choice)
 
-        return self.get_candidate_index(stat_or_choice)
+        return self.get_choice_index(stat_or_choice)
 
     def get_indices_by_id(self, label_or_id):
         """
@@ -737,13 +740,16 @@ class Contest:
         self.all_voting_groups_by_id = voting_groups_by_id
 
         self.ballot_subtitle = None
+        # This is a dict mapping Choice id to Choice object.
+        self.choices_by_id = None
         self.contest_party = None
         self.name = None
         self.parent_header = None
         self.results_mapping = None
-        self._results_details_loaded = False
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
         self.url_state_results = None
+
+        self._results_details_loaded = False
 
     def __repr__(self):
         return f'<Contest {self.type_name!r}: id={self.id!r}>'
@@ -817,6 +823,9 @@ class Contest:
     # Also expose the dict values as an ordered list, for convenience.
     @property
     def choices(self):
+        """
+        Return an iterator over the Choice objects, in their pre-election order.
+        """
         # Here we use that choices_by_id is an OrderedDict.
         yield from self.choices_by_id.values()
 
@@ -842,6 +851,18 @@ class Contest:
         total_stat = self.get_stat_by_id('RSTot')
 
         return self.get_summary_total(total_stat)
+
+    def get_choice_index(self, choice):
+        """
+        Return the index of a choice's results in each results row.
+        """
+        return self.results_mapping.get_choice_index(choice)
+
+    def get_max_vote_total(self):
+        results_indices = [self.get_choice_index(choice) for choice in self.choices]
+        vg_totals = self.get_vg_summary_totals()
+
+        return max(vg_totals[index] for index in results_indices)
 
     @property
     def reporting_groups(self):
@@ -1011,7 +1032,7 @@ class Contest:
 
     def get_round_total(self, choice, round_num):
         ensure_int(round_num, 'round_num')
-        index = self.results_mapping.get_candidate_index(choice)
+        index = self.get_choice_index(choice)
         return self.get_round_stat_by_index(index, round_num)
 
     def make_rcv_results(self, continuing_stat_id):

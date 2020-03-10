@@ -94,7 +94,7 @@ class RCVResults:
         """
         Return the totals index corresponding to a candidate.
         """
-        return self.results_mapping.get_candidate_index(candidate)
+        return self.results_mapping.get_choice_index(candidate)
 
     def get_candidate_indices(self):
         """
