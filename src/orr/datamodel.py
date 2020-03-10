@@ -830,7 +830,7 @@ class Contest:
             # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
             return 1 if c.is_yes() else 0
           # For other contests, sort by vote total
-          return self.get_vote_total(c)
+          return self.get_summary_total(c)
 
         yield from sorted(self.choices, reverse=True, key=sorter)
 
@@ -841,7 +841,7 @@ class Contest:
         """
         total_stat = self.get_stat_by_id('RSTot')
 
-        return self.get_vote_total(total_stat)
+        return self.get_summary_total(total_stat)
 
     @property
     def reporting_groups(self):
@@ -969,7 +969,8 @@ class Contest:
         Return the row of subtotals corresponding to the given voting group.
 
         Args:
-          voting_group: a VotingGroup object.
+          voting_group: a VotingGroup object, or None for the "all" voting
+            group.
         """
         # Summary results should be loaded for the election if present
         if not hasattr(self, 'results'):
@@ -983,10 +984,14 @@ class Contest:
 
         return self.results[rg_index]
 
-    def get_vote_total(self, stat_or_choice, voting_group=None):
+    def get_summary_total(self, stat_or_choice, voting_group=None):
         """
+        Return the summary total for a ResultStatType and VotingGroup object.
+
         Args:
           stat_or_choice: a ResultStatType object or Choice object.
+          voting_group: a VotingGroup object, or None for the "all" voting
+            group.
         """
         # TODO: check stat_or_choice_index
         stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
