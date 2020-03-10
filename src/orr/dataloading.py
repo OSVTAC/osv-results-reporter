@@ -572,7 +572,7 @@ def process_contest_result_stats(contest, result_stats_data):
     for result_stat in result_stats_data:
         # We could use the _id to get a column index, but we assume the
         # json list of stats is in the correct order so we just append
-        # Otherwise we need to use result_style.voting_group_indexes_by_id
+        # Otherwise we need to use `result_style.get_voting_group_by_id()`.
         append_results_col(contest, result_stat['results'])
 
 
@@ -590,7 +590,7 @@ def process_choice_results(contest, choices_data):
 
         # We could use the _id to get a column index, but we assume the
         # json list of stats is in the correct order so we just append
-        # Otherwise we need to use result_style.voting_group_indexes_by_id
+        # Otherwise we need to use `result_style.get_voting_group_by_id()`.
         append_results_col(contest, choice_data['results'])
 
         success = choice_data.get('success')
@@ -845,11 +845,7 @@ def load_result_voting_groups(result_style_loader, ids_text, voting_groups_by_id
     assert type(result_style) == ResultStyle
 
     voting_groups = ids_text_to_objects(ids_text, voting_groups_by_id)
-    indexes_by_id = datamodel.make_indexes_by_id(voting_groups)
-    # TODO: remove setting this?
-    result_style.voting_group_indexes_by_id = indexes_by_id
 
-    # TODO: make the return value an OrderedDict?
     return voting_groups
 
 

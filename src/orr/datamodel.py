@@ -50,17 +50,17 @@ VOTING_GROUP_ID_ALL = 'TO'
 # "vote for 3", if only 1 choice was made, there would be 2 undervotes,
 # and if 4 or more choices were made, there would be 3 overvotes
 VOTING_STATS = OrderedDict([
-    ('RSTot', 'Total Votes'),       # Sum of valid votes reported
     ('RSCst', 'Ballots Cast'),      # Ballot sheets submitted by voters
-    ('RSReg', 'Registered Voters'), # Voters registered for computing turnout
-    ('RSTrn', 'Voter Turnout'),     # (SVCst/SVReg)*100
-    ('RSRej', 'Ballots Rejected'),  # Not countable
-    ('RSUnc', 'Ballots Uncounted'), # Not yet counted or needing adjudication
-    ('RSWri', 'Writein Votes'),     # Write-in candidates not explicitly listed
-    ('RSUnd', 'Undervotes'),        # Blank votes or additional votes not made
+    ('RSExh', 'Exhausted Ballots'), # All RCV choices were eliminated (RCV only)
     ('RSOvr', 'Overvotes'),         # Possible votes rejected by overvoting
-    ('RSExh', 'Exhausted Ballots')  # All RCV choices were eliminated (RCV only)
-    ])
+    ('RSReg', 'Registered Voters'), # Voters registered for computing turnout
+    ('RSRej', 'Ballots Rejected'),  # Not countable
+    ('RSTot', 'Total Votes'),       # Sum of valid votes reported
+    ('RSTrn', 'Voter Turnout'),     # (SVCst/SVReg)*100
+    ('RSUnc', 'Ballots Uncounted'), # Not yet counted or needing adjudication
+    ('RSUnd', 'Undervotes'),        # Blank votes or additional votes not made
+    ('RSWri', 'Write-in Votes'),    # Write-in candidates not explicitly listed
+])
 
 # Set defining the RESULT_STATS items that are percentages (decimal)
 # that should be displayed with a % suffix.
@@ -70,7 +70,7 @@ RESULT_STAT_PERCENTAGE = { 'RSTrn' }
 # total as well as one or more subtotals. A set of ID/Suffix codes and
 # a name/title is predefined. An RCV contest will also have RCV Round subtotals
 VOTING_GROUPS = OrderedDict([
-    ('TO','Total'),             # Total of all subtotals
+    (VOTING_GROUP_ID_ALL, 'Total'),  # Total of all subtotals
     ('ED','Election Day'),      # Election day precinct voting (in county)
     ('MV','Vote by Mail'),      # Vote by mail ballots (in county)
     ('EV','Early Voting'),      # Early voting/vote centers (in county)
@@ -204,9 +204,14 @@ class ResultStatType:
 class ResultStyle:
 
     """
-    Each contest references the id of a ResultStyle that defines a
-    set of attributes for the type of voting including what result stats
-    will be available.
+    Encapsulates what result totals and subtotals are available (e.g.
+    for a contest).
+
+    Specifically, it encapsulates:
+
+    1) an ordered list of VotingGroup objects (e.g. TO, ED, MV, etc).
+    2) an ordered list of ResultStatType objects (e.g. RSReg, RSCst,
+       RSTot, etc).
 
     Instance attributes:
 
@@ -214,51 +219,73 @@ class ResultStyle:
       description:
       is_rcv:
       result_stat_types:
-      voting_group_indexes_by_id:
-      voting_groups: the VotingGroup objects associated with this
-        result style, as a list.
     """
 
     def __init__(self):
         self.id = None
-        self.voting_group_indexes_by_id = None
+        self.result_stat_types = None
+
+        # These are set by @voting_groups.setter.
+        #
+        # This is a dict mapping VotingGroup id to VotingGroup object.
+        self._id_to_voting_group = None
+        # This is a list of VotingGroup objects.
+        self._voting_groups = None
 
     def __repr__(self):
         return f'<ResultStyle id={self.id!r}>'
 
-    def get_voting_group_by_id(self, id_):
+    @property
+    def voting_groups(self):
         """
-        Look up and return a `VotingGroup` object.
+        Return the VotingGroup objects associated with this result style
+        (in the correct order), as a list.
         """
-        index = self.voting_group_indexes_by_id[id_]
-        voting_group = self.voting_groups[index]
+        return self._voting_groups
 
-        return voting_group
-
-    def voting_group_ids_from_idlist(self, idlist):
+    @voting_groups.setter
+    def voting_groups(self, groups):
         """
-        Return the matching voting group ids, as a list.
-
         Args:
-          idlist: a space-separated list of ids, as a string.
+          groups: a list of VotingGroup objects.
         """
-        if (not idlist) or (idlist == "*"):
-            # Then return all of the ids, in order.
-            return [voting_group.id for voting_group in self.voting_groups]
+        self._id_to_index = make_indexes_by_id(groups)
+        self._id_to_voting_group = {vg.id: vg for vg in groups}
+        self._voting_groups = groups
 
-        # Otherwise, return only the matching ones.
-        ids = parse_ids_text(idlist)
-        ids = [id_ for id_ in ids if id_ in self.voting_group_indexes_by_id]
+    def get_voting_group_by_id(self, voting_group_id):
+        """
+        Return the `VotingGroup` object given an id.
 
-        return ids
+        Raises:
+          * `KeyError` if the id doesn't exist for the ResultStyle.
+        """
+        return self._id_to_voting_group[voting_group_id]
+
+    def get_vg_index_by_id(self, voting_group_id):
+        """
+        Return the `VotingGroup` index given an id.
+
+        Raises:
+          * `KeyError` if the id doesn't exist for the ResultStyle.
+        """
+        return self._id_to_index[voting_group_id]
 
     def voting_groups_from_idlist(self, idlist):
         """
-        Returns the list of voting group objects by the
+        Return the list of voting group objects corresponding to a
         space-separated list of ids. Unmatched ids are omitted.
         """
-        ids = self.voting_group_ids_from_idlist(idlist)
-        voting_groups = [self.get_voting_group_by_id(id_) for id_ in ids]
+        if idlist == '*':
+            # Then return all of the ids, in order.
+            return self.voting_groups
+
+        # Otherwise, return only the matching ones.
+        ids = parse_ids_text(idlist)
+        voting_groups = [
+            self.get_voting_group_by_id(vg_id) for vg_id in ids
+                if vg_id in self._id_to_index
+        ]
 
         return voting_groups
 
@@ -665,10 +692,10 @@ class Contest:
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
       results_mapping: a ResultsMapping object.
-      results: the results as a matrix, where each column corresponds to
-        either a ResultStatType or Choice object, and each row a subtotal.
-        For example, an entry can be accessed as--
-        `results[i][stat_choice_index]`.
+      results: the result subtotals as a matrix, where each row corresponds
+        to a ReportingGroup object, and each column a ResultStatType object
+        or Choice object.  This means a subtotal can be accessed e.g. as
+        `results[rg_index][stat_choice_index]`.
       _results_details_loaded: bool indicating if detailed results are present
       rcv_totals: a list of tuples, one for each round, starting with the
         first round.
@@ -895,7 +922,7 @@ class Contest:
 
         return headings
 
-    def voting_groups_from_idlist(self, group_idlist=None):
+    def voting_groups_from_idlist(self, group_idlist):
         """
         Helper function to reference the voting groups.
         """
@@ -915,10 +942,34 @@ class Contest:
 
         return ''
 
-    def _get_voting_group_total(self, stat_or_choice, vg_index):
+    def get_summary_rg_index(self, voting_group=None):
         """
+        Return the index of the reporting group for the summary totals of
+        the given voting group.
+
         Args:
-          stat_or_choice: a ResultStatType object or Choice object.
+          voting_group: a VotingGroup object, or None for the "all" voting
+            group.
+        """
+        if voting_group is None:
+            vg_id = VOTING_GROUP_ID_ALL  # 'TO'
+        else:
+            vg_id = voting_group.id
+
+        vg_index = self.result_style.get_vg_index_by_id(vg_id)
+
+        # Here we make the assumption that the reporting group for the
+        # "all" area for the voting group we're interested in has an
+        # index that matches the index of the voting group.
+        # TODO: remove this assumption.
+        return vg_index
+
+    def get_vg_summary_totals(self, voting_group=None):
+        """
+        Return the row of subtotals corresponding to the given voting group.
+
+        Args:
+          voting_group: a VotingGroup object.
         """
         # Summary results should be loaded for the election if present
         if not hasattr(self, 'results'):
@@ -928,20 +979,21 @@ class Contest:
             if not self.get('results',[]):
                 return []
 
+        rg_index = self.get_summary_rg_index(voting_group)
+
+        return self.results[rg_index]
+
+    def get_vote_total(self, stat_or_choice, voting_group=None):
+        """
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
+        """
         # TODO: check stat_or_choice_index
         stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
 
-        return self.results[vg_index][stat_or_choice_index]
+        vg_totals = self.get_vg_summary_totals(voting_group)
 
-    def get_vote_total(self, stat_or_choice, voting_group=None):
-        if voting_group is None:
-            vg_id = 'TO'
-        else:
-            vg_id = voting_group.id
-
-        vg_index = self.result_style.voting_group_indexes_by_id[vg_id]
-
-        return self._get_voting_group_total(stat_or_choice, vg_index=vg_index)
+        return vg_totals[stat_or_choice_index]
 
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')
