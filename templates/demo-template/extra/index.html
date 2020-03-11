@@ -242,10 +242,10 @@
       <tbody class="choices">
         {# TODO: use maxVoteFraction instead of scalePercent. -#}
         {% if contest.approval_required %}
-          {% set scalePercent = 100 %}
+          {% set maxVoteFraction = 1 %}
         {% else %}
           {% set highestVoteTotal = contest.get_max_vote_total() %}
-          {% set scalePercent = highestVoteTotal|compute_percent(contest.total_votes) %}
+          {% set maxVoteFraction = highestVoteTotal|compute_fraction(contest.total_votes) %}
         {% endif %}
         {% for choice in contest.choices_sorted %}
           {% set voteTotal = contest.get_summary_total(choice) %}
@@ -258,25 +258,25 @@
             <td>{{ voteTotal|format_number }}</td>
             <td>{{ p|format_percent }}</td>
             <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ p|compute_percent(scalePercent) }}%"></div>
+                <div class="percentage-bar" style="width: {{ p|compute_percent(100 * maxVoteFraction) }}%"></div>
                 {# Only show the cutoff line for the "yes" choice #}
                 {% if contest.approval_required and choice.is_yes() %}
-                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(scalePercent) }}% - 0.25em)"></div>
+                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(100 * maxVoteFraction) }}% - 0.25em)"></div>
                 {% endif %}
             </td>
           </tr>
         {% endfor %}
         {% if contest.has_stat('RSWri') %}
           {% set writeinStat = contest.get_stat_by_id('RSWri') %}
-          {% set writeinVotes = contest.get_summary_total(writeinStat) %}
-          {% if writeinVotes %}
+          {% set voteTotal = contest.get_summary_total(writeinStat) %}
+          {% if voteTotal %}
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
-              {% set p = writeinVotes|compute_percent(contest.total_votes) %}
-              <td>{{ writeinVotes|format_number }}</td>
+              {% set p = voteTotal|compute_percent(contest.total_votes) %}
+              <td>{{ voteTotal|format_number }}</td>
               <td>{{ p|format_percent }}</td>
               <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ p|compute_percent(scalePercent) }}%"></div>
+                <div class="percentage-bar" style="width: {{ p|compute_percent(100 * maxVoteFraction) }}%"></div>
               </td>
             </tr>
           {% endif %}
