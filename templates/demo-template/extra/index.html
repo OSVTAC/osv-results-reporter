@@ -240,28 +240,28 @@
         </tr>
       </thead>
       <tbody class="choices">
-        {# TODO: use maxVoteFraction instead of scalePercent. -#}
+        {% set totalVotes = contest.total_votes %}
         {% if contest.approval_required %}
           {% set maxVoteFraction = 1 %}
         {% else %}
           {% set highestVoteTotal = contest.get_max_vote_total() %}
-          {% set maxVoteFraction = highestVoteTotal|compute_fraction(contest.total_votes) %}
+          {% set maxVoteFraction = highestVoteTotal|compute_fraction(totalVotes) %}
         {% endif %}
         {% for choice in contest.choices_sorted %}
           {% set voteTotal = contest.get_summary_total(choice) %}
-          {% set p = voteTotal|compute_percent(contest.total_votes) %}
+          {% set voteFraction = voteTotal|compute_fraction(totalVotes) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice.ballot_title|translate -}}
               {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
             </td>
             <td>{{ voteTotal|format_number }}</td>
-            <td>{{ p|format_percent }}</td>
+            <td>{{ voteTotal|format_percent2(totalVotes) }}</td>
             <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ p|compute_percent(100 * maxVoteFraction) }}%"></div>
+                <div class="percentage-bar" style="width: {{ voteFraction|compute_percent(maxVoteFraction) }}%"></div>
                 {# Only show the cutoff line for the "yes" choice #}
                 {% if contest.approval_required and choice.is_yes() %}
-                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction*100|compute_percent(100 * maxVoteFraction) }}% - 0.25em)"></div>
+                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction|compute_percent(maxVoteFraction) }}% - 0.25em)"></div>
                 {% endif %}
             </td>
           </tr>
@@ -270,13 +270,13 @@
           {% set writeinStat = contest.get_stat_by_id('RSWri') %}
           {% set voteTotal = contest.get_summary_total(writeinStat) %}
           {% if voteTotal %}
+            {% set voteFraction = voteTotal|compute_fraction(totalVotes) %}
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
-              {% set p = voteTotal|compute_percent(contest.total_votes) %}
               <td>{{ voteTotal|format_number }}</td>
-              <td>{{ p|format_percent }}</td>
+              <td>{{ voteTotal|format_percent2(totalVotes) }}</td>
               <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ p|compute_percent(100 * maxVoteFraction) }}%"></div>
+                <div class="percentage-bar" style="width: {{ voteFraction|compute_percent(maxVoteFraction) }}%"></div>
               </td>
             </tr>
           {% endif %}
@@ -288,7 +288,7 @@
           <td class="text-cell">{{ totalStat.text|translate }}</td>
           {% set totalVote = contest.get_summary_total(totalStat) %}
           <td>{{ totalVote|format_number }}</td>
-          <td>{{ totalVote|format_percent2(contest.total_votes) }}</td>
+          <td>{{ totalVote|format_percent2(totalVotes) }}</td>
         </tr>
         {% set castStat = contest.get_stat_by_id('RSCst') %}
         {% set castTotal = contest.get_summary_total(castStat) %}
