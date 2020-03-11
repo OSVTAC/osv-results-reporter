@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from 'macros.html' import show_precincts_reporting, subtotal_percent_tds %}
+{% from 'macros.html' import bar_td, show_precincts_reporting, subtotal_percent_tds %}
 
 {% block title %}{{ "summary_results_header"|TT }}{% endblock %}
 
@@ -208,12 +208,12 @@
               <td>{{ round.votes|format_number }}</td>
               <td>{{ round.round_num }}</td>
               <td>{{ round.percent|format_percent }}</td>
-              <td class="bars-row">
-                  <div class="percentage-bar" style="width: {{ round.percent|compute_percent(scalePercent) }}%"></div>
-                  {% if scalePercent >= 50 %}
-                    <div class="cutoff-line" style="left: calc({{ 50|compute_percent(scalePercent) }}% - 0.25em)"></div>
-                  {% endif %}
-              </td>
+              {% if scalePercent >= 50 %}
+                {% set line_subtotal = 50 %}
+              {% else %}
+                {% set line_subtotal = 0 %}
+              {% endif %}
+              {{ bar_td(round.percent, scalePercent, line_subtotal=line_subtotal) }}
             </tr>
           {% endfor %}
         </tbody>
@@ -254,13 +254,13 @@
               {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
             </td>
             {{ subtotal_percent_tds(voteTotal, totalVotes) }}
-            <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ voteFraction|compute_percent(maxVoteFraction) }}%"></div>
-                {# Only show the cutoff line for the "yes" choice #}
-                {% if contest.approval_required and choice.is_yes() %}
-                  <div class="cutoff-line" style="left: calc({{ contest.approval_required_fraction|compute_percent(maxVoteFraction) }}% - 0.25em)"></div>
-                {% endif %}
-            </td>
+            {# Only show the cutoff line for the "yes" choice #}
+            {% if contest.approval_required and choice.is_yes() %}
+              {% set line_subtotal = contest.approval_required_fraction %}
+            {% else %}
+              {% set line_subtotal = 0 %}
+            {% endif %}
+            {{ bar_td(voteFraction, maxVoteFraction, line_subtotal=line_subtotal) }}
           </tr>
         {% endfor %}
         {% if contest.has_stat('RSWri') %}
@@ -271,9 +271,7 @@
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
               {{ subtotal_percent_tds(voteTotal, totalVotes) }}
-              <td class="bars-row">
-                <div class="percentage-bar" style="width: {{ voteFraction|compute_percent(maxVoteFraction) }}%"></div>
-              </td>
+              {{ bar_td(voteFraction, maxVoteFraction) }}
             </tr>
           {% endif %}
         {% endif %}

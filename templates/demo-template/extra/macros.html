@@ -7,3 +7,12 @@
   <td>{{ subtotal|format_number }}</td>
   <td>{{ subtotal|format_percent2(total) }}</td>
 {%- endmacro -%}
+
+{% macro bar_td(subtotal, total, line_subtotal) -%}
+  <td class="bars-row">
+    <div class="percentage-bar" style="width: {{ subtotal|compute_percent(total) }}%"></div>
+    {% if line_subtotal %}
+      <div class="cutoff-line" style="left: calc({{ line_subtotal|compute_percent(total) }}% - 0.25em)"></div>
+    {% endif %}
+  </td>
+{%- endmacro -%}
