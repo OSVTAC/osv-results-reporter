@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from 'macros.html' import show_precincts_reporting %}
+{% from 'macros.html' import show_precincts_reporting, subtotal_percent_tds %}
 
 {% block title %}{{ "summary_results_header"|TT }}{% endblock %}
 
@@ -102,15 +102,13 @@
       <tr>
         <td class="text-cell">{{ vg.text|translate }}</td>
         {% set turnoutSubtotal = election.turnout.get_summary_total(turnoutStat, voting_group=vg) %}
-        <td>{{ turnoutSubtotal|format_number }}</td>
-        <td>{{ turnoutSubtotal|format_percent2(turnoutCount) }}</td>
+        {{ subtotal_percent_tds(turnoutSubtotal, turnoutCount) }}
       </tr>
     {% endfor %}
     <tbody class="result-stats">
       <tr>
         <td class="text-cell total">Total Turnout</td>
-        <td>{{ turnoutCount|format_number }}</td>
-        <td>{{ turnoutCount|format_percent2(turnoutCount) }}</td>
+        {{ subtotal_percent_tds(turnoutCount, turnoutCount) }}
       </tr>
       <tr>
         <td class="text-cell">Percent of Registered Voters</td>
@@ -255,8 +253,7 @@
               {{- choice.ballot_title|translate -}}
               {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
             </td>
-            <td>{{ voteTotal|format_number }}</td>
-            <td>{{ voteTotal|format_percent2(totalVotes) }}</td>
+            {{ subtotal_percent_tds(voteTotal, totalVotes) }}
             <td class="bars-row">
                 <div class="percentage-bar" style="width: {{ voteFraction|compute_percent(maxVoteFraction) }}%"></div>
                 {# Only show the cutoff line for the "yes" choice #}
@@ -273,8 +270,7 @@
             {% set voteFraction = voteTotal|compute_fraction(totalVotes) %}
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
-              <td>{{ voteTotal|format_number }}</td>
-              <td>{{ voteTotal|format_percent2(totalVotes) }}</td>
+              {{ subtotal_percent_tds(voteTotal, totalVotes) }}
               <td class="bars-row">
                 <div class="percentage-bar" style="width: {{ voteFraction|compute_percent(maxVoteFraction) }}%"></div>
               </td>
@@ -287,8 +283,7 @@
         <tr>
           <td class="text-cell">{{ totalStat.text|translate }}</td>
           {% set totalVote = contest.get_summary_total(totalStat) %}
-          <td>{{ totalVote|format_number }}</td>
-          <td>{{ totalVote|format_percent2(totalVotes) }}</td>
+          {{ subtotal_percent_tds(totalVote, totalVotes) }}
         </tr>
         {% set castStat = contest.get_stat_by_id('RSCst') %}
         {% set castTotal = contest.get_summary_total(castStat) %}
@@ -297,8 +292,7 @@
           <tr>
             <td class="text-cell">{{ result_stat.text|translate }}</td>
             {% set statTotal = contest.get_summary_total(result_stat) %}
-            <td>{{ statTotal|format_number }}</td>
-            <td>{{ statTotal|format_percent2(castTotal) }}</td>
+            {{ subtotal_percent_tds(statTotal, castTotal) }}
           </tr>
         {% endfor %}
       </tbody>

@@ -2,3 +2,8 @@
 {{ "precincts_reporting_N_of_M"|TT(reporting_count, total_count) }} (
   {{- reporting_count|format_percent2(total_count) }})
 {%- endmacro -%}
+
+{% macro subtotal_percent_tds(subtotal, total) -%}
+  <td>{{ subtotal|format_number }}</td>
+  <td>{{ subtotal|format_percent2(total) }}</td>
+{%- endmacro -%}
