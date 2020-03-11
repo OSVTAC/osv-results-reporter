@@ -240,14 +240,12 @@
       <tbody class="choices">
         {% set totalVotes = contest.total_votes %}
         {% if contest.approval_required %}
-          {% set maxVoteFraction = 1 %}
+          {% set maxDisplayVote = totalVotes %}
         {% else %}
-          {% set highestVoteTotal = contest.get_max_vote_total() %}
-          {% set maxVoteFraction = highestVoteTotal|compute_fraction(totalVotes) %}
+          {% set maxDisplayVote = contest.get_max_vote_total() %}
         {% endif %}
         {% for choice in contest.choices_sorted %}
           {% set voteTotal = contest.get_summary_total(choice) %}
-          {% set voteFraction = voteTotal|compute_fraction(totalVotes) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice.ballot_title|translate -}}
@@ -256,22 +254,21 @@
             {{ subtotal_percent_tds(voteTotal, totalVotes) }}
             {# Only show the cutoff line for the "yes" choice #}
             {% if contest.approval_required and choice.is_yes() %}
-              {% set line_subtotal = contest.approval_required_fraction %}
+              {% set line_subtotal = contest.approval_required_fraction * totalVotes %}
             {% else %}
               {% set line_subtotal = 0 %}
             {% endif %}
-            {{ bar_td(voteFraction, maxVoteFraction, line_subtotal=line_subtotal) }}
+            {{ bar_td(voteTotal, maxDisplayVote, line_subtotal=line_subtotal) }}
           </tr>
         {% endfor %}
         {% if contest.has_stat('RSWri') %}
           {% set writeinStat = contest.get_stat_by_id('RSWri') %}
           {% set voteTotal = contest.get_summary_total(writeinStat) %}
           {% if voteTotal %}
-            {% set voteFraction = voteTotal|compute_fraction(totalVotes) %}
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
               {{ subtotal_percent_tds(voteTotal, totalVotes) }}
-              {{ bar_td(voteFraction, maxVoteFraction) }}
+              {{ bar_td(voteTotal, maxDisplayVote) }}
             </tr>
           {% endif %}
         {% endif %}
