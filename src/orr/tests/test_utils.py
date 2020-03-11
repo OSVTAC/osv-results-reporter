@@ -115,6 +115,27 @@ class UtilsModuleTest(TestCase):
 
         self.assertEqual(actual, expected)
 
+    def test_compute_fraction(self):
+        cases = [
+            ((1, 3), 0.3333333),
+            ((1, 1), 1),
+            # 0 is allowed for the denominator.
+            ((1, 0), 0),
+        ]
+        for args, expected in cases:
+            with self.subTest(args=args):
+                num, denom = args
+                actual = utils.compute_fraction(num, denom)
+                if type(expected) is int:
+                    # Use exact equality (including of types) when the
+                    # result is expected to be an integer (e.g. so 1.0
+                    # isn't acceptable when 1 is expected).
+                    self.assertEqual(type(actual), type(expected))
+                    self.assertEqual(actual, expected)
+                else:
+                    # Use approximate equality for floats.
+                    self.assertAlmostEqual(actual, expected)
+
     def test_compute_percent(self):
         cases = [
             ((1, 3), 33.3333333),

@@ -179,6 +179,40 @@ def format_number(num):
     return f'{num:n}'
 
 
+def compute_fraction(numer, denom):
+    """
+    Compute a fraction, given a numerator and denominator.
+
+    This function differs from straight division in a couple edge-case
+    respects, like returning a number even if the denominator is 0.  The
+    latter is useful e.g. if we're in a template and a number is always
+    desired.
+
+    >>> 1 / 0
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ZeroDivisionError: division by zero
+    >>> compute_fraction(1, 0)  # returns 0 rather than erroring out.
+    0
+    >>> 1 / 1
+    1.0
+    >>> compute_fraction(1, 1)  # returns an int rather than float.
+    1
+    """
+    if not denom:
+        return 0
+
+    if numer == denom:
+        # Special-casing equality ensures that the return value will be
+        # an exact integer.  This avoids certain pathological edge cases
+        # (involving floats), like the following:
+        #  >>> 100 * (1/3) / (1/3)
+        #  99.99999999999999
+        return 1
+
+    return numer / denom
+
+
 def compute_percent(numer, denom):
     """
     Compute a numeric percent, given a numerator and denominator.
@@ -192,17 +226,7 @@ def compute_percent(numer, denom):
     >>> compute_percent(1, 0)
     0
     """
-    if not denom:
-        return 0
-
-    if numer == denom:
-        # Special-casing equality ensures that 100 is returned instead
-        # of 99.99999999999 in certain floating-point edge cases, e.g.
-        #  >>> 100 * (1/3) / (1/3)
-        #  99.99999999999999
-        quotient = 1
-    else:
-        quotient = numer / denom
+    quotient = compute_fraction(numer, denom=denom)
 
     return 100 * quotient
 
