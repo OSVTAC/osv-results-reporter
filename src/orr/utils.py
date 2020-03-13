@@ -199,7 +199,7 @@ def compute_fraction(numer, denom):
     >>> compute_fraction(1, 1)  # returns an int rather than float.
     1
     """
-    if not denom:
+    if denom == 0 or (numer == 0 and type(numer) == int):
         return 0
 
     if numer == denom:
@@ -240,7 +240,9 @@ def format_percent(percent):
     """
     if percent is None:
         return ''
-    if percent == 100:
+    if percent == 0 and type(percent) == int:
+        return '0%'
+    if percent == 100 and type(percent) == int:
         return '100%'
 
     return f'{percent:.2f}%'
@@ -252,8 +254,8 @@ def format_percent2(num, denom):
     """
     if denom is None or num is None or denom == 0:
         return ''
-    else:
-        return(format_percent(100 * num/denom))
+
+    return format_percent(compute_percent(num, denom))
 
 
 def _convert_fragment(char):

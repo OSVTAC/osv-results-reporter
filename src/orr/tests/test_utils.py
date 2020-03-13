@@ -138,6 +138,8 @@ class UtilsModuleTest(TestCase):
 
     def test_compute_percent(self):
         cases = [
+            ((0,   5), 0),
+            ((0.0, 5), 0.0),
             ((1, 3), 33.3333333),
             # 0 is allowed for the denominator.
             ((1, 0), 0),
@@ -155,6 +157,8 @@ class UtilsModuleTest(TestCase):
                     # Use approximate equality for floats.
                     self.assertAlmostEqual(actual, expected)
 
+                self.assertEqual(type(actual), type(expected))
+
     def test_compute_percent__float_handling(self):
         """
         Test a case with the property that 100 * x / x != 100.
@@ -167,9 +171,12 @@ class UtilsModuleTest(TestCase):
 
     def test_format_percent(self):
         cases = [
-            (0, '0.00%'),
+            (0, '0%'),
+            (0.0, '0.00%'),
             (10, '10.00%'),
             (5.7777, '5.78%'),
+            (100, '100%'),
+            (100.0, '100.00%'),
         ]
         for percent, expected in cases:
             with self.subTest(percent=percent):
