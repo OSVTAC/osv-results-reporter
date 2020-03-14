@@ -307,15 +307,24 @@
         {% endif %}
       </tbody>
       <tbody class="result-stats">
+        {% if canVoteForMultiple %}
+          <tr>
+            {% set castStat = contest.get_stat_by_id('RSCst') %}
+            {# TODO: make this "Voted Ballots" when we have that data. #}
+            <td class="text-cell">{{ castStat.text|translate }}</td>
+            {# This percent should be 100%. #}
+            {{ subtotal_percent_tds(votedBallots, voteDenominator) }}
+          </tr>
+          {# Don't show a percent column in this case. #}
+          {% set totalVotesDenominator = None %}
+        {% else %}
+          {% set totalVotesDenominator = totalVotes %}
+        {% endif %}
         {% set totalStat = contest.get_stat_by_id('RSTot') %}
         <tr>
           <td class="text-cell">{{ totalStat.text|translate }}</td>
-          {% set totalVote = contest.get_summary_total(totalStat) %}
-          {% if canVoteForMultiple %}
-            {{ subtotal_percent_tds(totalVote, total=None) }}
-          {% else %}
-            {{ subtotal_percent_tds(totalVote, total=totalVotes) }}
-          {% endif %}
+          {# This percent should be 100% when N=1. #}
+          {{ subtotal_percent_tds(totalVotes, total=totalVotesDenominator) }}
         </tr>
         {{ show_contest_ballot_stats(contest) }}
       </tbody>

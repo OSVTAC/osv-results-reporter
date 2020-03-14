@@ -322,7 +322,7 @@
                     "_id": "RSTot",
                     "heading": "Ballots Counted",
                     "results": [
-                        272618,
+                        237056,
                         131676,
                         140942
                     ]
@@ -349,7 +349,7 @@
                     "_id": "RSUnd",
                     "heading": "Undervotes",
                     "results": [
-                        35462,
+                        37051,
                         18253,
                         17209
                     ]
