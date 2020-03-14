@@ -111,6 +111,9 @@
         {{ subtotal_percent_tds(turnoutCount, turnoutCount) }}
       </tr>
       <tr>
+        <td colspan="2">&nbsp;</td>
+      </tr>
+      <tr>
         <td class="text-cell">Percent of Registered Voters</td>
         <td>{{ turnoutCount|format_percent2(regCount) }}</td>
       </tr>
@@ -228,6 +231,10 @@
         </tbody>
       </table>
     {% else %}
+    {% set totalVotes = contest.total_votes %}
+    {% set votedBallots = contest.get_voted_ballots() %}
+    {% set canVoteForMultiple = contest.can_vote_for_multiple() %}
+    {% set voteDenominator = votedBallots %}
     <table class="table summary-table">
       <thead>
         <tr>
@@ -238,7 +245,6 @@
         </tr>
       </thead>
       <tbody class="choices">
-        {% set totalVotes = contest.total_votes %}
         {% if contest.approval_required %}
           {% set maxDisplayVote = totalVotes %}
         {% else %}
@@ -251,7 +257,7 @@
               {{- choice.ballot_title|translate -}}
               {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
             </td>
-            {{ subtotal_percent_tds(voteTotal, totalVotes) }}
+            {{ subtotal_percent_tds(voteTotal, voteDenominator) }}
             {# Only show the cutoff line for the "yes" choice #}
             {% if contest.approval_required and choice.is_yes() %}
               {% set line_subtotal = contest.approval_required_fraction * totalVotes %}
@@ -267,7 +273,7 @@
           {% if voteTotal %}
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
-              {{ subtotal_percent_tds(voteTotal, totalVotes) }}
+              {{ subtotal_percent_tds(voteTotal, voteDenominator) }}
               {{ bar_td(voteTotal, maxDisplayVote) }}
             </tr>
           {% endif %}
@@ -278,12 +284,28 @@
         <tr>
           <td class="text-cell">{{ totalStat.text|translate }}</td>
           {% set totalVote = contest.get_summary_total(totalStat) %}
-          {{ subtotal_percent_tds(totalVote, totalVotes) }}
+          {% if canVoteForMultiple %}
+            {{ subtotal_percent_tds(totalVote, total=None) }}
+          {% else %}
+            {{ subtotal_percent_tds(totalVote, total=totalVotes) }}
+          {% endif %}
         </tr>
         {% set castStat = contest.get_stat_by_id('RSCst') %}
         {% set castTotal = contest.get_summary_total(castStat) %}
+        <tr>
+          <td colspan="3">&nbsp;</td>
+        </tr>
+        {% if canVoteForMultiple %}
+          {% set stat_ids = 'RSOvr RSCst' %}
+        {% else %}
+          {% set stat_ids = 'RSUnd RSOvr RSCst' %}
+          <tr>
+            <td class="text-cell">Voted Ballots</td>
+            {{ subtotal_percent_tds(votedBallots, castTotal) }}
+          </tr>
+        {% endif %}
         {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
-        {% for result_stat in contest.iter_result_stats('RSUnd RSOvr RSCst') %}
+        {% for result_stat in contest.iter_result_stats(stat_ids) %}
           <tr>
             <td class="text-cell">{{ result_stat.text|translate }}</td>
             {% set statTotal = contest.get_summary_total(result_stat) %}

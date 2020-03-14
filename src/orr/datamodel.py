@@ -1021,6 +1021,27 @@ class Contest:
 
         return vg_totals[stat_or_choice_index]
 
+    def can_vote_for_multiple(self):
+        results_mapping = self.results_mapping
+        stat_indices = results_mapping.get_indexes_by_id_list('RSTot RSUnd RSOvr RSCst')
+
+        vg_totals = self.get_vg_summary_totals()
+
+        *subtotals, total_cast = (vg_totals[i] for i in stat_indices)
+
+        # Total votes plus undervotes plus overvotes equals "Ballots cast"
+        # only if it's vote-for-1 as opposed to vote-for-N with N > 1.
+        return sum(subtotals) != total_cast
+
+    def get_voted_ballots(self):
+        if not self.can_vote_for_multiple():
+            return self.total_votes
+
+        # Then use "Ballots cast" as the denominator.
+        total_stat = self.get_stat_by_id('RSCst')
+
+        return self.get_summary_total(total_stat)
+
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')
         return self.rcv_totals[round_num - 1][index]
