@@ -45,6 +45,33 @@
   </div>
 {%- endmacro %}
 
+{% macro show_contest_ballot_stats(contest) -%}
+  <tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+  {% set canVoteForMultiple = contest.can_vote_for_multiple() %}
+  {% set votedBallots = contest.get_voted_ballots() %}
+  {% set castStat = contest.get_stat_by_id('RSCst') %}
+  {% set castTotal = contest.get_summary_total(castStat) %}
+  {% if canVoteForMultiple %}
+    {# TODO: show "Blank Ballots" once we add it to the input data. -#}
+    {% set stat_ids = 'RSOvr RSCst' %}
+  {% else %}
+    {% set stat_ids = 'RSUnd RSOvr RSCst' %}
+    <tr>
+      <td class="text-cell">Voted Ballots</td>
+      {{ subtotal_percent_tds(votedBallots, castTotal) }}
+    </tr>
+  {% endif %}
+  {% for result_stat in contest.iter_result_stats(stat_ids) %}
+    <tr>
+      <td class="text-cell">{{ result_stat.text|translate }}</td>
+      {% set statTotal = contest.get_summary_total(result_stat) %}
+      {{ subtotal_percent_tds(statTotal, castTotal) }}
+    </tr>
+  {% endfor %}
+{%- endmacro -%}
+
 {% block bodyTop %}
 <div class="navigation">
   <div class="nav-contest">
@@ -221,13 +248,12 @@
           {% endfor %}
         </tbody>
         <tbody class="result-stats">
-          {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
-          {% for result_stat in contest.iter_result_stats('RSTot RSUnd RSOvr') %}
-            <tr>
-              <td class="text-cell">{{ result_stat.text|translate }}</td>
-              <td>{{ contest.get_summary_total(result_stat)|format_number }}</td>
-            </tr>
-          {% endfor %}
+          {% set totalStat = contest.get_stat_by_id('RSTot') %}
+          <tr>
+            <td class="text-cell">{{ totalStat.text|translate }}</td>
+            <td>{{ contest.get_summary_total(totalStat)|format_number }}</td>
+          </tr>
+          {{ show_contest_ballot_stats(contest) }}
         </tbody>
       </table>
     {% else %}
@@ -290,28 +316,7 @@
             {{ subtotal_percent_tds(totalVote, total=totalVotes) }}
           {% endif %}
         </tr>
-        {% set castStat = contest.get_stat_by_id('RSCst') %}
-        {% set castTotal = contest.get_summary_total(castStat) %}
-        <tr>
-          <td colspan="3">&nbsp;</td>
-        </tr>
-        {% if canVoteForMultiple %}
-          {% set stat_ids = 'RSOvr RSCst' %}
-        {% else %}
-          {% set stat_ids = 'RSUnd RSOvr RSCst' %}
-          <tr>
-            <td class="text-cell">Voted Ballots</td>
-            {{ subtotal_percent_tds(votedBallots, castTotal) }}
-          </tr>
-        {% endif %}
-        {# In the per-contest summary, only display the total (ballots counted), undervotes and overvotes -#}
-        {% for result_stat in contest.iter_result_stats(stat_ids) %}
-          <tr>
-            <td class="text-cell">{{ result_stat.text|translate }}</td>
-            {% set statTotal = contest.get_summary_total(result_stat) %}
-            {{ subtotal_percent_tds(statTotal, castTotal) }}
-          </tr>
-        {% endfor %}
+        {{ show_contest_ballot_stats(contest) }}
       </tbody>
     </table>
     {% endif %}
