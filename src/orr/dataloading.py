@@ -744,7 +744,7 @@ def load_contest_results(contest):
 
         if len(contest.results) != contest.reporting_group_count:
             raise RuntimeError(
-                f'Mismatched reporting groups in {path}')
+                f'Mismatched reporting groups in {path}\nresults={len(contest.results)} count={contest.reporting_group_count} ')
 
 
 def load_all_results_details(election, filedir=None, filename_format=None):
@@ -792,6 +792,7 @@ class ResultStatTypeLoader:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('heading', parse_i18n),
+        ('description', parse_i18n),
         # Save the dict to a private attribute so "text" can be a property.
         # TODO: make this public after heading is removed.
         ('_text', parse_i18n, 'text'),
@@ -883,6 +884,9 @@ class AreaLoader:
     ]
 
 
+def load_party(contest_loader, value, parties_by_id):
+    return parties_by_id[value]
+
 class PartyLoader:
 
     model_class = datamodel.Party
@@ -891,6 +895,8 @@ class PartyLoader:
         ('id', parse_id, '_id'),
         # Save to a private attribute so we can use a property.
         ('_name', parse_i18n, 'name'),
+        ('contest_party_crossover', parse_as_is),
+        ('heading', parse_as_is)
     ]
 
 
@@ -937,6 +943,9 @@ class CandidateLoader:
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
         ('candidate_party', parse_i18n),
+#        AutoAttr('candidate_party_info', load_party, data_key='candidate_party_id',
+#          context_keys=('parties_by_id',), unpack_context=True),
+        ('candidate_party_id', parse_as_is),
         ('is_writein', parse_bool),
     ]
 
@@ -1015,9 +1024,6 @@ def load_results_mapping(contest_loader, data):
 def load_voting_district(contest_loader, value, areas_by_id):
     return areas_by_id[value]
 
-def load_party(contest_loader, value, parties_by_id):
-    return parties_by_id[value]
-
 
 def make_contest_results_loader(contest_loader, data):
     """
@@ -1085,7 +1091,9 @@ class ContestLoader:
         ('is_partisan', parse_as_is),
         ('name', parse_i18n),
         ('short_description', parse_i18n),
+        ('votes_allowed', parse_as_is),
         ('number_elected', parse_as_is),
+        ('contest_party_crossover', parse_as_is),
         ('max_ranked', parse_int),
         ('question_text', parse_i18n),
         AutoAttr('result_style', load_contest_result_style,

@@ -170,7 +170,6 @@ def lang_to_phrase_id(context, lang_code):
 
     return language_data['phrase_id']
 
-
 def _get_template_format_translation(context, phrase_id, lang_code):
     """
     Return a phrase translation, without inserting replacement field values.
@@ -182,7 +181,10 @@ def _get_template_format_translation(context, phrase_id, lang_code):
     with no replacement fields.
     """
     phrases_data = context['phrases_data']
-    translations = phrases_data[phrase_id]
+    translations = phrases_data.get(phrase_id, None)
+    if translations==None:
+        _log.warning(f"Invalid Translation phrase_id '{phrase_id}'")
+        return(phrase_id)
 
     return translations[lang_code]
 
@@ -193,9 +195,6 @@ def _get_template_translation(context, phrase_id, *params, lang_code=None):
       params: the format string parameters, if needed.
       lang_code: a 2-letter language code.
     """
-    phrases_data = context['phrases_data']
-    translations = phrases_data[phrase_id]
-
     format_str = _get_template_format_translation(context, phrase_id, lang_code=lang_code)
 
     try:
