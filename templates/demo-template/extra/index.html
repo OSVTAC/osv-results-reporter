@@ -49,10 +49,10 @@
   <tr>
     <td colspan="3">&nbsp;</td>
   </tr>
-  {% set canVoteForMultiple = contest.can_vote_for_multiple() %}
   {% set votedBallots = contest.get_voted_ballots() %}
-  {% set castStat = contest.get_stat_by_id('RSCst') %}
-  {% set castTotal = contest.get_summary_total(castStat) %}
+  {% set rg_totals = contest.get_rg_summary_totals() %}
+  {% set cast_result = rg_totals.get_summary_total(stat_id='RSCst') %}
+  {% set canVoteForMultiple = contest.can_vote_for_multiple() %}
   {% if canVoteForMultiple %}
     {# TODO: show "Blank Ballots" once we add it to the input data. -#}
     {% set stat_ids = 'RSOvr RSCst' %}
@@ -60,14 +60,13 @@
     {% set stat_ids = 'RSUnd RSOvr RSCst' %}
     <tr>
       <td class="text-cell">Voted Ballots</td>
-      {{ subtotal_percent_tds(votedBallots, castTotal) }}
+      {{ subtotal_percent_tds(votedBallots, cast_result.total) }}
     </tr>
   {% endif %}
-  {% for result_stat in contest.iter_result_stats(stat_ids) %}
+  {% for result_total in rg_totals.iter_result_totals(stat_ids) %}
     <tr>
-      <td class="text-cell">{{ result_stat.text|translate }}</td>
-      {% set statTotal = contest.get_summary_total(result_stat) %}
-      {{ subtotal_percent_tds(statTotal, castTotal) }}
+      <td class="text-cell">{{ result_total.text|translate }}</td>
+      {{ subtotal_percent_tds(result_total.total, cast_result.total) }}
     </tr>
   {% endfor %}
 {%- endmacro -%}

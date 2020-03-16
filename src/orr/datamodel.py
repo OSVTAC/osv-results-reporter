@@ -599,13 +599,17 @@ class ResultsMapping:
         """
         return self.result_stat_count + choice.index
 
-    def get_stat_or_choice_index(self, stat_or_choice):
+    def get_stat_or_choice_index(self, stat_or_choice=None, stat_id=None):
         """
         Args:
           stat_or_choice: a ResultStatType object or Choice object.
+          stat_id: the id of a a ResultStatType object.
         """
         if type(stat_or_choice) == ResultStatType:
-            return self.stat_id_to_index[stat_or_choice.id]
+            stat_id = stat_or_choice.id
+
+        if stat_id is not None:
+            return self.stat_id_to_index[stat_id]
 
         # TODO: provide a good error message if this assertion fails.
         assert isinstance(stat_or_choice, Choice)
@@ -674,6 +678,62 @@ class ResultsMapping:
         indices = self.get_indexes_by_id_list(stat_idlist)
 
         yield from (result_stat_types[i] for i in indices)
+
+
+class ResultTotal:
+
+    def __init__(self, stat_or_choice, total):
+        self.stat_or_choice = stat_or_choice
+        self.total = total
+
+    @property
+    def text(self):
+        return self.stat_or_choice.text
+
+
+class ReportingGroupTotals:
+
+    """
+    Encapsulates the vote totals for a reporting group (ReportingGroup object).
+    """
+
+    def __init__(self, vg_totals, results_mapping):
+        """
+        Args:
+          results_mapping: a ResultsMapping object.
+        """
+        self.results_mapping = results_mapping
+        self.vg_totals = vg_totals
+
+    def get_summary_total(self, stat_or_choice=None, stat_id=None):
+        """
+        Return the summary total for a ResultStatType or Choice object.
+
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
+          stat_id: the id of a a ResultStatType object.
+        """
+        if stat_id is not None:
+            stat_or_choice = self.results_mapping.get_stat_by_id(stat_id)
+
+        # TODO: check stat_or_choice_index
+        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
+
+        total = self.vg_totals[stat_or_choice_index]
+
+        return ResultTotal(stat_or_choice, total=total)
+
+    def iter_result_totals(self, stat_ids):
+        """
+        Yield ResultTotal objects.
+
+        Args:
+          stat_ids: a list of ResultStatType ids, as a space-delimited
+            string, or None to yield all of the ResultStatType objects,
+            in order.
+        """
+        for result_stat in self.results_mapping.iter_result_stats(stat_ids):
+            yield self.get_summary_total(stat_id=result_stat.id)
 
 
 class Contest:
@@ -1005,6 +1065,16 @@ class Contest:
 
         return self.results[rg_index]
 
+    def get_rg_summary_totals(self, voting_group=None):
+        """
+        Return the summary totals for a voting group, as a ReportingGroupTotals
+        object.
+        """
+        vg_totals = self.get_vg_summary_totals(voting_group)
+
+        return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping)
+
+    # TODO: remove this in favor of ReportingGroupTotals.get_summary_total().
     def get_summary_total(self, stat_or_choice, voting_group=None):
         """
         Return the summary total for a ResultStatType and VotingGroup object.
@@ -1014,12 +1084,11 @@ class Contest:
           voting_group: a VotingGroup object, or None for the "all" voting
             group.
         """
-        # TODO: check stat_or_choice_index
-        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
+        rg_totals = self.get_rg_summary_totals(voting_group)
 
-        vg_totals = self.get_vg_summary_totals(voting_group)
+        result_total = rg_totals.get_summary_total(stat_or_choice)
 
-        return vg_totals[stat_or_choice_index]
+        return result_total.total
 
     def can_vote_for_multiple(self):
         results_mapping = self.results_mapping
