@@ -74,12 +74,16 @@ def parse_args():
     scriptcommon.add_common_args(parser)
     parser.add_argument('--version', action='version', version='%(prog)s '+VERSION)
     parser.add_argument('-t', dest='test', action='store_true',
-                        help='test mode, print files to expand')
+        help='test mode, print files to expand')
     parser.add_argument('--config-path', '-c', dest='config_path', metavar='PATH',
-                        help='path to the configuration file to use')
+        help='path to the configuration file to use')
+    parser.add_argument('--delete-okay', action='store_true',
+        help=('whether to allow directory deletions without prompting. '
+              'This is useful for example when running ORR in a subprocess, '
+              'when stdout may not be connected to a terminal/tty device.'))
     parser.add_argument('--output-fresh-parent', action='store_true',
-                        help=('require that the output parent not already exist. '
-                              'This is for running inside a Docker container.'))
+        help=('require that the output parent not already exist. '
+              'This is for running inside a Docker container.'))
 
     ns = parser.parse_args()
 
@@ -142,7 +146,37 @@ def get_main_titles(context):
     return (election_title, results_title)
 
 
-def initialize_output_dir(template_dir, output_dir):
+def check_can_delete_directory(output_dir, delete_okay=False):
+    """
+    Raises an exception if the deletion is not permitted.
+    """
+    if delete_okay:
+        return
+
+    prompt = dedent(f"""\
+    Output directory already exists:
+    --> {output_dir.resolve()}
+    Okay to delete (yes/no)?
+    """)
+
+    if not sys.stdout.isatty():
+        error_msg = dedent("""\
+        stdout not connected to a terminal/tty device: unable to prompt user with
+        the following message:
+        >>>
+        {prompt}
+        <<<
+        You may want to consider using the --delete-okay option.
+        """).format(prompt=prompt.rstrip())
+        raise RuntimeError(error_msg)
+
+    _log.info(f'prompting user and waiting for reply.')
+    response = input(prompt)
+    if response != 'yes':
+        raise SystemExit('Not okay to delete: aborting.')
+
+
+def initialize_output_dir(template_dir, output_dir, delete_okay=False):
     """
     Create the output directory, copying static files if necessary.
 
@@ -156,14 +190,8 @@ def initialize_output_dir(template_dir, output_dir):
         return
 
     if output_dir.exists():
-        # TODO: add a command-line option to bypass this prompt.
-        response = input(
-            'Output directory already exists:\n'
-            f'--> {output_dir.resolve()}\n'
-            'Okay to delete (yes/no)?\n'
-        )
-        if response != 'yes':
-            raise SystemExit('Not okay to delete: aborting.')
+        check_can_delete_directory(output_dir, delete_okay=delete_okay)
+
         shutil.rmtree(output_dir)
 
     shutil.copytree(initial_files_dir, output_dir)
@@ -232,7 +260,8 @@ def load_translation_data(template_dir):
 
 def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=None,
     extra_template_dirs=None, output_dir=None, fresh_output=False,
-    test_mode=False, build_time=None, deterministic=None, skip_pdf=False):
+    test_mode=False, build_time=None, deterministic=None, skip_pdf=False,
+    delete_okay=False):
     """
     Args:
       config_path: optional path to the config file, as a string.
@@ -249,6 +278,8 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
         Defaults to `datetime.now()`.
       deterministic: for deterministic PDF generation.  Defaults to False.
       skip_pdf: whether to skip PDF generation.  Defaults to False.
+      delete_okay: whether it's okay to delete directories that the user
+        would otherwise be prompted for.
     """
     if build_time is None:
         build_time = datetime.now()
@@ -303,7 +334,7 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     election_title, results_title = get_main_titles(context)
     context['election_title'] = election_title
 
-    initialize_output_dir(template_dir, output_dir=output_dir)
+    initialize_output_dir(template_dir, output_dir=output_dir, delete_okay=delete_okay)
 
     # TODO: allow different locales to be used (e.g. the system's default
     #  locale and/or a locale passed in via the command-line)?
@@ -332,6 +363,7 @@ def main():
     output_dir = options.output_dir
     deterministic = options.deterministic
     skip_pdf = options.skip_pdf
+    delete_okay = ns.delete_okay
 
     logging.basicConfig(level=log_level)
 
@@ -352,7 +384,7 @@ def main():
         template_dir=template_dir, extra_template_dirs=extra_template_dirs,
         output_dir=output_dir, fresh_output=fresh_output,
         test_mode=test_mode, build_time=build_time,
-        deterministic=deterministic, skip_pdf=skip_pdf,
+        deterministic=deterministic, skip_pdf=skip_pdf, delete_okay=delete_okay,
     )
 
     # TODO: allow suppressing stdout?
