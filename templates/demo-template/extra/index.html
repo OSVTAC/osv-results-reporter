@@ -90,7 +90,7 @@
     </li>
     {% if election.url_state_results %}
     <li>
-      <a href="{{ election.url_state_results }}">CA State results</a> &rArr;
+      <a href="{{ election.url_state_results }}">{{ "hyperlink_text_ca_state_results"|TT }}</a> &rArr;
     </li>
     {% endif %}
   </ul>
@@ -109,7 +109,7 @@
       <td>{{ reg_result.total|format_number }}</td>
     </tr>
     <tr>
-      <td class="text-cell">{{ eligible_result.text|translate }} <span class="note">(estimated)</span></td>
+      <td class="text-cell">{{ eligible_result.text|translate }} <span class="note">({{ "quantity_modifier_estimated"|TT }})</span></td>
       <td>{{ eligible_result.total|format_number }}</td>
     </tr>
   </table>
@@ -139,11 +139,11 @@
         <td colspan="2">&nbsp;</td>
       </tr>
       <tr>
-        <td class="text-cell">Percent of Registered Voters</td>
+        <td class="text-cell">{{ "percent_of_registered_voters"|TT }}</td>
         <td>{{ turnout_result.total|format_percent2(reg_result.total) }}</td>
       </tr>
       <tr>
-        <td class="text-cell">Percent of Eligible Voters <span class="note">(estimated)</span></td>
+        <td class="text-cell">{{ "percent_of_eligible_voters"|TT }} <span class="note">({{ "quantity_modifier_estimated"|TT }})</span></td>
         <td>{{ turnout_result.total|format_percent2(eligible_result.total) }}</td>
       </tr>
     </tbody>
@@ -202,7 +202,7 @@
       {% endif %}
       <a href="{{ rel_output_path }}">[{{ "detailed_results_label"|TT }}]</a>
       {% if contest.url_state_results %}
-        <a href="{{ contest.url_state_results }}">[CA State results &rArr;]</a>
+        <a href="{{ contest.url_state_results }}">[{{ "hyperlink_text_ca_state_results"|TT }} &rArr;]</a>
       {% endif %}
     </p>
     {% set rg_totals = contest.get_rg_summary_totals() %}
@@ -232,7 +232,7 @@
             <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
               <td class="text-cell title">
                 {{- choice.ballot_title|translate -}}
-                {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
+                {%- if choice.is_writein %} <span class="note">({{ "write_in_candidate_modifier"|TT }})</span>{% endif -%}
               </td>
               <td>{{ round.votes|format_number }}</td>
               <td>{{ round.round_num }}</td>
@@ -281,7 +281,7 @@
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice.ballot_title|translate -}}
-              {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
+              {%- if choice.is_writein %} <span class="note">({{ "write_in_candidate_modifier"|TT }})</span>{% endif -%}
             </td>
             {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
             {# Only show the cutoff line for the "yes" choice #}
@@ -297,7 +297,7 @@
           {% set vote_result = rg_totals.get_summary_total(stat_id='RSWri') %}
           {% if vote_result.total %}
             <tr>
-              <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
+              <td class="text-cell title">{{ vote_result.text|translate }} <span class="note">({{ "write_in_modifier_unreviewed"|TT }})</span></td>
               {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
               {{ bar_td(vote_result.total, maxDisplayVote) }}
             </tr>
