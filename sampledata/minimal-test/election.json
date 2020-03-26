@@ -423,7 +423,7 @@
                 "en": "Ballots Cast",
                 "es": "Votos",
                 "tl": "Mga Inihulog na Balota",
-                "zh": "投票"
+                "zh": "投票總數"
             }
         },
         {
@@ -442,7 +442,8 @@
             "heading": "Eligible Voters",
             "text": {
                 "_desc": "RSEli: Label for the number of people eligible to register to vote.",
-                "en": "Eligible Voters"
+                "en": "Eligible Voters",
+                "zh": "有資格投票的選民人數"
             }
         },
         {
@@ -475,7 +476,8 @@
             "heading": "Writein Votes",
             "text": {
                 "_desc": "RSWri: Label for the number of write-in votes",
-                "en": "Write-in Votes"
+                "en": "Write-in Votes",
+                "zh": "信件郵票數"
             }
         },
         {

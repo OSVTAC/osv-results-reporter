@@ -189,7 +189,7 @@ def _get_template_format_translation(context, phrase_id, lang_code):
     return translations[lang_code]
 
 
-def _get_template_translation(context, phrase_id, *params, lang_code=None):
+def _get_template_translation(context, phrase_id, lang_code=None, **params):
     """
     Args:
       params: the format string parameters, if needed.
@@ -198,7 +198,7 @@ def _get_template_translation(context, phrase_id, *params, lang_code=None):
     format_str = _get_template_format_translation(context, phrase_id, lang_code=lang_code)
 
     try:
-        return format_str.format(*params)
+        return format_str.format(**params)
     except Exception:
         raise RuntimeError(format_str, params)
 
@@ -218,7 +218,7 @@ def has_template_translation(context, phrase_id, lang):
 
 
 @contextfilter
-def template_translate(context, phrase_id, *params, lang=None):
+def template_translate(context, phrase_id, lang=None, **params):
     """
     Translate the given phrase into the currently active language.
 
@@ -232,11 +232,11 @@ def template_translate(context, phrase_id, *params, lang=None):
     if lang is None:
         lang = utils.get_language(context)
 
-    translation = _get_template_translation(context, phrase_id, *params, lang_code=lang)
+    translation = _get_template_translation(context, phrase_id, lang_code=lang, **params)
     if translation:
         return translation
 
-    translation = _get_template_translation(context, phrase_id, *params, lang_code=ENGLISH_LANG)
+    translation = _get_template_translation(context, phrase_id, lang_code=ENGLISH_LANG, **params)
 
     # Put brackets around words that are missing a translation,
     # so we can see visually.

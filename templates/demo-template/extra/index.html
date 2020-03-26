@@ -97,7 +97,7 @@
 
   <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
 
-  <h4>{{ "registration_header"|TT }}</h4>
+  <h4>{{ "voter_registration_header"|TT }}</h4>
 
   <table class="table summary-table">
     {% set regStat = election.turnout.get_stat_by_id('RSReg') %}
@@ -114,7 +114,7 @@
     </tr>
   </table>
 
-  <h4>{{ "turnout_header"|TT }}</h4>
+  <h4>{{ "voter_turnout_header"|TT }}</h4>
 
   <p>
     {{ show_precincts_reporting(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
