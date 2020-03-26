@@ -1069,6 +1069,10 @@ class Contest:
         """
         Return the summary totals for a voting group, as a ReportingGroupTotals
         object.
+
+        Args:
+          voting_group: a VotingGroup object, or None for the "all" voting
+            group.
         """
         vg_totals = self.get_vg_summary_totals(voting_group)
 

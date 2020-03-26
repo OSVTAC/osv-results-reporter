@@ -95,57 +95,56 @@
     {% endif %}
   </ul>
 
-  <h3 id="turnout">{{ anchored_header(election.turnout.ballot_title, 'turnout') }}</h3>
+  {% set turnout_contest = election.turnout %}
+  <h3 id="turnout">{{ anchored_header(turnout_contest.ballot_title, 'turnout') }}</h3>
 
   <h4>{{ "voter_registration_header"|TT }}</h4>
 
   <table class="table summary-table">
-    {% set regStat = election.turnout.get_stat_by_id('RSReg') %}
-    {% set eligibleStat = election.turnout.get_stat_by_id('RSEli') %}
-    {% set regCount = election.turnout.get_summary_total(regStat) %}
-    {% set eligibleCount = election.turnout.get_summary_total(eligibleStat) %}
+    {% set turnout_rg_totals = turnout_contest.get_rg_summary_totals() %}
+    {% set reg_result = turnout_rg_totals.get_summary_total(stat_id='RSReg') %}
+    {% set eligible_result = turnout_rg_totals.get_summary_total(stat_id='RSEli') %}
     <tr>
-      <td class="text-cell">{{ regStat.text|translate }}</td>
-      <td>{{ regCount|format_number }}</td>
+      <td class="text-cell">{{ reg_result.text|translate }}</td>
+      <td>{{ reg_result.total|format_number }}</td>
     </tr>
     <tr>
-      <td class="text-cell">{{ eligibleStat.text|translate }} <span class="note">(estimated)</span></td>
-      <td>{{ eligibleCount|format_number }}</td>
+      <td class="text-cell">{{ eligible_result.text|translate }} <span class="note">(estimated)</span></td>
+      <td>{{ eligible_result.total|format_number }}</td>
     </tr>
   </table>
 
   <h4>{{ "voter_turnout_header"|TT }}</h4>
 
   <p>
-    {{ show_precincts_reporting(election.turnout.precincts_reporting, election.turnout.total_precincts) }}
+    {{ show_precincts_reporting(turnout_contest.precincts_reporting, turnout_contest.total_precincts) }}
   </p>
 
   <table class="table summary-table">
-    {% set turnoutStat = election.turnout.get_stat_by_id('RSCst') %}
-    {% set turnoutCount = election.turnout.get_summary_total(turnoutStat) %}
-
-    {% for vg in election.turnout.voting_groups_from_idlist('ED MV') %}
+    {% set turnout_result = turnout_rg_totals.get_summary_total(stat_id='RSCst') %}
+    {% for vg in turnout_contest.voting_groups_from_idlist('ED MV') %}
+      {% set rg_totals = turnout_contest.get_rg_summary_totals(vg) %}
       <tr>
         <td class="text-cell">{{ vg.text|translate }}</td>
-        {% set turnoutSubtotal = election.turnout.get_summary_total(turnoutStat, voting_group=vg) %}
-        {{ subtotal_percent_tds(turnoutSubtotal, turnoutCount) }}
+        {% set subtotal_result = rg_totals.get_summary_total(stat_id='RSCst') %}
+        {{ subtotal_percent_tds(subtotal_result.total, turnout_result.total) }}
       </tr>
     {% endfor %}
     <tbody class="result-stats">
       <tr>
         <td class="text-cell total">Total Turnout</td>
-        {{ subtotal_percent_tds(turnoutCount, turnoutCount) }}
+        {{ subtotal_percent_tds(turnout_result.total, turnout_result.total) }}
       </tr>
       <tr>
         <td colspan="2">&nbsp;</td>
       </tr>
       <tr>
         <td class="text-cell">Percent of Registered Voters</td>
-        <td>{{ turnoutCount|format_percent2(regCount) }}</td>
+        <td>{{ turnout_result.total|format_percent2(reg_result.total) }}</td>
       </tr>
       <tr>
         <td class="text-cell">Percent of Eligible Voters <span class="note">(estimated)</span></td>
-        <td>{{ turnoutCount|format_percent2(eligibleCount) }}</td>
+        <td>{{ turnout_result.total|format_percent2(eligible_result.total) }}</td>
       </tr>
     </tbody>
   </table>
@@ -206,6 +205,7 @@
         <a href="{{ contest.url_state_results }}">[CA State results &rArr;]</a>
       {% endif %}
     </p>
+    {% set rg_totals = contest.get_rg_summary_totals() %}
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
       {% set rcv_results = contest.make_rcv_results("RSTot") %}
@@ -247,10 +247,10 @@
           {% endfor %}
         </tbody>
         <tbody class="result-stats">
-          {% set totalStat = contest.get_stat_by_id('RSTot') %}
+          {% set total_result = rg_totals.get_summary_total(stat_id='RSTot') %}
           <tr>
-            <td class="text-cell">{{ totalStat.text|translate }}</td>
-            <td>{{ contest.get_summary_total(totalStat)|format_number }}</td>
+            <td class="text-cell">{{ total_result.text|translate }}</td>
+            <td>{{ total_result.total|format_number }}</td>
             <td></td>
           </tr>
           {{ show_contest_ballot_stats(contest) }}
@@ -277,30 +277,29 @@
           {% set maxDisplayVote = contest.get_max_vote_total() %}
         {% endif %}
         {% for choice in contest.choices_sorted %}
-          {% set voteTotal = contest.get_summary_total(choice) %}
+          {% set vote_result = rg_totals.get_summary_total(choice) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice.ballot_title|translate -}}
               {%- if choice.is_writein %} <span class="note">(write-in)</span>{% endif -%}
             </td>
-            {{ subtotal_percent_tds(voteTotal, voteDenominator) }}
+            {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
             {# Only show the cutoff line for the "yes" choice #}
             {% if contest.approval_required and choice.is_yes() %}
               {% set line_subtotal = contest.approval_required_fraction * totalVotes %}
             {% else %}
               {% set line_subtotal = 0 %}
             {% endif %}
-            {{ bar_td(voteTotal, maxDisplayVote, line_subtotal=line_subtotal) }}
+            {{ bar_td(vote_result.total, maxDisplayVote, line_subtotal=line_subtotal) }}
           </tr>
         {% endfor %}
         {% if contest.has_stat('RSWri') %}
-          {% set writeinStat = contest.get_stat_by_id('RSWri') %}
-          {% set voteTotal = contest.get_summary_total(writeinStat) %}
-          {% if voteTotal %}
+          {% set vote_result = rg_totals.get_summary_total(stat_id='RSWri') %}
+          {% if vote_result.total %}
             <tr>
               <td class="text-cell title">Write-ins <span class="note">(not yet reviewed)</span></td>
-              {{ subtotal_percent_tds(voteTotal, voteDenominator) }}
-              {{ bar_td(voteTotal, maxDisplayVote) }}
+              {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
+              {{ bar_td(vote_result.total, maxDisplayVote) }}
             </tr>
           {% endif %}
         {% endif %}
