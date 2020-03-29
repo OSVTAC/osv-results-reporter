@@ -723,9 +723,17 @@ class ReportingGroupTotals:
         self.results_mapping = results_mapping
         self.vg_totals = vg_totals
 
+    @property
+    def total_votes(self):
+        """
+        Return the total vote for choices (i.e. "RSTot"), as a ResultTotal object.
+        """
+        return self.get_summary_total(stat_id='RSTot')
+
     def get_summary_total(self, stat_or_choice=None, stat_id=None):
         """
-        Return the summary total for a ResultStatType or Choice object.
+        Return the summary total for a ResultStatType or Choice object,
+        as a ResultTotal object.
 
         Args:
           stat_or_choice: a ResultStatType object or Choice object.
@@ -740,6 +748,26 @@ class ReportingGroupTotals:
         total = self.vg_totals[stat_or_choice_index]
 
         return ResultTotal(stat_or_choice, total=total)
+
+    # TODO: switch to using "votes_allowed", etc.
+    def can_vote_for_multiple(self):
+        stat_indices = self.results_mapping.get_indexes_by_id_list('RSTot RSUnd RSOvr RSCst')
+
+        *subtotals, total_cast = (self.vg_totals[i] for i in stat_indices)
+
+        # Total votes plus undervotes plus overvotes equals "Ballots cast"
+        # only if it's vote-for-1 as opposed to vote-for-N with N > 1.
+        return sum(subtotals) != total_cast
+
+    def get_voted_ballots(self):
+        """
+        Return a ResultTotal object.
+        """
+        if self.can_vote_for_multiple():
+            # Then use "Ballots cast" as the denominator.
+            return self.get_summary_total(stat_id='RSCst')
+
+        return self.total_votes
 
     def iter_result_totals(self, stat_ids):
         """
@@ -920,15 +948,6 @@ class Contest:
           return self.get_summary_total(c)
 
         yield from sorted(self.choices, reverse=True, key=sorter)
-
-    @property
-    def total_votes(self):
-        """
-        Return the total vote for choices (i.e. "RSTot").
-        """
-        total_stat = self.get_stat_by_id('RSTot')
-
-        return self.get_summary_total(total_stat)
 
     def get_choice_index(self, choice):
         """
@@ -1111,27 +1130,6 @@ class Contest:
         result_total = rg_totals.get_summary_total(stat_or_choice)
 
         return result_total.total
-
-    def can_vote_for_multiple(self):
-        results_mapping = self.results_mapping
-        stat_indices = results_mapping.get_indexes_by_id_list('RSTot RSUnd RSOvr RSCst')
-
-        vg_totals = self.get_vg_summary_totals()
-
-        *subtotals, total_cast = (vg_totals[i] for i in stat_indices)
-
-        # Total votes plus undervotes plus overvotes equals "Ballots cast"
-        # only if it's vote-for-1 as opposed to vote-for-N with N > 1.
-        return sum(subtotals) != total_cast
-
-    def get_voted_ballots(self):
-        if not self.can_vote_for_multiple():
-            return self.total_votes
-
-        # Then use "Ballots cast" as the denominator.
-        total_stat = self.get_stat_by_id('RSCst')
-
-        return self.get_summary_total(total_stat)
 
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')

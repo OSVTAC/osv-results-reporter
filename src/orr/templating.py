@@ -193,8 +193,9 @@ def _get_template_format_translation(context, phrase_id, lang_code):
     phrases_data = context['phrases_data']
     translations = phrases_data.get(phrase_id, None)
     if translations==None:
-        _log.warning(f"Invalid Translation phrase_id '{phrase_id}'")
-        return(phrase_id)
+        msg = f'phrase_id not found: {phrase_id!r}'
+        _log.warning(msg)
+        return phrase_id
 
     return translations[lang_code]
 

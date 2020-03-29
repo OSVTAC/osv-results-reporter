@@ -49,18 +49,23 @@
   <tr>
     <td colspan="3">&nbsp;</td>
   </tr>
-  {% set votedBallots = contest.get_voted_ballots() %}
   {% set rg_totals = contest.get_rg_summary_totals() %}
   {% set cast_result = rg_totals.get_summary_total(stat_id='RSCst') %}
-  {% set canVoteForMultiple = contest.can_vote_for_multiple() %}
+  {% set canVoteForMultiple = rg_totals.can_vote_for_multiple() %}
   {% if canVoteForMultiple %}
     {# TODO: show "Blank Ballots" once we add it to the input data. -#}
     {% set stat_ids = 'RSOvr RSCst' %}
   {% else %}
     {% set stat_ids = 'RSUnd RSOvr RSCst' %}
+    {% set voted_ballots = rg_totals.get_voted_ballots() %}
     <tr>
-      <td class="text-cell">Voted Ballots</td>
-      {{ subtotal_percent_tds(votedBallots, cast_result.total) }}
+      {#-
+         We hard-code different language here ("Voted Ballots" instead of
+         "Total Votes") because we're in the ballots subsection of the
+         totals rather than the votes subsection.
+      -#}
+      <td class="text-cell">{{ "category_ballots_voted"|TT }}</td>
+      {{ subtotal_percent_tds(voted_ballots.total, cast_result.total) }}
     </tr>
   {% endif %}
   {% for result_total in rg_totals.iter_result_totals(stat_ids) %}
@@ -206,6 +211,7 @@
       {% endif %}
     </p>
     {% set rg_totals = contest.get_rg_summary_totals() %}
+    {% set total_result = rg_totals.total_votes %}
     {% if contest.is_rcv %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
       {% set rcv_results = contest.make_rcv_results("RSTot") %}
@@ -247,7 +253,6 @@
           {% endfor %}
         </tbody>
         <tbody class="result-stats">
-          {% set total_result = rg_totals.get_summary_total(stat_id='RSTot') %}
           <tr>
             <td class="text-cell">{{ total_result|translate }}</td>
             <td>{{ total_result.total|format_number }}</td>
@@ -257,10 +262,10 @@
         </tbody>
       </table>
     {% else %}
-    {% set totalVotes = contest.total_votes %}
-    {% set votedBallots = contest.get_voted_ballots() %}
-    {% set canVoteForMultiple = contest.can_vote_for_multiple() %}
-    {% set voteDenominator = votedBallots %}
+    {% set totalVotes = total_result.total %}
+    {% set voted_ballots = rg_totals.get_voted_ballots() %}
+    {% set canVoteForMultiple = rg_totals.can_vote_for_multiple() %}
+    {% set voteDenominator = voted_ballots.total %}
     <table class="table summary-table">
       <thead>
         <tr>
@@ -311,7 +316,7 @@
             {# TODO: make this "Voted Ballots" when we have that data. #}
             <td class="text-cell">{{ castStat|translate }}</td>
             {# This percent should be 100%. #}
-            {{ subtotal_percent_tds(votedBallots, voteDenominator) }}
+            {{ subtotal_percent_tds(voted_ballots.total, voteDenominator) }}
           </tr>
           {# Don't show a percent column in this case. #}
           {% set totalVotesDenominator = None %}
