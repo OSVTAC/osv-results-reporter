@@ -25,7 +25,7 @@
   <div class="nav-group">
     <div class="nav-group-header">
       <a href="{{ header.ballot_title|to_element_id|to_fragment }}">
-        {{ header.ballot_title|translate }}
+        {{ header|translate }}
       </a>
     </div>
     <div class="nav-group-items">
@@ -65,7 +65,7 @@
   {% endif %}
   {% for result_total in rg_totals.iter_result_totals(stat_ids) %}
     <tr>
-      <td class="text-cell">{{ result_total.text|translate }}</td>
+      <td class="text-cell">{{ result_total|translate }}</td>
       {{ subtotal_percent_tds(result_total.total, cast_result.total) }}
     </tr>
   {% endfor %}
@@ -105,11 +105,11 @@
     {% set reg_result = turnout_rg_totals.get_summary_total(stat_id='RSReg') %}
     {% set eligible_result = turnout_rg_totals.get_summary_total(stat_id='RSEli') %}
     <tr>
-      <td class="text-cell">{{ reg_result.text|translate }}</td>
+      <td class="text-cell">{{ reg_result|translate }}</td>
       <td>{{ reg_result.total|format_number }}</td>
     </tr>
     <tr>
-      <td class="text-cell">{{ eligible_result.text|translate }} <span class="note">({{ "quantity_modifier_estimated"|TT }})</span></td>
+      <td class="text-cell">{{ eligible_result|translate }} <span class="note">({{ "quantity_modifier_estimated"|TT }})</span></td>
       <td>{{ eligible_result.total|format_number }}</td>
     </tr>
   </table>
@@ -125,7 +125,7 @@
     {% for vg in turnout_contest.voting_groups_from_idlist('ED MV') %}
       {% set rg_totals = turnout_contest.get_rg_summary_totals(vg) %}
       <tr>
-        <td class="text-cell">{{ vg.text|translate }}</td>
+        <td class="text-cell">{{ vg|translate }}</td>
         {% set subtotal_result = rg_totals.get_summary_total(stat_id='RSCst') %}
         {{ subtotal_percent_tds(subtotal_result.total, turnout_result.total) }}
       </tr>
@@ -231,7 +231,7 @@
           {% for choice, round in rcv_results.rcv_summary() %}
             <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
               <td class="text-cell title">
-                {{- choice.ballot_title|translate -}}
+                {{- choice|translate -}}
                 {%- if choice.is_writein %} <span class="note">({{ "write_in_candidate_modifier"|TT }})</span>{% endif -%}
               </td>
               <td>{{ round.votes|format_number }}</td>
@@ -249,7 +249,7 @@
         <tbody class="result-stats">
           {% set total_result = rg_totals.get_summary_total(stat_id='RSTot') %}
           <tr>
-            <td class="text-cell">{{ total_result.text|translate }}</td>
+            <td class="text-cell">{{ total_result|translate }}</td>
             <td>{{ total_result.total|format_number }}</td>
             <td></td>
           </tr>
@@ -280,7 +280,7 @@
           {% set vote_result = rg_totals.get_summary_total(choice) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
-              {{- choice.ballot_title|translate -}}
+              {{- choice|translate -}}
               {%- if choice.is_writein %} <span class="note">({{ "write_in_candidate_modifier"|TT }})</span>{% endif -%}
             </td>
             {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
@@ -297,7 +297,7 @@
           {% set vote_result = rg_totals.get_summary_total(stat_id='RSWri') %}
           {% if vote_result.total %}
             <tr>
-              <td class="text-cell title">{{ vote_result.text|translate }} <span class="note">({{ "write_in_modifier_unreviewed"|TT }})</span></td>
+              <td class="text-cell title">{{ vote_result|translate }} <span class="note">({{ "write_in_modifier_unreviewed"|TT }})</span></td>
               {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
               {{ bar_td(vote_result.total, maxDisplayVote) }}
             </tr>
@@ -309,7 +309,7 @@
           <tr>
             {% set castStat = contest.get_stat_by_id('RSCst') %}
             {# TODO: make this "Voted Ballots" when we have that data. #}
-            <td class="text-cell">{{ castStat.text|translate }}</td>
+            <td class="text-cell">{{ castStat|translate }}</td>
             {# This percent should be 100%. #}
             {{ subtotal_percent_tds(votedBallots, voteDenominator) }}
           </tr>
@@ -320,7 +320,7 @@
         {% endif %}
         {% set totalStat = contest.get_stat_by_id('RSTot') %}
         <tr>
-          <td class="text-cell">{{ totalStat.text|translate }}</td>
+          <td class="text-cell">{{ totalStat|translate }}</td>
           {# This percent should be 100% when N=1. #}
           {{ subtotal_percent_tds(totalVotes, total=totalVotesDenominator) }}
         </tr>

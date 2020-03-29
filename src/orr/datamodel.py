@@ -150,6 +150,9 @@ class VotingGroup:
       heading:
     """
 
+    # This attribute says which property contains the translations.
+    __i18n_attr__ = 'text'
+
     def __init__(self, id_=None, heading=None):
         self.id = id_
         # TODO: remove self.heading.
@@ -182,6 +185,9 @@ class ResultStatType:
       heading:
       is_percent:
     """
+
+    # This attribute says which property contains the translations.
+    __i18n_attr__ = 'text'
 
     def __init__(self, _id=None, heading=None):
         self.id = _id
@@ -458,6 +464,9 @@ class Header:
       parent_header: the parent header of the item, as a Header object.
     """
 
+    # This attribute says which property contains the translations.
+    __i18n_attr__ = 'ballot_title'
+
     def __init__(self):
         self.ballot_title = None
         self.ballot_items = []
@@ -490,6 +499,9 @@ class Choice:
       is_successful: boolean indicating whether the choice was successful
         (e.g. elected, advanced to runoff, met the initiative threshold, etc).
     """
+
+    # This attribute says which property contains the translations.
+    __i18n_attr__ = 'ballot_title'
 
     def __init__(self, contest=None):
         self.id = None
@@ -682,9 +694,15 @@ class ResultsMapping:
 
 class ResultTotal:
 
+    # This attribute says which property contains the translations.
+    __i18n_attr__ = 'text'
+
     def __init__(self, stat_or_choice, total):
         self.stat_or_choice = stat_or_choice
         self.total = total
+
+    def __repr__(self):
+        return f'<ResultTotal object: {self.stat_or_choice!r}>'
 
     @property
     def text(self):

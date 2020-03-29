@@ -44,6 +44,16 @@ from orr.writers.xlsxwriting import XLSXBook
 _log = logging.getLogger(__name__)
 
 
+def check_defined(value):
+    """
+    Ensure the value is not "undefined".
+
+    Raises an exception if the value is a jinja2.Undefined object.
+    """
+    if type(value) == Undefined:
+        raise RuntimeError('value has type jinja2.Undefined')
+
+
 @environmentfilter
 def output_file_uri(env, rel_path):
     """
@@ -251,20 +261,36 @@ def translate(context, value, lang=None):
     if lang is None:
         lang = utils.get_language(context)
 
+    check_defined(value)
+
+    if hasattr(value, '__i18n_attr__'):
+        attr_name = value.__i18n_attr__
+        try:
+            value = getattr(value, attr_name)
+        except AttributeError:
+            msg = f'i18n attribute {attr_name!r} missing from object: {value}'
+            # Use `from None` since the new exception provides strictly
+            # more information than the previous.
+            raise RuntimeError(msg) from None
+
     if type(value) == dict:
-        return choose_translation(value, lang)
+        return choose_translation(value, lang=lang)
 
     if isinstance(value, SubstitutionString):
         data = tuple(translate(context, part, lang=lang) for part in value.data)
         return value.format_string.format(*data)
 
     # Then assume the value is the key for a translation.
+    # TODO: remove the rest of this function now that we have translations.json?
     try:
         all_trans = context['translations']
     except KeyError:
         raise RuntimeError(f'"translations" missing while translating: {value}')
 
-    translations = all_trans[value]
+    try:
+        translations = all_trans[value]
+    except KeyError:
+        raise RuntimeError(f'key missing from translations: {type(value)} {value!r}')
 
     return choose_translation(translations, lang)
 
@@ -458,6 +484,7 @@ def create_xlsx(env, rel_path, contests):
 
     return rel_path
 
+
 @environmentfunction
 def create_pdf(env, rel_path, contests, title=None, translate=None):
     """
@@ -478,8 +505,7 @@ def create_pdf(env, rel_path, contests, title=None, translate=None):
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
     """
-    if type(contests) == Undefined:
-        raise RuntimeError('contests argument is undefined')
+    check_defined(contests)
 
     options = env.globals['options']
     if options.skip_pdf:

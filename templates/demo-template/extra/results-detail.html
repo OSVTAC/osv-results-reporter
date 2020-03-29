@@ -16,9 +16,9 @@
       {# First display any headers, if there are new headers. #}
       {% for level, header in headers %}
         {% if level == 1 %}
-          <h3>{{ header.ballot_title|translate }}</h3>
+          <h3>{{ header|translate }}</h3>
         {% else %}
-          <h4>{{ header.ballot_title|translate }}</h4>
+          <h4>{{ header|translate }}</h4>
         {% endif %}
       {% endfor %}
     <p>{{ contest.contest_name|translate }}
