@@ -940,12 +940,14 @@ class Contest:
         """
         Return the list of choices in descending order of total votes
         """
+        rg_totals = self.get_rg_summary_totals()
         def sorter(c):
-          if self.approval_required:
-            # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
-            return 1 if c.is_yes() else 0
-          # For other contests, sort by vote total
-          return self.get_summary_total(c)
+            if self.approval_required:
+                # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
+                return 1 if c.is_yes() else 0
+
+            # For other contests, sort by vote total
+            return rg_totals.get_summary_total(c).total
 
         yield from sorted(self.choices, reverse=True, key=sorter)
 
@@ -1114,22 +1116,6 @@ class Contest:
         vg_totals = self.get_vg_summary_totals(voting_group)
 
         return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping)
-
-    # TODO: remove this in favor of ReportingGroupTotals.get_summary_total().
-    def get_summary_total(self, stat_or_choice, voting_group=None):
-        """
-        Return the summary total for a ResultStatType and VotingGroup object.
-
-        Args:
-          stat_or_choice: a ResultStatType object or Choice object.
-          voting_group: a VotingGroup object, or None for the "all" voting
-            group.
-        """
-        rg_totals = self.get_rg_summary_totals(voting_group)
-
-        result_total = rg_totals.get_summary_total(stat_or_choice)
-
-        return result_total.total
 
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')
