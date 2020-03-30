@@ -96,9 +96,8 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
         phrases_data=phrases,
     )
 
+    translate_phrase = contextfilter(functools.partial(templating.translate_phrase, phrases=phrases))
     translate = contextfilter(functools.partial(templating.translate, phrases=phrases))
-    template_translate = contextfilter(functools.partial(templating.template_translate, phrases=phrases))
-    has_translation = functools.partial(templating.has_template_translation, phrases)
 
     filters = dict(
         output_file_uri=templating.output_file_uri,
@@ -107,10 +106,9 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
         format_datetime=templating.format_datetime,
         secure_hash=templating.secure_hash,
         lang_to_phrase_id=templating.lang_to_phrase_id,
-        # Using a double T ("TT") makes it easier to search and find
-        # all usages in our template code.
-        TT=template_translate,
-        has_TT=has_translation,
+        # Using "TP" makes it easier to find all usages in our template code.
+        TP=translate_phrase,
+        # TODO: rename to "TO" (translate object).
         translate=translate,
         default_contest_path=templating.default_contest_path,
         format_number=utils.format_number,

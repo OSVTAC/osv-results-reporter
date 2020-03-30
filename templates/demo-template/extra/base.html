@@ -22,8 +22,8 @@
       </p>
     {% endif %}
     <p>
-      {{ "switch_language"|TT -}}
-      {%- if options.lang != "en" %} ({{ "switch_language"|TT(lang="en") }})
+      {{ "switch_language"|TP -}}
+      {%- if options.lang != "en" %} ({{ "switch_language"|TP(lang="en") }})
       {%- endif -%}:
     {% for lang in languages %}
       {% with lang_phrase_id=lang|lang_to_phrase_id %}
@@ -33,8 +33,8 @@
               Show the name of the current language in the current language,
               and in English in parentheses (if not already English).
             -#}
-            {{- lang_phrase_id|TT -}}
-            {%- if lang != "en" %} ({{ lang_phrase_id|TT(lang="en") }}){%- endif -%}
+            {{- lang_phrase_id|TP -}}
+            {%- if lang != "en" %} ({{ lang_phrase_id|TP(lang="en") }}){%- endif -%}
           </strong>
         {%- else -%}
           <a href="{{ current_page_link(lang) }}">
@@ -42,7 +42,7 @@
               Show other languages in the other language, and in the
               current language in parentheses.
             -#}
-            {{- lang_phrase_id|TT(lang=lang) }} ({{ lang_phrase_id|TT }})</a>
+            {{- lang_phrase_id|TP(lang=lang) }} ({{ lang_phrase_id|TP }})</a>
         {%- endif -%}
         {%- if not loop.last %} |{% endif %}
 
@@ -50,7 +50,7 @@
     {% endfor %}
     </p>
     <p>
-      {{ "last_updated"|TT }}: {{ build_time|format_datetime }}
+      {{ "last_updated"|TP }}: {{ build_time|format_datetime }}
     </p>
     {# The line below inserts the string from the "title" block above. #}
     <h2>{{ self.title() }}</h2>

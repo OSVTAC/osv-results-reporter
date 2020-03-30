@@ -228,24 +228,8 @@ def _get_template_translation(phrases, phrase_id, lang=None, **params):
         raise RuntimeError(format_str, params)
 
 
-def has_template_translation(phrases, phrase_id, lang):
-    """
-    Return whether the given phrase has a translation into the given
-    (non-English) language.
-
-    Args:
-      phrases: the dict of all phrases (keyed by phrase id).
-    """
-    if lang == ENGLISH_LANG:
-        # Don't consider English a translation as we're only interested
-        # in non-English translations.
-        return False
-
-    return bool(_get_template_format_translation(phrases, phrase_id, lang=lang))
-
-
 # We apply the contextfilter decorator to this function elsewhere in our code.
-def template_translate(context, phrase_id, lang=None, phrases=None, **params):
+def translate_phrase(context, phrase_id, lang=None, phrases=None, **params):
     """
     Translate the given phrase into the currently active language.
 
@@ -263,20 +247,13 @@ def template_translate(context, phrase_id, lang=None, phrases=None, **params):
     translation = _get_template_translation(phrases, phrase_id=phrase_id,
         lang=lang, **params)
 
-    if not translation:
-        # Then the translation value is the empty string, which means
-        # it's missing.
-        translation = _get_template_translation(phrases, phrase_id=phrase_id,
-            lang=ENGLISH_LANG, **params)
-
-        # Put brackets around words that are missing a translation,
-        # so we can see visually.
-        return f'[{translation}]'
+    assert translation
 
     return translation
 
 
 # We apply the contextfilter decorator to this function elsewhere in our code.
+# TODO: rename this to `translate_object`.
 def translate(context, value, lang=None, phrases=None):
     """
     Return the translation using the currently set language.
