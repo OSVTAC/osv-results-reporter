@@ -159,17 +159,6 @@ def make_translation(languages, make_text):
     return {lang: make_text(lang) for lang in languages}
 
 
-def choose_translation(translations, lang):
-    try:
-        text = translations[lang]
-    except KeyError:
-        # Then default to English.
-        _log.warning(f'missing {lang!r} translation: {translations}')
-        text = translations[ENGLISH_LANG]
-
-    return text
-
-
 @contextfilter
 def lang_to_phrase_id(context, lang_code):
     """
@@ -181,13 +170,36 @@ def lang_to_phrase_id(context, lang_code):
     return language_data['phrase_id']
 
 
-def _get_template_format_translation(phrases, phrase_id, lang_code):
+def choose_translation(translations, lang):
+    if lang not in translations:
+        # Then English should be used.
+        lang = ENGLISH_LANG
+
+    # TODO: provide a good error message if a KeyError occurs.
+    text = translations[lang]
+    if not text:
+        msg = f'empty {lang!r} translation for: {translations}'
+        if lang == ENGLISH_LANG:
+            # Raise an exception since English is required.
+            raise RuntimeError(msg)
+
+        _log.warning(msg)
+        # Use English as a fallback, and put brackets around it so we
+        # can see the missing translation in the rendered form.
+        # TODO: provide a good error message if a KeyError occurs below.
+        text = translations[ENGLISH_LANG]
+        text = f'[{text}]'
+
+    return text
+
+
+def _get_template_format_translation(phrases, phrase_id, lang):
     """
     Return a phrase translation, without inserting replacement field values.
 
     Args:
       phrases: the dict of all phrases (keyed by phrase id).
-      lang_code: a 2-letter language code.
+      lang: a 2-letter language code.
 
     The return value can be either a format string, or a simple string
     with no replacement fields.
@@ -198,17 +210,17 @@ def _get_template_format_translation(phrases, phrase_id, lang_code):
         _log.warning(msg)
         return phrase_id
 
-    return translations[lang_code]
+    return choose_translation(translations, lang=lang)
 
 
-def _get_template_translation(phrases, phrase_id, lang_code=None, **params):
+def _get_template_translation(phrases, phrase_id, lang=None, **params):
     """
     Args:
       phrases: the dict of all phrases (keyed by phrase id).
       params: the format string parameters, if needed.
-      lang_code: a 2-letter language code.
+      lang: a 2-letter language code.
     """
-    format_str = _get_template_format_translation(phrases, phrase_id, lang_code=lang_code)
+    format_str = _get_template_format_translation(phrases, phrase_id, lang=lang)
 
     try:
         return format_str.format(**params)
@@ -229,7 +241,7 @@ def has_template_translation(phrases, phrase_id, lang):
         # in non-English translations.
         return False
 
-    return bool(_get_template_format_translation(phrases, phrase_id, lang_code=lang))
+    return bool(_get_template_format_translation(phrases, phrase_id, lang=lang))
 
 
 # We apply the contextfilter decorator to this function elsewhere in our code.
@@ -249,13 +261,13 @@ def template_translate(context, phrase_id, lang=None, phrases=None, **params):
         lang = utils.get_language(context)
 
     translation = _get_template_translation(phrases, phrase_id=phrase_id,
-        lang_code=lang, **params)
+        lang=lang, **params)
 
     if not translation:
         # Then the translation value is the empty string, which means
         # it's missing.
         translation = _get_template_translation(phrases, phrase_id=phrase_id,
-            lang_code=ENGLISH_LANG, **params)
+            lang=ENGLISH_LANG, **params)
 
         # Put brackets around words that are missing a translation,
         # so we can see visually.
@@ -287,20 +299,11 @@ def translate(context, value, lang=None, phrases=None):
             # more information than the previous.
             raise RuntimeError(msg) from None
 
-    if type(value) == dict:
-        return choose_translation(value, lang=lang)
-
     if isinstance(value, SubstitutionString):
         data = tuple(translate(context, part, lang=lang) for part in value.data)
         return value.format_string.format(*data)
 
-    # TODO: remove the rest of this function now that we have translations.json?
-    try:
-        translations = phrases[value]
-    except KeyError:
-        raise RuntimeError(f'key missing from translations: {type(value)} {value!r}')
-
-    return choose_translation(translations, lang)
+    return choose_translation(value, lang=lang)
 
 
 @contextfilter
