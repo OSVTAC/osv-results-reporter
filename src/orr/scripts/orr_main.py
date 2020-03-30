@@ -125,9 +125,12 @@ def load_input(data, path):
     _log.info(f'loaded data from {path}')
 
 
-def get_main_titles(context):
+def get_main_titles(context, phrases):
     """
     Create or get, and return: (election_title, results_title).
+
+    Args:
+      phrases: the dict of all phrases (keyed by phrase id).
     """
     election = context['election']
     languages = context['languages']
@@ -135,8 +138,8 @@ def get_main_titles(context):
     def make_text(lang):
         return '{} - {} - {}'.format(
             templating.format_date(context, election.date, lang=lang),
-            templating.translate(context, election.ballot_title, lang=lang),
-            templating.translate(context, election.election_area, lang=lang),
+            templating.translate(context, election.ballot_title, lang=lang, phrases=phrases),
+            templating.translate(context, election.election_area, lang=lang, phrases=phrases),
         )
 
     election_title = templating.make_translation(languages, make_text=make_text)
@@ -331,7 +334,8 @@ def run(config_path=None, input_dir=None, input_results_dir=None, template_dir=N
     context = dataloading.load_context(input_dir, input_results_dir=input_results_dir,
                                 build_time=build_time)
 
-    election_title, results_title = get_main_titles(context)
+    phrases = env.globals['phrases_data']
+    election_title, results_title = get_main_titles(context, phrases=phrases)
     context['election_title'] = election_title
 
     initialize_output_dir(template_dir, output_dir=output_dir, delete_okay=delete_okay)

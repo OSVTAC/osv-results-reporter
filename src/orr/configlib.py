@@ -23,6 +23,7 @@
 Contains functions to help configure ORR.
 """
 
+import functools
 from pathlib import Path
 
 import jinja2
@@ -95,6 +96,10 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
         phrases_data=phrases,
     )
 
+    translate = contextfilter(functools.partial(templating.translate, phrases=phrases))
+    template_translate = contextfilter(functools.partial(templating.template_translate, phrases=phrases))
+    has_translation = functools.partial(templating.has_template_translation, phrases)
+
     filters = dict(
         output_file_uri=templating.output_file_uri,
         format_date=templating.format_date,
@@ -104,10 +109,9 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
         lang_to_phrase_id=templating.lang_to_phrase_id,
         # Using a double T ("TT") makes it easier to search and find
         # all usages in our template code.
-        TT=templating.template_translate,
-        has_TT=templating.has_template_translation,
-        # TODO: rename "translate" to a different 2-letter acronym.
-        translate=templating.translate,
+        TT=template_translate,
+        has_TT=has_translation,
+        translate=translate,
         default_contest_path=templating.default_contest_path,
         format_number=utils.format_number,
         compute_fraction=utils.compute_fraction,

@@ -180,18 +180,19 @@ def lang_to_phrase_id(context, lang_code):
 
     return language_data['phrase_id']
 
-def _get_template_format_translation(context, phrase_id, lang_code):
+
+def _get_template_format_translation(phrases, phrase_id, lang_code):
     """
     Return a phrase translation, without inserting replacement field values.
 
     Args:
+      phrases: the dict of all phrases (keyed by phrase id).
       lang_code: a 2-letter language code.
 
     The return value can be either a format string, or a simple string
     with no replacement fields.
     """
-    phrases_data = context['phrases_data']
-    translations = phrases_data.get(phrase_id, None)
+    translations = phrases.get(phrase_id, None)
     if translations==None:
         msg = f'phrase_id not found: {phrase_id!r}'
         _log.warning(msg)
@@ -200,13 +201,14 @@ def _get_template_format_translation(context, phrase_id, lang_code):
     return translations[lang_code]
 
 
-def _get_template_translation(context, phrase_id, lang_code=None, **params):
+def _get_template_translation(phrases, phrase_id, lang_code=None, **params):
     """
     Args:
+      phrases: the dict of all phrases (keyed by phrase id).
       params: the format string parameters, if needed.
       lang_code: a 2-letter language code.
     """
-    format_str = _get_template_format_translation(context, phrase_id, lang_code=lang_code)
+    format_str = _get_template_format_translation(phrases, phrase_id, lang_code=lang_code)
 
     try:
         return format_str.format(**params)
@@ -214,26 +216,29 @@ def _get_template_translation(context, phrase_id, lang_code=None, **params):
         raise RuntimeError(format_str, params)
 
 
-@contextfilter
-def has_template_translation(context, phrase_id, lang):
+def has_template_translation(phrases, phrase_id, lang):
     """
     Return whether the given phrase has a translation into the given
     (non-English) language.
+
+    Args:
+      phrases: the dict of all phrases (keyed by phrase id).
     """
     if lang == ENGLISH_LANG:
         # Don't consider English a translation as we're only interested
         # in non-English translations.
         return False
 
-    return bool(_get_template_format_translation(context, phrase_id, lang_code=lang))
+    return bool(_get_template_format_translation(phrases, phrase_id, lang_code=lang))
 
 
-@contextfilter
-def template_translate(context, phrase_id, lang=None, **params):
+# We apply the contextfilter decorator to this function elsewhere in our code.
+def template_translate(context, phrase_id, lang=None, phrases=None, **params):
     """
     Translate the given phrase into the currently active language.
 
     Args:
+      phrases: the dict of all phrases (keyed by phrase id).
       params: the format string parameters, if needed.
 
     The currently active language is read from the context, and the
@@ -243,21 +248,29 @@ def template_translate(context, phrase_id, lang=None, **params):
     if lang is None:
         lang = utils.get_language(context)
 
-    translation = _get_template_translation(context, phrase_id, lang_code=lang, **params)
-    if translation:
-        return translation
+    translation = _get_template_translation(phrases, phrase_id=phrase_id,
+        lang_code=lang, **params)
 
-    translation = _get_template_translation(context, phrase_id, lang_code=ENGLISH_LANG, **params)
+    if not translation:
+        # Then the translation value is the empty string, which means
+        # it's missing.
+        translation = _get_template_translation(phrases, phrase_id=phrase_id,
+            lang_code=ENGLISH_LANG, **params)
 
-    # Put brackets around words that are missing a translation,
-    # so we can see visually.
-    return f'[{translation}]'
+        # Put brackets around words that are missing a translation,
+        # so we can see visually.
+        return f'[{translation}]'
+
+    return translation
 
 
-@contextfilter
-def translate(context, value, lang=None):
+# We apply the contextfilter decorator to this function elsewhere in our code.
+def translate(context, value, lang=None, phrases=None):
     """
     Return the translation using the currently set language.
+
+    Args:
+      phrases: the dict of all phrases (keyed by phrase id).
     """
     if lang is None:
         lang = utils.get_language(context)
@@ -281,15 +294,9 @@ def translate(context, value, lang=None):
         data = tuple(translate(context, part, lang=lang) for part in value.data)
         return value.format_string.format(*data)
 
-    # Then assume the value is the key for a translation.
     # TODO: remove the rest of this function now that we have translations.json?
     try:
-        all_trans = context['translations']
-    except KeyError:
-        raise RuntimeError(f'"translations" missing while translating: {value}')
-
-    try:
-        translations = all_trans[value]
+        translations = phrases[value]
     except KeyError:
         raise RuntimeError(f'key missing from translations: {type(value)} {value!r}')
 
