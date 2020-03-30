@@ -138,8 +138,8 @@ def get_main_titles(context, phrases):
     def make_text(lang):
         return '{} - {} - {}'.format(
             templating.format_date(context, election.date, lang=lang),
-            templating.translate(context, election.ballot_title, lang=lang, phrases=phrases),
-            templating.translate(context, election.election_area, lang=lang, phrases=phrases),
+            templating.translate_data(context, election.ballot_title, lang=lang),
+            templating.translate_data(context, election.election_area, lang=lang),
         )
 
     election_title = templating.make_translation(languages, make_text=make_text)

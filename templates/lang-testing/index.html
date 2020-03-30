@@ -5,7 +5,7 @@ Office
   {% with %}
     {% set options.lang = lang %}
     {% set rel_path_template = "detail.html" %}
-    <li><a href="{{ rel_path_template }}">{{ i8n_office|translate }}</a> ({{ lang }})</li>
+    <li><a href="{{ rel_path_template }}">{{ i8n_office|TD }}</a> ({{ lang }})</li>
     {% do subtemplate('detail.html') %}
   {% endwith %}
 {% endfor %}

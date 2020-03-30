@@ -16,8 +16,8 @@ div.contests {width:500px}
 </style>
 </head>
 <body>
-  <h1>{{ election.election_area|translate }}
-    - {{ election.ballot_title|translate }}
+  <h1>{{ election.election_area|TD }}
+    - {{ election.ballot_title|TD }}
     - {{ election.date|format_date }}</h1>
   <div class='contests'>
     {% for bi in election.ballot_items %}

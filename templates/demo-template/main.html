@@ -23,7 +23,7 @@
 {% with base_name='sov' %}
   {% set options.lang = "en" %}
   {% set translator = make_translator() %}
-  {% with output_path=create_pdf(base_name, election.contests, title=report_title, translate=translator) %}
+  {% with output_path=create_pdf(base_name, election.contests, title=report_title, translator=translator) %}
     <li><a href="{{ output_path }}">{{ output_path }}</a></li>
   {% endwith %}
 {% endwith %}

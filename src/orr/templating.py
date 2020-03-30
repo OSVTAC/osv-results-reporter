@@ -213,12 +213,12 @@ def _get_template_format_translation(phrases, phrase_id, lang):
     return choose_translation(translations, lang=lang)
 
 
-def _get_template_translation(phrases, phrase_id, lang=None, **params):
+def _get_template_translation(phrases, phrase_id, lang, **params):
     """
     Args:
       phrases: the dict of all phrases (keyed by phrase id).
-      params: the format string parameters, if needed.
       lang: a 2-letter language code.
+      params: the format string parameters, if needed.
     """
     format_str = _get_template_format_translation(phrases, phrase_id, lang=lang)
 
@@ -234,6 +234,8 @@ def translate_phrase(context, phrase_id, lang=None, phrases=None, **params):
     Translate the given phrase into the currently active language.
 
     Args:
+      lang: an optional 2-letter language code.  Defaults to the context's
+        current language.
       phrases: the dict of all phrases (keyed by phrase id).
       params: the format string parameters, if needed.
 
@@ -252,14 +254,15 @@ def translate_phrase(context, phrase_id, lang=None, phrases=None, **params):
     return translation
 
 
-# We apply the contextfilter decorator to this function elsewhere in our code.
-# TODO: rename this to `translate_object`.
-def translate(context, value, lang=None, phrases=None):
+@contextfilter
+def translate_data(context, value, lang=None):
     """
     Return the translation using the currently set language.
 
     Args:
       phrases: the dict of all phrases (keyed by phrase id).
+      lang: an optional 2-letter language code.  Defaults to the context's
+        current language.
     """
     if lang is None:
         lang = utils.get_language(context)
@@ -277,7 +280,9 @@ def translate(context, value, lang=None, phrases=None):
             raise RuntimeError(msg) from None
 
     if isinstance(value, SubstitutionString):
-        data = tuple(translate(context, part, lang=lang) for part in value.data)
+        data = tuple(
+            translate_data(context, part, lang=lang) for part in value.data
+        )
         return value.format_string.format(*data)
 
     return choose_translation(value, lang=lang)
@@ -285,7 +290,7 @@ def translate(context, value, lang=None, phrases=None):
 
 @contextfilter
 def to_element_id(context, text):
-    text = translate(context, text, lang=ENGLISH_LANG)
+    text = translate_data(context, text, lang=ENGLISH_LANG)
     return utils.make_element_id(text)
 
 
@@ -296,7 +301,7 @@ def current_page_link(context, lang=None):
     version), as a link relative to the current page.
 
     Args:
-      lang: an optional language abbreviation.  Defaults to the context's
+      lang: an optional 2-letter language code.  Defaults to the context's
         current language.
     """
     default_rel_path = context['default_rel_path']
@@ -313,7 +318,8 @@ def get_relative_href(context, rel_path, lang=None):
     current page).
 
     Args:
-      lang: if None, defaults to the currently active language.
+      lang: an optional 2-letter language code.  Defaults to the context's
+        current language.
     """
     path = Path()
     default_rel_path = context['default_rel_path']
@@ -352,7 +358,7 @@ def default_contest_path(contest, dir_path=None):
 
 @contextfunction
 def make_translator(context):
-    return functools.partial(translate, context)
+    return functools.partial(translate_data, context)
 
 
 @contextfunction
@@ -376,19 +382,18 @@ def subtemplate(context, template_name, default_rel_output_path=None):
 
 # TODO: turn this into a generator-iterator so not all data needs to be
 #  loaded into memory at once.
-def make_contest_triples(contests, translate=None):
+def make_contest_triples(contests, translator=None):
     """
     Return an iterable of triples (contest_name, rows).
 
     Args:
       contests: an iterable of Contest objects.
-      translate: a function that has the same signature as our
-        translate() contextfilter.
+      translator: a function that is a return value of `make_translator()`.
     """
     triples = []
     for contest in contests:
-        names = translate(contest.ballot_title)
-        headings = contest.detail_headings(translate=translate)
+        names = translator(contest.ballot_title)
+        headings = contest.detail_headings(translator=translator)
         rows = [headings]
         rows.extend(contest.detail_rows('CHOICES *'))
         triple = (contest.id, names, rows)
@@ -407,12 +412,12 @@ def create_tsv_files(context, rel_dir, contests):
         given Jinja2 environment.
     """
     output_dir = utils.get_output_dir(context.environment)
-    contests = make_contest_triples(contests, translate=make_translator(context))
+    contests = make_contest_triples(contests, translator=make_translator(context))
 
     yield from tsvwriting.make_tsv_directory(output_dir, rel_dir, contests)
 
 
-def create_file(do_create, rel_path, contests, type_name, ext, env, translate=None):
+def create_file(do_create, rel_path, contests, type_name, ext, env, translator=None):
     """
     Create a file of contest data using the given function, and return
     a Path object.
@@ -433,7 +438,7 @@ def create_file(do_create, rel_path, contests, type_name, ext, env, translate=No
     rel_path = rel_path.with_suffix(ext)
     output_path = utils.get_output_path(env, rel_path)
 
-    contests = make_contest_triples(contests, translate=translate)
+    contests = make_contest_triples(contests, translator=translator)
 
     do_create(output_path, contests=contests)
 
@@ -474,7 +479,7 @@ def create_xlsx(env, rel_path, contests):
 
 
 @environmentfunction
-def create_pdf(env, rel_path, contests, title=None, translate=None):
+def create_pdf(env, rel_path, contests, title=None, translator=None):
     """
     Create a PDF of contest data, and return a path to the file relative
     to the output directory, as a Path object.
@@ -487,8 +492,7 @@ def create_pdf(env, rel_path, contests, title=None, translate=None):
         will add it).
       contests: an iterable of Contest objects.
       title: an optional title to set on the PDF's properties.
-      translate: a function that has the same signature as our
-        translate() contextfilter.
+      translator: a function that is a return value of `make_translator()`.
 
     The file is written to the given path, relative to the output path
     configured in the given Jinja2 environment.
@@ -505,6 +509,6 @@ def create_pdf(env, rel_path, contests, title=None, translate=None):
     do_create = functools.partial(pdfwriter.make_pdf, title=title, deterministic=deterministic)
 
     rel_path = create_file(do_create, rel_path=rel_path, contests=contests,
-                        type_name='PDF', ext='.pdf', env=env, translate=translate)
+                        type_name='PDF', ext='.pdf', env=env, translator=translator)
 
     return rel_path

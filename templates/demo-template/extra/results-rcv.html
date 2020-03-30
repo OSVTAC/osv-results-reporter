@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block title %}RCV Rounds -
-{{ options.contest.contest_name|translate }}
-{%- if options.contest.short_description %} - {{ options.contest.short_description|translate }}
+{{ options.contest.contest_name|TD }}
+{%- if options.contest.short_description %} - {{ options.contest.short_description|TD }}
 {%- endif -%}
 {% endblock %}
 
@@ -54,7 +54,7 @@
       </thead>
       {% for candidate in rcv_results.compute_candidate_order() %}
         <tr {%- if candidate.is_successful %} class="successful"{% endif -%}>
-            <td class="text-cell title">{{ candidate|translate }}</td>
+            <td class="text-cell title">{{ candidate|TD }}</td>
             {% for candidate_result in rcv_results.get_candidate_rounds(candidate) %}
                 {{ show_candidate_round(candidate_result) }}
             {% endfor %}

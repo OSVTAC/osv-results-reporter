@@ -10,8 +10,8 @@
 <body>
   {% block bodyTop %}{% endblock %}
   <div class="main-wrapper">
-    <h1>{{ election_title|translate }}
-      {%- if election.results_title %} - {{ election.results_title|translate|upper }}
+    <h1>{{ election_title|TD }}
+      {%- if election.results_title %} - {{ election.results_title|TD|upper }}
       {%- endif -%}
     </h1>
     {# Only show the "back" link if we're not already on the summary page #}

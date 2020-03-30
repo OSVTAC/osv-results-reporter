@@ -1024,21 +1024,20 @@ class Contest:
         my_header_path = self.make_header_path()
         return get_path_difference(my_header_path, header_path)
 
-    def detail_headings(self, stat_idlist=None, translate=None):
+    def detail_headings(self, stat_idlist=None, translator=None):
         """
         Args:
-          translate: a function that has the same signature as our
-            translate() contextfilter.
+          translator: a function that is a return value of `make_translator()`.
         """
         headings = ['Subtotal Area']
 
         for choice in self.choices:
-            heading = translate(choice.ballot_title)
+            heading = translator(choice)
             headings.append(heading)
 
         result_stats = self.iter_result_stats(stat_idlist)
 
-        headings.extend(translate(stat.text) for stat in result_stats)
+        headings.extend(translator(stat) for stat in result_stats)
 
         return headings
 

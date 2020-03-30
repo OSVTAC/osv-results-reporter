@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}{{ "detailed_results_label"|TP }} -
-{{ options.contest.contest_name|translate }}{% endblock %}
+{{ options.contest.contest_name|TD }}{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="../static/tables.css">
@@ -16,25 +16,25 @@
       {# First display any headers, if there are new headers. #}
       {% for level, header in headers %}
         {% if level == 1 %}
-          <h3>{{ header|translate }}</h3>
+          <h3>{{ header|TD }}</h3>
         {% else %}
-          <h4>{{ header|translate }}</h4>
+          <h4>{{ header|TD }}</h4>
         {% endif %}
       {% endfor %}
-    <p>{{ contest.contest_name|translate }}
-        {%- if contest.short_description %} - {{ contest.short_description|translate }}
+    <p>{{ contest.contest_name|TD }}
+        {%- if contest.short_description %} - {{ contest.short_description|TD }}
         {%- endif -%}
     </p>
     {% if contest.vote_for_msg %}
       <p>
-        {{ contest.vote_for_msg|translate }}
+        {{ contest.vote_for_msg|TD }}
       </p>
     {% endif %}
     <p>
       {{ show_precincts_reporting(contest.precincts_reporting, contest.total_precincts) }}
     </p>
     <table class="table detail-table sticky-table">
-      <thead><tr>{% with headings=contest.detail_headings(translate=translator) %}<th>{{ headings|first }}</th>
+      <thead><tr>{% with headings=contest.detail_headings(translator=translator) %}<th>{{ headings|first }}</th>
       {% for heading in headings[1:] %}
         <th class="choice">{{ heading }}</th>
       {% endfor %}
