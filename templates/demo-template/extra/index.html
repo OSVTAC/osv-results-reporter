@@ -51,8 +51,7 @@
   </tr>
   {% set rg_totals = contest.get_rg_summary_totals() %}
   {% set cast_result = rg_totals.get_summary_total(stat_id='RSCst') %}
-  {% set canVoteForMultiple = rg_totals.can_vote_for_multiple() %}
-  {% if canVoteForMultiple %}
+  {% if contest.can_vote_for_multiple %}
     {# TODO: show "Blank Ballots" once we add it to the input data. -#}
     {% set stat_ids = 'RSOvr RSCst' %}
   {% else %}
@@ -264,7 +263,6 @@
     {% else %}
     {% set totalVotes = total_result.total %}
     {% set voted_ballots = rg_totals.get_voted_ballots() %}
-    {% set canVoteForMultiple = rg_totals.can_vote_for_multiple() %}
     {% set voteDenominator = voted_ballots.total %}
     <table class="table summary-table">
       <thead>
@@ -310,7 +308,7 @@
         {% endif %}
       </tbody>
       <tbody class="result-stats">
-        {% if canVoteForMultiple %}
+        {% if contest.can_vote_for_multiple %}
           <tr>
             {% set castStat = contest.get_stat_by_id('RSCst') %}
             {# TODO: make this "Voted Ballots" when we have that data. #}

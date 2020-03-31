@@ -715,11 +715,13 @@ class ReportingGroupTotals:
     Encapsulates the vote totals for a reporting group (ReportingGroup object).
     """
 
-    def __init__(self, vg_totals, results_mapping):
+    def __init__(self, vg_totals, results_mapping, can_vote_for_multiple=None):
         """
         Args:
           results_mapping: a ResultsMapping object.
+          can_vote_for_multiple: None means unspecified.
         """
+        self.can_vote_for_multiple = can_vote_for_multiple
         self.results_mapping = results_mapping
         self.vg_totals = vg_totals
 
@@ -749,21 +751,11 @@ class ReportingGroupTotals:
 
         return ResultTotal(stat_or_choice, total=total)
 
-    # TODO: switch to using "votes_allowed", etc.
-    def can_vote_for_multiple(self):
-        stat_indices = self.results_mapping.get_indexes_by_id_list('RSTot RSUnd RSOvr RSCst')
-
-        *subtotals, total_cast = (self.vg_totals[i] for i in stat_indices)
-
-        # Total votes plus undervotes plus overvotes equals "Ballots cast"
-        # only if it's vote-for-1 as opposed to vote-for-N with N > 1.
-        return sum(subtotals) != total_cast
-
     def get_voted_ballots(self):
         """
         Return a ResultTotal object.
         """
-        if self.can_vote_for_multiple():
+        if self.can_vote_for_multiple:
             # Then use "Ballots cast" as the denominator.
             return self.get_summary_total(stat_id='RSCst')
 
@@ -854,6 +846,7 @@ class Contest:
         self.results_mapping = None
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
         self.url_state_results = None
+        self.votes_allowed = None
 
         self._results_details_loaded = False
 
@@ -882,12 +875,29 @@ class Contest:
 
         return SubstitutionString(format_str, fields)
 
+    # TODO: change this to use the `result_style` attribute.
     @property
     def is_rcv(self):
         """
         Return whether the contest is an RCV contest.
         """
         return bool(self.rcv_rounds)
+
+    @property
+    def can_vote_for_multiple(self):
+        """
+        Return True or False, or None for unspecified.
+
+        None can happen e.g. for the turnout pseudo-contest, as votes
+        don't make sense in that context.
+        """
+        if self.votes_allowed is None:
+            return None
+
+        try:
+            return self.votes_allowed > 1 and not self.is_rcv
+        except Exception:
+            raise RuntimeError(f'error for contest: {self!r}')
 
     percent_pattern = re.compile(r'^(\d+)%$')
     fraction_pattern = re.compile(r'^(\d+)/(\d+)$')
@@ -1114,7 +1124,8 @@ class Contest:
         """
         vg_totals = self.get_vg_summary_totals(voting_group)
 
-        return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping)
+        return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping,
+            can_vote_for_multiple=self.can_vote_for_multiple)
 
     def get_round_stat_by_index(self, index, round_num):
         ensure_int(round_num, 'round_num')
