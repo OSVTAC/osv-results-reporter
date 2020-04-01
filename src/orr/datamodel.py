@@ -576,17 +576,21 @@ class ResultsMapping:
     and (2) index in the results row.
     """
 
-    def __init__(self, result_stat_types, choice_count):
+    def __init__(self, result_stat_types, choices):
         """
         Args:
           result_stat_types: an iterable of ResultStatType objects.
-          choice_count: the number of choices in the contest.
+          choices: the choices in the contest, as a list of Choice objects.
         """
         stat_id_to_index = make_indexes_by_id(result_stat_types)
 
-        self.choice_count = choice_count
+        self.choices = choices
         self.stat_id_to_index = stat_id_to_index
         self.result_stat_types = result_stat_types
+
+    @property
+    def choice_count(self):
+        return len(self.choices)
 
     @property
     def result_stat_count(self):
@@ -638,8 +642,9 @@ class ResultsMapping:
             return list(range(self.result_stat_count))
 
         if label_or_id == 'CHOICES':
-            return list(range(self.result_stat_count,
-                              self.result_stat_count + self.choice_count))
+            return list(
+                range(self.result_stat_count, self.result_stat_count + len(self.choices))
+            )
 
         return [self.stat_id_to_index[label_or_id]]
 
@@ -760,6 +765,11 @@ class ReportingGroupTotals:
             return self.get_summary_total(stat_id='RSCst')
 
         return self.total_votes
+
+    def get_max_vote_total(self):
+        choice_indices = self.results_mapping.get_indices_by_id('CHOICES')
+
+        return max(self.vg_totals[index] for index in choice_indices)
 
     def iter_result_totals(self, stat_ids):
         """
@@ -937,13 +947,20 @@ class Contest:
       return "{:.2g}%".format(fraction * 100.0)
 
     # Also expose the dict values as an ordered list, for convenience.
-    @property
-    def choices(self):
+    # TODO: change this to a list?
+    def iter_choices(self):
         """
         Return an iterator over the Choice objects, in their pre-election order.
         """
-        # Here we use that choices_by_id is an OrderedDict.
-        yield from self.choices_by_id.values()
+        if self.choices_by_id is None:
+            yield from ()
+        else:
+            # Here we use that choices_by_id is an OrderedDict.
+            yield from self.choices_by_id.values()
+
+    @property
+    def choice_count(self):
+        return len(list(self.iter_choices()))
 
     @property
     def choices_sorted(self):
@@ -959,19 +976,13 @@ class Contest:
             # For other contests, sort by vote total
             return rg_totals.get_summary_total(c).total
 
-        yield from sorted(self.choices, reverse=True, key=sorter)
+        yield from sorted(self.iter_choices(), reverse=True, key=sorter)
 
     def get_choice_index(self, choice):
         """
         Return the index of a choice's results in each results row.
         """
         return self.results_mapping.get_choice_index(choice)
-
-    def get_max_vote_total(self):
-        results_indices = [self.get_choice_index(choice) for choice in self.choices]
-        vg_totals = self.get_vg_summary_totals()
-
-        return max(vg_totals[index] for index in results_indices)
 
     @property
     def reporting_groups(self):
@@ -1041,7 +1052,7 @@ class Contest:
         """
         headings = ['Subtotal Area']
 
-        for choice in self.choices:
+        for choice in self.iter_choices():
             heading = translator(choice)
             headings.append(heading)
 
@@ -1093,6 +1104,7 @@ class Contest:
         # TODO: remove this assumption.
         return vg_index
 
+    # TODO: make this private, or combine with get_rg_summary_totals().
     def get_vg_summary_totals(self, voting_group=None):
         """
         Return the row of subtotals corresponding to the given voting group.
@@ -1149,7 +1161,7 @@ class Contest:
         """
         # Convert the choices from a generator to a list before passing
         # to RCVResults.
-        candidates = list(self.choices)
+        candidates = list(self.iter_choices())
         continuing_stat = self.get_stat_by_id(continuing_stat_id)
         return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
                           candidates=candidates, continuing_stat=continuing_stat)

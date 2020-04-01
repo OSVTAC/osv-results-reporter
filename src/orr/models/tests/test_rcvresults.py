@@ -106,12 +106,11 @@ class RCVResultsTest(TestCase):
         Return an RCVResults object for testing.
         """
         candidates = self.make_test_candidates()
-        choice_count = len(candidates)
         result_stat_types = self.make_test_result_stat_types()
         continuing_stat = result_stat_types[1]
         assert continuing_stat.heading == 'Continuing'
 
-        results_mapping = ResultsMapping(result_stat_types, choice_count=choice_count)
+        results_mapping = ResultsMapping(result_stat_types, choices=candidates)
         rcv_results = RCVResults(SAMPLE_RCV_TOTALS, results_mapping, candidates=candidates,
                                  continuing_stat=continuing_stat)
 

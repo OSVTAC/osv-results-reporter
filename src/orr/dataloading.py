@@ -710,8 +710,7 @@ def load_contest_results(contest):
 
     _log.debug(f'load_results_details({path})')
 
-    # TODO: set this as an auto_attr?
-    contest.choice_count = len(contest.choices_by_id)
+    # TODO: initialize these attributes in __init__() instead.
     contest.results = []
     contest.rcv_totals = []
     contest.results_details_loaded = True
@@ -1017,8 +1016,9 @@ def load_results_mapping(contest_loader, data):
         choice_count = len(contest.choices_by_id)
 
     result_style = contest.result_style
+    choices = list(contest.iter_choices())
 
-    return ResultsMapping(result_style.result_stat_types, choice_count=choice_count)
+    return ResultsMapping(result_style.result_stat_types, choices=choices)
 
 
 def load_voting_district(contest_loader, value, areas_by_id):

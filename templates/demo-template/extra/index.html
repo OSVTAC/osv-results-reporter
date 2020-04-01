@@ -277,7 +277,7 @@
         {% if contest.approval_required %}
           {% set maxDisplayVote = totalVotes %}
         {% else %}
-          {% set maxDisplayVote = contest.get_max_vote_total() %}
+          {% set maxDisplayVote = rg_totals.get_max_vote_total() %}
         {% endif %}
         {% for choice in contest.choices_sorted %}
           {% set vote_result = rg_totals.get_summary_total(choice) %}
