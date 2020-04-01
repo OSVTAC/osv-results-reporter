@@ -273,12 +273,6 @@
                 "ballot_title": {
                     "en": "3"
                 },
-                "choice_names": {
-                    "en": "YES;NO",
-                    "es": "SÍ;NO",
-                    "tl": "OO;HINDI",
-                    "zh": "贊成;反對"
-                },
                 "choices": [
                     {
                         "_id": "3767",

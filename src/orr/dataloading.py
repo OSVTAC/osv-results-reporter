@@ -1079,8 +1079,6 @@ class ContestLoader:
         ('approval_required', parse_as_is),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
-        # TODO: this should be parsed out.
-        ('choice_names', parse_as_is),
         ('choices_by_id', load_choices, 'choices'),
         AutoAttr('contest_party', load_party, data_key='contest_party_id',
           context_keys=('parties_by_id',), unpack_context=True),
@@ -1094,6 +1092,7 @@ class ContestLoader:
         ('votes_allowed', parse_as_is),
         ('number_elected', parse_as_is),
         ('contest_party_crossover', parse_as_is),
+        # TODO: remove this (it was supplanted by `votes_allowed`).
         ('max_ranked', parse_int),
         ('question_text', parse_i18n),
         AutoAttr('result_style', load_contest_result_style,
