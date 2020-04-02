@@ -883,8 +883,14 @@ class AreaLoader:
     ]
 
 
-def load_party(contest_loader, value, parties_by_id):
-    return parties_by_id[value]
+def load_party(loader, party_id, parties_by_id):
+    """
+    Args:
+      loader: the current active loader (e.g. a CandidateLoader or
+        ContestLoader object).
+    """
+    return parties_by_id[party_id]
+
 
 class PartyLoader:
 
@@ -942,9 +948,10 @@ class CandidateLoader:
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
         ('candidate_party', parse_i18n),
-#        AutoAttr('candidate_party_info', load_party, data_key='candidate_party_id',
-#          context_keys=('parties_by_id',), unpack_context=True),
-        ('candidate_party_id', parse_as_is),
+        # Pass `unpack_context=True` since `load_party()` accepts a
+        # `parties_by_id` argument and not a full `context` argument.
+        AutoAttr('candidate_party_info', load_party, data_key='candidate_party_id',
+            context_keys=('parties_by_id',), unpack_context=True),
         ('is_writein', parse_bool),
     ]
 
@@ -959,7 +966,7 @@ CONTEST_TO_CHOICE_LOADER = {
     'ynoffice': ChoiceLoader,
 }
 
-def load_single_choice(data, choice_loader_cls, cls_info):
+def load_single_choice(data, choice_loader_cls, cls_info, context=None):
     """
     Common processing to enter a candidate or measure choice
 
@@ -969,12 +976,12 @@ def load_single_choice(data, choice_loader_cls, cls_info):
       cls_info: the dict of kwargs to pass to the Choice constructor.
     """
     choice_loader = choice_loader_cls()
-    choice = load_object(choice_loader, data, cls_info=cls_info)
+    choice = load_object(choice_loader, data, cls_info=cls_info, context=context)
 
     return choice
 
 
-def load_choices(contest_loader, choices_data):
+def load_choices(contest_loader, choices_data, context=None):
     """
     Scan an input data list of contest choice entries to create.
 
@@ -997,7 +1004,7 @@ def load_choices(contest_loader, choices_data):
 
     cls_info = dict(contest=contest)
     load_data = functools.partial(load_single_choice, choice_loader_cls=choice_loader_cls,
-                                  cls_info=cls_info)
+        cls_info=cls_info, context=context)
     choices_by_id = load_objects_to_mapping(load_data, choices_data, should_index=True)
 
     return choices_by_id
@@ -1075,7 +1082,10 @@ class ContestLoader:
         ('approval_required', parse_as_is),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
-        ('choices_by_id', load_choices, 'choices'),
+        # Don't pass `unpack_context=True` since `load_choices()` accepts
+        # a `context` argument (not the unpacked keys).
+        AutoAttr('choices_by_id', load_choices, data_key='choices',
+            context_keys=('parties_by_id',)),
         AutoAttr('contest_party', load_party, data_key='contest_party_id',
           context_keys=('parties_by_id',), unpack_context=True),
         # This is needed only while loading.

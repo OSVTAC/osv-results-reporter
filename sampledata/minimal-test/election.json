@@ -79,6 +79,7 @@
                             "en": "DAVID CHIU",
                             "zh": "邱信福"
                         },
+                        "candidate_party_id": "DEM",
                         "candidate_party": {
                             "en": "Party Preference: Democratic",
                             "es": "Preferencia por partido: Demócrata",
@@ -399,6 +400,26 @@
         "es",
         "tl",
         "zh"
+    ],
+    "party_names": [
+        {
+            "_id": "DEM",
+            "name": {
+                "en": "Democratic",
+                "es": "Demócrata",
+                "tl": "Demokratiko",
+                "zh": "民主黨"
+            }
+        },
+        {
+            "_id": "REP",
+            "name": {
+                "en": "Republican",
+                "es": "Republicano",
+                "tl": "Republikano",
+                "zh": "共和黨"
+            }
+        }
     ],
     "result_stat_types": [
         {
