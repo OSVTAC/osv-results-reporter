@@ -375,11 +375,21 @@ class Area:
     def __repr__(self):
         return f'<Area {self.classification!r}: id={self.id!r}>'
 
+    def get_reporting_group_ids(self):
+        # TODO: parse the ids when loading.
+        return parse_ids_text(self.reporting_group_ids)
+
+    @property
+    def reporting_group_count(self):
+        reporting_group_ids = self.get_reporting_group_ids()
+
+        return len(reporting_group_ids)
+
     def iter_reporting_groups(self, areas_by_id, voting_groups_by_id):
         """
         An iterator that creates and yields the reporting groups.
         """
-        reporting_group_ids = parse_ids_text(self.reporting_group_ids)
+        reporting_group_ids = self.get_reporting_group_ids()
 
         for index, s in enumerate(reporting_group_ids):
             m = self.reporting_group_pattern.match(s)
@@ -538,11 +548,13 @@ class Candidate(Choice):
     """
 
     def __init__(self, contest=None):
-        self.ballot_title = None
         self.id = None
 
         # Back-reference.
         self.contest = contest
+
+        self.ballot_title = None
+        self.candidate_party = None
 
     def __repr__(self):
         return f'<Candidate id={self.id!r} title={i18n_repr(self.ballot_title)}>'
@@ -863,6 +875,24 @@ class Contest:
     def __repr__(self):
         return f'<Contest {self.type_name!r}: id={self.id!r}>'
 
+    @property
+    def result_stat_count(self):
+        """
+        Helper function to get the number of result stats
+        """
+        return len(self.result_style.result_stat_types)
+
+    @property
+    def reporting_group_count(self):
+        return self.voting_district.reporting_group_count
+
+    @property
+    def choice_count(self):
+        if self.choices_by_id is None:
+            return 0
+
+        return len(self.choices_by_id)
+
     # This is named "contest_name" instead of "name" to make it easier to
     # search for occurrences in the code.
     @property
@@ -958,10 +988,7 @@ class Contest:
             # Here we use that choices_by_id is an OrderedDict.
             yield from self.choices_by_id.values()
 
-    @property
-    def choice_count(self):
-        return len(list(self.iter_choices()))
-
+    # TODO: move this to ReportingGroupTotals.
     @property
     def choices_sorted(self):
         """
@@ -978,32 +1005,15 @@ class Contest:
 
         yield from sorted(self.iter_choices(), reverse=True, key=sorter)
 
-    def get_choice_index(self, choice):
-        """
-        Return the index of a choice's results in each results row.
-        """
-        return self.results_mapping.get_choice_index(choice)
-
-    @property
-    def reporting_groups(self):
+    def iter_reporting_groups(self):
         """
         Create and return a list of ReportingGroup objects.
         """
         area = self.voting_district
         voting_groups_by_id = self.all_voting_groups_by_id
         iterator = area.iter_reporting_groups(self.areas_by_id, voting_groups_by_id=voting_groups_by_id)
-        return list(iterator)
 
-    @property
-    def reporting_group_count(self):
-        return len(self.reporting_groups)
-
-    @property
-    def result_stat_count(self):
-        """
-        Helper function to get the number of result stats
-        """
-        return len(self.result_style.result_stat_types)
+        return iterator
 
     def has_stat(self, stat_id):
         """
@@ -1105,9 +1115,10 @@ class Contest:
         return vg_index
 
     # TODO: make this private, or combine with get_rg_summary_totals().
-    def get_vg_summary_totals(self, voting_group=None):
+    def get_rg_summary_totals(self, voting_group=None):
         """
-        Return the row of subtotals corresponding to the given voting group.
+        Return the summary totals for a voting group, as a ReportingGroupTotals
+        object.
 
         Args:
           voting_group: a VotingGroup object, or None for the "all" voting
@@ -1123,35 +1134,11 @@ class Contest:
 
         rg_index = self.get_summary_rg_index(voting_group)
 
-        return self.results[rg_index]
-
-    def get_rg_summary_totals(self, voting_group=None):
-        """
-        Return the summary totals for a voting group, as a ReportingGroupTotals
-        object.
-
-        Args:
-          voting_group: a VotingGroup object, or None for the "all" voting
-            group.
-        """
-        vg_totals = self.get_vg_summary_totals(voting_group)
+        # This is the row of subtotals corresponding to the voting group.
+        vg_totals = self.results[rg_index]
 
         return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping,
             can_vote_for_multiple=self.can_vote_for_multiple)
-
-    def get_round_stat_by_index(self, index, round_num):
-        ensure_int(round_num, 'round_num')
-        return self.rcv_totals[round_num - 1][index]
-
-    def get_round_stat(self, stat_id, round_num):
-        ensure_int(round_num, 'round_num')
-        index = self.results_mapping.stat_id_to_index[stat_id]
-        return self.get_round_stat_by_index(index, round_num)
-
-    def get_round_total(self, choice, round_num):
-        ensure_int(round_num, 'round_num')
-        index = self.get_choice_index(choice)
-        return self.get_round_stat_by_index(index, round_num)
 
     def make_rcv_results(self, continuing_stat_id):
         """
@@ -1176,7 +1163,7 @@ class Contest:
             to all of the contest's reporting groups.
         """
         if reporting_groups is None:
-            reporting_groups = self.reporting_groups
+            reporting_groups = self.iter_reporting_groups()
 
         self.load_results_details()
 

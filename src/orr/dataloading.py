@@ -1010,10 +1010,6 @@ def load_contest_result_style(contest_loader, value, result_styles_by_id):
 
 def load_results_mapping(contest_loader, data):
     contest = contest_loader.model_object
-    if contest.choices_by_id is None:
-        choice_count = 0
-    else:
-        choice_count = len(contest.choices_by_id)
 
     result_style = contest.result_style
     choices = list(contest.iter_choices())
@@ -1039,7 +1035,7 @@ class TurnoutLoader:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('ballot_title', parse_i18n),
-         AutoAttr('result_style', load_contest_result_style,
+        AutoAttr('result_style', load_contest_result_style,
             context_keys=('result_styles_by_id',), unpack_context=True, required=True),
         AutoAttr('results_mapping', load_results_mapping, data_key=False),
         AutoAttr('voting_district', load_voting_district,
