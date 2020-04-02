@@ -339,8 +339,8 @@ def create_mapping_by_id(objects):
 
 def load_objects_to_mapping(load_data, seq, should_index=False):
     """
-    Read from JSON data a list of objects, and return a dict mapping id
-    to object.
+    Read from JSON data a list of objects, and return an OrderedDict mapping
+    id to object.
 
     Args:
       load_data: a function with signature load_data(data) that returns
@@ -1098,8 +1098,6 @@ class ContestLoader:
         ('votes_allowed', parse_as_is),
         ('number_elected', parse_as_is),
         ('contest_party_crossover', parse_as_is),
-        # TODO: remove this (it was supplanted by `votes_allowed`).
-        ('max_ranked', parse_int),
         ('question_text', parse_i18n),
         AutoAttr('result_style', load_contest_result_style,
             context_keys=('result_styles_by_id',), unpack_context=True, required=True),
