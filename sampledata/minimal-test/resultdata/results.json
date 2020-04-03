@@ -97,6 +97,12 @@
                     ]
                 }
             ],
+            "results_summary": [
+                "area_id\tsubtotal_type\tRSReg\tRSCst\tRSTot\tRSRej\tRSUnc\tRSUnd\tRSOvr\t4812:DAVID CHIU\t4813:ALEJANDRO FERNANDEZ",
+                "ALL\tTO\t298938\t158051\t158051\t0\t0\t23539\t44\t115997\t18471",
+                "ALL\tED\t298938\t74785\t74785\t0\t0\t13631\t18\t52699\t8437",
+                "ALL\tMV\t298938\t83266\t83266\t0\t0\t9908\t26\t63298\t10034"
+            ],
             "total_precincts": 346
         },
         {
@@ -271,6 +277,20 @@
                     ]
                 }
             ],
+            "results_summary": [
+                "area_id\tsubtotal_type\tRSReg\tRSCst\tRSTot\tRSRej\tRSUnc\tRSWri\tRSUnd\tRSOvr\tRSExh\t3790:AMY FARAH WEISS\t3789:ELLEN LEE ZHOU\t4969:MICHELLE BRAVO\t4970:LONDON BREED\t3786:MARK LENO\t3788:JANE KIM\t3785:RICHIE GREENBERG\t3787:ANGELA ALIOTO\t9912:ANTOINE R. ROGERS",
+                "RCV8\tTO\t513573\t254016\t229408\t0\t0\t0\t2350\t748\t21510\t\t\t\t115977\t113431",
+                "RCV7\tTO\t513573\t254016\t237517\t0\t0\t0\t2350\t693\t13456\t\t\t\t102767\t68707\t66043",
+                "RCV6\tTO\t513573\t254016\t245762\t0\t0\t0\t2350\t667\t5237\t\t\t\t96392\t64128\t63261\t\t21981",
+                "RCV5\tTO\t513573\t254016\t248572\t0\t0\t0\t2350\t649\t2445\t\t10637\t\t93605\t62861\t61843\t\t19626",
+                "RCV4\tTO\t513573\t254016\t250745\t0\t0\t0\t2350\t641\t280\t\t9829\t\t92442\t61881\t61422\t7242\t17929",
+                "RCV3\tTO\t513573\t254016\t250892\t0\t0\t0\t2350\t638\t136\t1735\t9687\t\t92243\t61533\t60829\t7128\t17737",
+                "RCV2\tTO\t513573\t254016\t251032\t0\t0\t0\t2350\t634\t0\t1675\t9576\t900\t92124\t61416\t60738\t7051\t17552",
+                "RCV1\tTO\t513573\t254016\t251032\t0\t0\t3\t2350\t634\t0\t1675\t9576\t900\t92121\t61416\t60738\t7051\t17552\t3",
+                "ALL\tTO\t43818\t23686\t22184\t1502\t0\t0\t1605\t116\t0\t497\t377\t7504\t707\t2298\t517\t408\t8155\t3",
+                "ALL\tED\t43818\t12211\t11760\t451\t0\t0\t1100\t56\t0\t220\t172\t3781\t355\t996\t245\t235\t4600\t0",
+                "ALL\tMV\t43818\t11475\t10424\t1051\t0\t0\t505\t60\t0\t277\t205\t3723\t352\t1302\t272\t173\t3555\t3"
+            ],
             "total_precincts": 48
         },
         {
@@ -363,6 +383,12 @@
                         45
                     ]
                 }
+            ],
+            "results_summary": [
+                "area_id\tsubtotal_type\tRSReg\tRSCst\tRSTot\tRSRej\tRSUnc\tRSUnd\tRSOvr\t3767:YES\t3768:NO",
+                "ALL\tTO\t513573\t274207\t237056\t1589\t0\t37051\t100\t180002\t57054",
+                "ALL\tED\t513573\t131900\t131676\t224\t0\t18253\t55\t89356\t24012",
+                "ALL\tMV\t513573\t142307\t140942\t1365\t0\t17209\t45\t90646\t33042"
             ],
             "success": true,
             "total_precincts": 597
