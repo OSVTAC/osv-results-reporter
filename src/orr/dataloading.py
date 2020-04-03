@@ -710,7 +710,9 @@ def load_contest_results(contest):
 
     _log.debug(f'load_results_details({path})')
 
-    # TODO: initialize these attributes in __init__() instead.
+    # TODO: don't initialize results and rcv_totals here.  Instead,
+    #  make this function return a detailed results object that can
+    #  be thrown away after use.
     contest.results = []
     contest.rcv_totals = []
     contest.results_details_loaded = True
@@ -947,10 +949,10 @@ class CandidateLoader:
         ('sequence', parse_int),
         ('ballot_title', parse_i18n),
         ('ballot_designation', parse_i18n),
-        ('candidate_party', parse_i18n),
+        ('ballot_party_label', parse_i18n),
         # Pass `unpack_context=True` since `load_party()` accepts a
         # `parties_by_id` argument and not a full `context` argument.
-        AutoAttr('candidate_party_info', load_party, data_key='candidate_party_id',
+        AutoAttr('candidate_party', load_party, data_key='candidate_party_id',
             context_keys=('parties_by_id',), unpack_context=True),
         ('is_writein', parse_bool),
     ]

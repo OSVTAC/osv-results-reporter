@@ -541,9 +541,11 @@ class Candidate(Choice):
     Instance attributes:
 
       id:
-      ballot_title:
       ballot_designation:
-      candidate_party:
+      ballot_party_label: an i18n dict (e.g. "Party Preference: Democratic"
+        for the English).
+      ballot_title:
+      candidate_party: a Party object.
       contest: back-reference to a Contest object.
     """
 
@@ -553,6 +555,7 @@ class Candidate(Choice):
         # Back-reference.
         self.contest = contest
 
+        self.ballot_party_label = None
         self.ballot_title = None
         self.candidate_party = None
 
@@ -865,8 +868,10 @@ class Contest:
         self.contest_party = None
         self.name = None
         self.parent_header = None
+        self.results = []
         self.results_mapping = None
         self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
+        self.rcv_totals = []
         self.url_state_results = None
         self.votes_allowed = None
 
