@@ -80,7 +80,7 @@
                             "zh": "邱信福"
                         },
                         "candidate_party_id": "DEM",
-                        "candidate_party": {
+                        "ballot_party_label": {
                             "en": "Party Preference: Democratic",
                             "es": "Preferencia por partido: Demócrata",
                             "tl": "Kinakatigang Partido: Demokratiko",
@@ -99,7 +99,7 @@
                             "en": "ALEJANDRO FERNANDEZ",
                             "zh": "阿勒簡德羅 ‧ 費南德斯"
                         },
-                        "candidate_party": {
+                        "ballot_party_label": {
                             "en": "Party Preference: Democratic",
                             "es": "Preferencia por partido: Demócrata",
                             "tl": "Kinakatigang Partido: Demokratiko",
