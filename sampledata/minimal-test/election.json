@@ -75,17 +75,17 @@
                             "tl": "Miyembro ng Asembleya",
                             "zh": "加州眾議員"
                         },
-                        "ballot_title": {
-                            "en": "DAVID CHIU",
-                            "zh": "邱信福"
-                        },
-                        "candidate_party_id": "DEM",
                         "ballot_party_label": {
                             "en": "Party Preference: Democratic",
                             "es": "Preferencia por partido: Demócrata",
                             "tl": "Kinakatigang Partido: Demokratiko",
                             "zh": "政黨傾向：民主黨"
-                        }
+                        },
+                        "ballot_title": {
+                            "en": "DAVID CHIU",
+                            "zh": "邱信福"
+                        },
+                        "candidate_party_id": "DEM"
                     },
                     {
                         "_id": "4813",
@@ -95,16 +95,17 @@
                             "tl": "Mangangalakal sa Maliit na Negosyo",
                             "zh": "小企業創業者"
                         },
-                        "ballot_title": {
-                            "en": "ALEJANDRO FERNANDEZ",
-                            "zh": "阿勒簡德羅 ‧ 費南德斯"
-                        },
                         "ballot_party_label": {
                             "en": "Party Preference: Democratic",
                             "es": "Preferencia por partido: Demócrata",
                             "tl": "Kinakatigang Partido: Demokratiko",
                             "zh": "政黨傾向：民主黨"
-                        }
+                        },
+                        "ballot_title": {
+                            "en": "ALEJANDRO FERNANDEZ",
+                            "zh": "阿勒簡德羅 ‧ 費南德斯"
+                        },
+                        "candidate_party_id": "DEM"
                     }
                 ],
                 "header_id": "HDR05",
