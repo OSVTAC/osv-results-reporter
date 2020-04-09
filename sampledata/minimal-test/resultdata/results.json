@@ -437,6 +437,25 @@
                 ]
             }
         ],
+        "results_summary": [
+            "area_id\tsubtotal_type\tresult_stat\tALL\tDEM\tREP",
+            "ALL\tTO\tRSReg\t503899\t305059\t32967",
+            "ALL\tTO\tRSVot\t305184\t219810\t16708",
+            "ALL\tTO\tRSCd1\t305184\t219810\t16708",
+            "ALL\tTO\tRSCd2\t283427\t219367\t16799",
+            "ALL\tED\tRSReg\t101679\t61346\t6609",
+            "ALL\tED\tRSVot\t107184\t78826\t4125",
+            "ALL\tED\tRSCd1\t107184\t78826\t4125",
+            "ALL\tED\tRSCd2\t105492\t78693\t4122",
+            "ALL\tMV\tRSIss\t402885\t244318\t26392",
+            "ALL\tMV\tRSVot\t198000\t140984\t12583",
+            "ALL\tMV\tRSCd1\t198000\t140984\t12583",
+            "ALL\tMV\tRSCd2\t177935\t140674\t12677",
+            "ALL\tMV\tRSCst\t210020\t149361\t13229",
+            "ALL\tMV\tRSCnt\t200615\t142573\t12767",
+            "ALL\tMV\tRSPnd\t0\t0\t0",
+            "ALL\tMV\tRSCha\t9405\t6788\t462"
+        ],
         "total_precincts": "604"
     }
 }
