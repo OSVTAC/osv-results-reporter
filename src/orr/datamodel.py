@@ -263,6 +263,8 @@ class ResultStyle:
 
     def __init__(self):
         self.id = None
+        self.description = None
+        self.is_rcv = None
         self.result_stat_types = None
 
         # These are set by @voting_groups.setter.
@@ -982,13 +984,12 @@ class Contest:
 
         return SubstitutionString(format_str, fields)
 
-    # TODO: change this to use the `result_style` attribute.
     @property
     def is_rcv(self):
         """
         Return whether the contest is an RCV contest.
         """
-        return bool(self.rcv_rounds)
+        return self.result_style.is_rcv
 
     @property
     def can_vote_for_multiple(self):
