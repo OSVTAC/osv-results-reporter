@@ -103,7 +103,10 @@
                 "ALL\tED\t298938\t74785\t74785\t0\t0\t13631\t18\t52699\t8437",
                 "ALL\tMV\t298938\t83266\t83266\t0\t0\t9908\t26\t63298\t10034"
             ],
-            "total_precincts": 346
+            "total_precincts": 346,
+            "winning_status": {
+                "winning": "4812:DAVID CHIU"
+            }
         },
         {
             "_id": "598",
@@ -291,7 +294,10 @@
                 "ALL\tED\t43818\t12211\t11760\t451\t0\t0\t1100\t56\t0\t220\t172\t3781\t355\t996\t245\t235\t4600\t0",
                 "ALL\tMV\t43818\t11475\t10424\t1051\t0\t0\t505\t60\t0\t277\t205\t3723\t352\t1302\t272\t173\t3555\t3"
             ],
-            "total_precincts": 48
+            "total_precincts": 48,
+            "winning_status": {
+                "winning": "4970:LONDON BREED"
+            }
         },
         {
             "_id": "617",
@@ -391,11 +397,15 @@
                 "ALL\tMV\t513573\t142307\t140942\t1365\t0\t17209\t45\t90646\t33042"
             ],
             "success": true,
-            "total_precincts": 597
+            "total_precincts": 597,
+            "winning_status": {
+                "winning": "3767:YES"
+            }
         }
     ],
     "turnout": {
         "_id": "TURNOUT",
+        "eligible_voters": 660296,
         "no_voter_precincts": [],
         "precincts_reporting": "604",
         "reporting_time": "2018-11-27 12:03:50",
@@ -438,24 +448,27 @@
             }
         ],
         "results_summary": [
-            "area_id\tsubtotal_type\tresult_stat\tALL\tDEM\tREP",
-            "ALL\tTO\tRSReg\t503899\t305059\t32967",
-            "ALL\tTO\tRSVot\t305184\t219810\t16708",
-            "ALL\tTO\tRSCd1\t305184\t219810\t16708",
-            "ALL\tTO\tRSCd2\t283427\t219367\t16799",
-            "ALL\tED\tRSReg\t101679\t61346\t6609",
-            "ALL\tED\tRSVot\t107184\t78826\t4125",
-            "ALL\tED\tRSCd1\t107184\t78826\t4125",
-            "ALL\tED\tRSCd2\t105492\t78693\t4122",
-            "ALL\tMV\tRSIss\t402885\t244318\t26392",
-            "ALL\tMV\tRSVot\t198000\t140984\t12583",
-            "ALL\tMV\tRSCd1\t198000\t140984\t12583",
-            "ALL\tMV\tRSCd2\t177935\t140674\t12677",
-            "ALL\tMV\tRSCst\t210020\t149361\t13229",
-            "ALL\tMV\tRSCnt\t200615\t142573\t12767",
-            "ALL\tMV\tRSPnd\t0\t0\t0",
-            "ALL\tMV\tRSCha\t9405\t6788\t462"
-        ],
+            "area_id\tsubtotal_type\tparty\tRSReg\tRSCst\tRSCnt\tRSCd1\tRSCd2\tRSPnd\tRSCha",
+            "ALL\tTO\tALL\t503899\t372848\t\t305184\t283427",
+            "ALL\tTO\tDEM\t305059\t\t\t219810\t219367",
+            "ALL\tTO\tREP\t32967\t\t\t16708\t16799",
+            "ALL\tED\tALL\t101679\t127886\t\t107184\t105492",
+            "ALL\tED\tDEM\t61346\t\t\t78826\t78693",
+            "ALL\tED\tREP\t6609\t\t\t4125\t4122",
+            "ALL\tMV\tALL\t\t244962\t200615\t198000\t177935\t0\t9405",
+            "ALL\tMV\tDEM\t\t\t142573\t140984\t140674\t0\t6788",
+            "ALL\tMV\tREP\t\t\t12767\t12583\t12677\t0\t462",
+            "PCT1141\tTO\tALL\t1056",
+            "PCT1141\tTO\tDEM\t593",
+            "PCT1141\tTO\tREP\t50",
+            "PCT1141\tED\tALL\t220",
+            "PCT1141\tED\tDEM\t113",
+            "PCT1141\tED\tREP\t11",
+            "PCT1141\tMV\tALL\t\t404\t397\t\t\t0\t7",
+            "PCT1141\tMV\tDEM\t\t267\t261\t\t\t0\t6",
+            "PCT1141\tMV\tREP\t\t20\t20\t\t\t0\t0",
+            "PCT7101\tTO\tALL\t147"
+         ],
         "total_precincts": "604"
     }
 }
