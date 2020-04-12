@@ -449,7 +449,7 @@
         ],
         "results_summary": [
             "area_id\tsubtotal_type\tparty\tRSReg\tRSCst\tRSCnt\tRSCd1\tRSCd2\tRSPnd\tRSCha",
-            "ALL\tTO\tALL\t503899\t372848\t\t305184\t283427",
+            "ALL\tTO\tALL\t500516\t372848\t\t305184\t283427",
             "ALL\tTO\tDEM\t305059\t\t\t219810\t219367",
             "ALL\tTO\tREP\t32967\t\t\t16708\t16799",
             "ALL\tED\tALL\t101679\t127886\t\t107184\t105492",
