@@ -270,7 +270,8 @@
             {
                 "_id": "617",
                 "_type": "measure",
-                "approval_required": "Majority",
+                "approval_choice_id": "3767",
+                "approval_threshold": "Majority",
                 "ballot_title": {
                     "en": "3"
                 },
@@ -390,7 +391,7 @@
             "ballot_title": {
                 "en": "Registration and Turnout"
             },
-            "result_style": "EMTE",
+            "result_style": "EMTX2",
             "voting_district": "0"
         },
         "url_state_results": "https://osvtac.github.io/"
@@ -423,14 +424,31 @@
     ],
     "result_stat_types": [
         {
-            "_id": "RSTot",
-            "heading": "Ballots Counted",
+            "_id": "RSCd1",
+            "description": "Number of ballot cards 1 submitted by votes",
             "text": {
-                "_desc": "RSTot: Label for the number of valid votes (i.e. votes for candidates, and not including undervotes and overvotes).",
-                "en": "Total Votes",
-                "es": "Total",
-                "tl": "Kabuuan",
-                "zh": "總共"
+                "en": "Card 1 Ballots Cast"
+            }
+        },
+        {
+            "_id": "RSCd2",
+            "description": "Number of ballot cards 2 submitted by votes",
+            "text": {
+                "en": "Card 2 Ballots Cast"
+            }
+        },
+        {
+            "_id": "RSCha",
+            "description": "Ballots rejected including those pending correction",
+            "text": {
+                "en": "Challenged Ballots"
+            }
+        },
+        {
+            "_id": "RSCnt",
+            "description": "Number of ballots cast accepted for counting",
+            "text": {
+                "en": "Counted Ballots"
             }
         },
         {
@@ -445,17 +463,6 @@
             }
         },
         {
-            "_id": "RSReg",
-            "heading": "Registered Voters",
-            "text": {
-                "_desc": "RSReg",
-                "en": "Registered Voters",
-                "es": "Electores inscritos",
-                "tl": "Rehistradong Botante",
-                "zh": "登記選民人數"
-            }
-        },
-        {
             "_id": "RSEli",
             "heading": "Eligible Voters",
             "text": {
@@ -465,48 +472,11 @@
             }
         },
         {
-            "_id": "RSTrn",
-            "heading": "Voter Turnout",
-            "is_percent": true,
+            "_id": "RSExh",
+            "heading": "Exhausted Ballots",
             "text": {
-                "_desc": "RSTrn: Label for the number of people that voted",
-                "en": "Voter Turnout"
-            }
-        },
-        {
-            "_id": "RSRej",
-            "heading": "Ballots Rejected",
-            "text": {
-                "_desc": "RSRej",
-                "en": "Ballots Rejected"
-            }
-        },
-        {
-            "_id": "RSUnc",
-            "heading": "Ballots Uncounted",
-            "text": {
-                "_desc": "RSUnc",
-                "en": "Ballots Uncounted"
-            }
-        },
-        {
-            "_id": "RSWri",
-            "heading": "Writein Votes",
-            "text": {
-                "_desc": "RSWri: Label for the number of write-in votes",
-                "en": "Write-in Votes",
-                "zh": "信件郵票數"
-            }
-        },
-        {
-            "_id": "RSUnd",
-            "heading": "Undervotes",
-            "text": {
-                "_desc": "RSUnd",
-                "en": "Undervotes",
-                "es": "Votos insuficientes",
-                "tl": "Mga kulang na boto",
-                "zh": "投票不足"
+                "_desc": "RSExh: Exhausted votes, for use in RCV contests.",
+                "en": "Exhausted Ballots"
             }
         },
         {
@@ -521,11 +491,77 @@
             }
         },
         {
-            "_id": "RSExh",
-            "heading": "Exhausted Ballots",
+            "_id": "RSPnd",
+            "description": "Uncounted ballots pending review",
             "text": {
-                "_desc": "RSExh: Exhausted votes, for use in RCV contests.",
-                "en": "Exhausted Ballots"
+                "en": "Pending Ballots"
+            }
+        },
+        {
+            "_id": "RSReg",
+            "heading": "Registered Voters",
+            "text": {
+                "_desc": "RSReg",
+                "en": "Registered Voters",
+                "es": "Electores inscritos",
+                "tl": "Rehistradong Botante",
+                "zh": "登記選民人數"
+            }
+        },
+        {
+            "_id": "RSRej",
+            "heading": "Ballots Rejected",
+            "text": {
+                "_desc": "RSRej",
+                "en": "Ballots Rejected"
+            }
+        },
+        {
+            "_id": "RSTot",
+            "heading": "Ballots Counted",
+            "text": {
+                "_desc": "RSTot: Label for the number of valid votes (i.e. votes for candidates, and not including undervotes and overvotes).",
+                "en": "Total Votes",
+                "es": "Total",
+                "tl": "Kabuuan",
+                "zh": "總共"
+            }
+        },
+        {
+            "_id": "RSTrn",
+            "heading": "Voter Turnout",
+            "is_percent": true,
+            "text": {
+                "_desc": "RSTrn: Label for the number of people that voted",
+                "en": "Voter Turnout"
+            }
+        },
+        {
+            "_id": "RSUnc",
+            "heading": "Ballots Uncounted",
+            "text": {
+                "_desc": "RSUnc",
+                "en": "Ballots Uncounted"
+            }
+        },
+        {
+            "_id": "RSUnd",
+            "heading": "Undervotes",
+            "text": {
+                "_desc": "RSUnd",
+                "en": "Undervotes",
+                "es": "Votos insuficientes",
+                "tl": "Mga kulang na boto",
+                "zh": "投票不足"
+            }
+        },
+        {
+            "_id": "RSWri",
+            "heading": "Writein Votes",
+            "text": {
+                "_desc": "RSWri: Label for the number of write-in votes",
+                "en": "Write-in Votes",
+                "zh": "信件郵票數"
             }
         }
     ],
@@ -559,10 +595,10 @@
             "voting_group_ids": "TO ED MV"
         },
         {
-            "_id": "EMTE",
-            "description": "Turnout, subtotal by Election Day/VBM, with Eligible",
+            "_id": "EMTX2",
+            "description": "2 Card extended Turnout, subtotal by Election Day/VBM",
             "is_rcv": false,
-            "result_stat_type_ids": "RSEli RSReg RSCst RSRej",
+            "result_stat_type_ids": "RSReg RSCst RSCnt RSCd1 RSCd2 RSPnd RSCha",
             "voting_group_ids": "TO ED MV"
         }
     ],
