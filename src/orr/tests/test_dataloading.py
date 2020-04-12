@@ -28,7 +28,7 @@ from textwrap import dedent
 from unittest import TestCase
 
 import orr.dataloading as dataloading
-from orr.tsvio import TSVStream
+from orr.tsvio import TSVLines
 
 
 class DataLoadingModuleTest(TestCase):
@@ -51,16 +51,16 @@ class DataLoadingModuleTest(TestCase):
         RCV1\tTO\t10000\t6000\t500\t800\t300\t200
         """)
         expected = [
-            (10000, 6000, None, 800, 300, None),
-            (10000, 6000, 500, 800, 300, None),
-            (10000, 6000, 500, 800, 300, 200),
+            [10000, 6000, None, 800, 300, None],
+            [10000, 6000, 500, 800, 300, None],
+            [10000, 6000, 500, 800, 300, 200],
         ]
         stream = io.StringIO(text)
-        tsv_stream = TSVStream(stream)
-        iter_rows = iter(tsv_stream)
+        tsv_lines = TSVLines(stream)
+        iter_rows = iter(tsv_lines)
 
         # Advance past the header line.
         next(iter_rows)
 
-        actual = list(dataloading.read_rcv_totals(tsv_stream, iter_rows, rounds=3))
+        actual = list(dataloading.read_rcv_totals(tsv_lines, iter_rows, rounds=3))
         self.assertEqual(actual, expected)

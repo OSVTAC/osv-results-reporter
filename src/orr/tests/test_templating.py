@@ -87,25 +87,6 @@ class TemplatingModuleTest(TestCase):
                 actual = templating.format_date_medium(context, day)
                 self.assertEqual(actual, expected)
 
-    def test_choose_translation(self):
-        translations = {
-            'en': 'Yes',
-            'es': 'Sí',
-            'tl': '',
-        }
-        cases = [
-            ('en', 'Yes'),
-            ('es', 'Sí'),
-            # Test an empty string translation.
-            ('tl', '[Yes]'),
-            # Test the key being missing (English should be used).
-            ('zh', 'Yes'),
-        ]
-        for lang, expected in cases:
-            with self.subTest(lang=lang):
-                actual = templating.choose_translation(translations, lang=lang)
-                self.assertEqual(actual, expected)
-
     def test_get_relative_href(self):
         cases = [
             (('summary.html', 'new.html', 'en'), 'new.html'),

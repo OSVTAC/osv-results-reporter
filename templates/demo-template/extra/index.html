@@ -107,7 +107,7 @@
   <table class="table summary-table">
     {% set turnout_rg_totals = turnout_contest.get_rg_summary_totals() %}
     {% set reg_result = turnout_rg_totals.get_summary_total(stat_id='RSReg') %}
-    {% set eligible_result = turnout_rg_totals.get_summary_total(stat_id='RSEli') %}
+    {% set eligible_result = turnout_contest.get_eligible_total() %}
     <tr>
       <td class="text-cell">{{ reg_result|TD }}</td>
       <td>{{ reg_result.total|format_number }}</td>
@@ -169,7 +169,7 @@
       {% set rel_path_template = contest|default_contest_path("results-detail") %}
       {% with rel_output_path=subtemplate('results-detail.html', rel_path_template) %}
 
-    <div class="contest {%- if contest.approval_required %} {% if contest.success -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
+    <div class="contest {%- if contest.approval_threshold %} {% if contest.success -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
 
     {% set contest_id = contest.contest_name|to_element_id %}
     <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}
@@ -191,9 +191,9 @@
         {{ contest.vote_for_msg|TD }}
       </p>
     {% endif %}
-    {% if contest.approval_required %}
+    {% if contest.approval_threshold %}
       <p>
-        Requires {{ contest.approval_required_percentage }} affirmative votes to pass
+        Requires {{ contest.approval_threshold_percentage }} affirmative votes to pass
       </p>
     {% endif %}
     <p>
@@ -274,7 +274,7 @@
         </tr>
       </thead>
       <tbody class="choices">
-        {% if contest.approval_required %}
+        {% if contest.approval_threshold %}
           {% set maxDisplayVote = totalVotes %}
         {% else %}
           {% set maxDisplayVote = rg_totals.get_max_vote_total() %}
@@ -288,8 +288,8 @@
             </td>
             {{ subtotal_percent_tds(vote_result.total, voteDenominator) }}
             {# Only show the cutoff line for the "yes" choice #}
-            {% if contest.approval_required and choice.is_yes() %}
-              {% set line_subtotal = contest.approval_required_fraction * totalVotes %}
+            {% if contest.is_approval_choice(choice) %}
+              {% set line_subtotal = contest.approval_threshold_fraction * totalVotes %}
             {% else %}
               {% set line_subtotal = 0 %}
             {% endif %}

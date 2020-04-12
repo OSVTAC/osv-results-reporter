@@ -50,7 +50,7 @@ class TSVReaderTest(TestCase):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / 'temp.tsv'
             path.write_text(text)
-            with TSVReader(path) as tsv_stream:
-                actual = list(tsv_stream)
+            with TSVReader(path) as tsv_lines:
+                actual = list(tsv_lines)
 
         self.assertEqual(actual, expected)

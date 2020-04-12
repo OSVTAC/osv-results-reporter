@@ -265,6 +265,39 @@ def _convert_fragment(char):
     return ELEMENT_ID_SEP
 
 
+def choose_translation(translations, lang=None):
+    """
+    Args:
+      translations: a dict of translations of a single phrase, where the
+        keys are 2-letter language codes.
+      lang: a 2-letter language code.  Defaults to English.
+    """
+    if lang not in translations:
+        # Then English should be used.
+        lang = ENGLISH_LANG
+
+    # TODO: provide a good error message if a KeyError occurs.
+    try:
+        text = translations[lang]
+    except Exception:
+        raise RuntimeError(f'error processing: translations={translations!r}, lang={lang}')
+
+    if not text:
+        msg = f'empty {lang!r} translation for: {translations}'
+        if lang == ENGLISH_LANG:
+            # Raise an exception since English is required.
+            raise RuntimeError(msg)
+
+        _log.warning(msg)
+        # Use English as a fallback, and put brackets around it so we
+        # can see the missing translation in the rendered form.
+        # TODO: provide a good error message if a KeyError occurs below.
+        text = translations[ENGLISH_LANG]
+        text = f'[{text}]'
+
+    return text
+
+
 def make_lang_path(default_path, context, lang=None):
     """
     Create the path for the given language and context, and return a Path object.
@@ -345,7 +378,10 @@ def parse_datetime(dt_string):
     Args:
       dt_string: a datetime string in the format, "2018-06-01 20:48:12".
     """
-    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+    try:
+        return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+    except Exception:
+        raise RuntimeError(f'error parsing: {dt_string!r}')
 
 
 def format_date(date, lang, format_=None):

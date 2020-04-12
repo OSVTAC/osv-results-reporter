@@ -128,6 +128,40 @@ def i18n_repr(i18n_text):
 SubstitutionString = namedtuple('SubstitutionString', 'format_string, data')
 
 
+def translate_object(obj, lang=None):
+    """
+    Args:
+      value: the object to translate.  This can be either (1) a data
+        model object with an `__i18n_attr__` attribute, (2) a
+        `SubstitutionString` object, or (3) an i18n dict.
+      lang: an optional 2-letter language code.  Defaults to English.
+    """
+    if lang is None:
+        lang = ENGLISH_LANG
+
+    if hasattr(obj, '__i18n_attr__'):
+        attr_name = obj.__i18n_attr__
+        try:
+            obj = getattr(obj, attr_name)
+        except AttributeError:
+            msg = f'i18n attribute {attr_name!r} missing from object: {obj}'
+            # Use `from None` since the new exception provides strictly
+            # more information than the previous.
+            raise RuntimeError(msg) from None
+
+    if isinstance(obj, SubstitutionString):
+        # TODO: make this a method of `SubstitutionString`?
+        try:
+            data = tuple(
+                translate_object(part, lang=lang) for part in obj.data
+            )
+            return obj.format_string.format(*data)
+        except Exception:
+            raise RuntimeError(f'error translating SubstitutionString: {obj!r}')
+
+    return utils.choose_translation(obj, lang=lang)
+
+
 # --- Results reporting group/type definitions ---
 
 class VotingGroup:
@@ -517,6 +551,8 @@ class Choice:
         self.id = None
         self.ballot_title = None
         self.is_successful = None
+        # TODO: document the possible values.
+        self.winning_status = None
 
         # Back-reference.
         self.contest = contest
@@ -524,15 +560,8 @@ class Choice:
     def __repr__(self):
         return f'<Choice id={self.id!r} title={i18n_repr(self.ballot_title)}>'
 
-    def is_yes(self):
-      """
-      Check whether this is the 'yes' choice.
-      If the contest is not a yes/no contest (=does not have an approval threshold),
-      this always returns False.
-      """
-      return self.contest.approval_required and bool(self.is_successful) == bool(self.contest.success)
 
-
+# TODO: make this not subclass Choice.
 class Candidate(Choice):
 
     """
@@ -551,12 +580,14 @@ class Candidate(Choice):
 
     def __init__(self, contest=None):
         self.id = None
+        self.ballot_title = None
+        # TODO: document the possible values.
+        self.winning_status = None
 
         # Back-reference.
         self.contest = contest
 
         self.ballot_party_label = None
-        self.ballot_title = None
         self.candidate_party = None
 
     def __repr__(self):
@@ -861,31 +892,46 @@ class Contest:
         self.election = election
         self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
+        self.approval_choice = None
 
+        self.ballot_title = None
         self.ballot_subtitle = None
         # This is a dict mapping Choice id to Choice object.
         self.choices_by_id = None
         self.contest_party = None
         self.name = None
         self.parent_header = None
-        self.results = []
+        # Number of RCV elimination rounds loaded
+        self.rcv_rounds = 0
         self.results_mapping = None
-        self.rcv_rounds = 0         # Number of RCV elimination rounds loaded
-        self.rcv_totals = []
+
+        # This is a matrix (list of lists), where the rows correspond
+        # to reporting groups (area-voting_group pair), and the columns
+        # correspond to result stats and choices.
+        self.summary_results = None
+
+        # This is True when there is an approval required and the threshold is met.
+        self.success = None
         self.url_state_results = None
         self.votes_allowed = None
 
         self._results_details_loaded = False
 
     def __repr__(self):
-        return f'<Contest {self.type_name!r}: id={self.id!r}>'
+        name = translate_object(self.contest_name)
+        return f'<Contest {self.type_name!r}: id={self.id!r} name={name!r}>'
+
+    # TODO: instead make a separate class for turnout.
+    @property
+    def is_turnout_contest(self):
+        return self.id == 'TURNOUT'
 
     @property
     def result_stat_count(self):
         """
         Helper function to get the number of result stats
         """
-        return len(self.result_style.result_stat_types)
+        return self.results_mapping.result_stat_count
 
     @property
     def reporting_group_count(self):
@@ -908,11 +954,14 @@ class Contest:
         format_str = '{}'
         if self.name:
             fields = [self.name]
-        else:
+        elif self.ballot_title:
             fields = [self.ballot_title]
             if self.ballot_subtitle:
                 format_str += ' - {}'
                 fields.append(self.ballot_subtitle)
+        else:
+            format_str = ''
+            fields = []
 
         if self.contest_party:
             format_str += ' ({})'
@@ -948,38 +997,38 @@ class Contest:
     fraction_pattern = re.compile(r'^(\d+)/(\d+)$')
 
     @property
-    def approval_required_fraction(self):
+    def approval_threshold_fraction(self):
         """
-        Converts the approval_required string to a fractional number,
+        Converts the approval_threshold string to a fractional number,
         0.0 if not applicable or .50, .55, .66667 etc for Majority, percent,
         or fractions.
         """
-        approval_required = self.approval_required
-        if not approval_required:
+        approval_threshold = self.approval_threshold
+        if not approval_threshold:
             return 0.0
-        if approval_required == "Majority":
+        if approval_threshold == 'Majority':
             return 0.5
 
-        m = self.percent_pattern.match(approval_required)
+        m = self.percent_pattern.match(approval_threshold)
         if m:
             return(float(m.group(1))/100.0)
 
-        m = self.fraction_pattern.match(approval_required)
+        m = self.fraction_pattern.match(approval_threshold)
         if m:
             return(float(m.group(1))/float(m.group(2)))
 
         return 0.0
 
     @property
-    def approval_required_percentage(self):
-      fraction = self.approval_required_fraction
+    def approval_threshold_percentage(self):
+      fraction = self.approval_threshold_fraction
       if fraction == 0.0:
-        return ""
+        return ''
       if fraction == 0.5:
-        return "50%+1"
+        return '50%+1'
       if fraction == 2/3:
-        return "66⅔%"
-      return "{:.2g}%".format(fraction * 100.0)
+        return '66⅔%'
+      return '{:.2g}%'.format(fraction * 100.0)
 
     # Also expose the dict values as an ordered list, for convenience.
     # TODO: change this to a list?
@@ -1000,15 +1049,23 @@ class Contest:
         Return the list of choices in descending order of total votes
         """
         rg_totals = self.get_rg_summary_totals()
-        def sorter(c):
-            if self.approval_required:
-                # Sort Yes above No. Return 1 for Yes and 0 for No to accomplish this.
-                return 1 if c.is_yes() else 0
-
-            # For other contests, sort by vote total
-            return rg_totals.get_summary_total(c).total
+        if self.approval_threshold:
+            def sorter(choice):
+                # Sort Yes above No. Return 1 for Yes and 0 for No to
+                # accomplish this.
+                return 1 if self.is_approval_choice(choice) else 0
+        else:
+            def sorter(choice):
+                # For other contests, sort by vote total
+                return rg_totals.get_summary_total(choice).total
 
         yield from sorted(self.iter_choices(), reverse=True, key=sorter)
+
+    def is_approval_choice(self, choice):
+        if not self.approval_threshold:
+            return False
+
+        return choice is self.approval_choice
 
     def iter_reporting_groups(self):
         """
@@ -1119,7 +1176,13 @@ class Contest:
         # TODO: remove this assumption.
         return vg_index
 
-    # TODO: make this private, or combine with get_rg_summary_totals().
+    def get_eligible_total(self):
+        """
+        Return the number of voters eligible to register (stat_id "RSEli"),
+        as a ResultTotal object.
+        """
+        return ResultTotal(self.eligible_voters_stat, total=self.eligible_voters)
+
     def get_rg_summary_totals(self, voting_group=None):
         """
         Return the summary totals for a voting group, as a ReportingGroupTotals
@@ -1130,17 +1193,12 @@ class Contest:
             group.
         """
         # Summary results should be loaded for the election if present
-        if not hasattr(self, 'results'):
-            if self.election._results_loaded:
-                return []
-            self.election.load_results()
-            if not self.get('results',[]):
-                return []
+        assert self.election.summary_results_loaded
 
         rg_index = self.get_summary_rg_index(voting_group)
 
         # This is the row of subtotals corresponding to the voting group.
-        vg_totals = self.results[rg_index]
+        vg_totals = self.summary_results[rg_index]
 
         return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping,
             can_vote_for_multiple=self.can_vote_for_multiple)
@@ -1151,6 +1209,9 @@ class Contest:
           continuing_stat_id: the id of the ResultStatType object
             corresponding to continuing ballots.
         """
+        if not self.rcv_totals:
+            raise RuntimeError(f'rcv_totals empty for {self!r}: {self.rcv_totals!r}')
+
         # Convert the choices from a generator to a list before passing
         # to RCVResults.
         candidates = list(self.iter_choices())
@@ -1206,11 +1267,6 @@ class Election:
       election_area:
       headers_by_id:
       contests_by_id:
-
-    Private attributes:
-      _load_results_data: a function that loads the contest results
-        status data into each contest.  The function should have signature:
-          load(election).
     """
 
     def __init__(self, input_dir, input_results_dir):
@@ -1227,13 +1283,22 @@ class Election:
         self.input_dir = input_dir
         self.input_results_dir = input_results_dir
 
-        self._results_loaded = self.have_results = False
         self.ballot_title = None
         self.date = None
+
+        self.results_title = None
         self.url_state_results = None
+
+        # Whether results data is available, or None if the results haven't
+        # been checked for and loaded.
+        self._results_available = None
 
     def __repr__(self):
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
+
+    @property
+    def summary_results_loaded(self):
+        return self._results_available is not None
 
     # Also expose the dict values as an (ordered) list, for convenience.
     @property
@@ -1294,21 +1359,3 @@ class Election:
 
         if len(headerStack) > 0:
           yield headerStack[0]
-
-    def load_results(self):
-        """
-        Loads the contest results status data into each contest.
-
-        Returns '' so this can be called from templates. No action is taken
-        if the contest status has been loaded.
-        """
-        # We use _results_loaded as a marker to indicate that the
-        # data has already been loaded.  Skip if already loaded.
-        if getattr(self, '_results_loaded', False):
-            return ''
-
-        self._load_results_data(self)
-
-        # Set in _load_results_data: self._results_loaded = True
-
-        return ''

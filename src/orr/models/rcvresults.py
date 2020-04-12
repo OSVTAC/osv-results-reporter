@@ -70,6 +70,9 @@ class RCVResults:
           continuing_stat: the ResultStatType object corresponding to
             continuing ballots in each round.
         """
+        if not rcv_totals:
+            raise RuntimeError(f'rcv_totals empty: {rcv_totals!r}')
+
         self.candidates = candidates
         self.continuing_stat = continuing_stat
         self.results_mapping = results_mapping
@@ -145,6 +148,8 @@ class RCVResults:
         """
         Return a list of CandidateRound objects for a particular candidate.
         """
+        assert self.rcv_totals
+
         continuing_index = self.get_continuing_index()
         candidate_index = self.get_candidate_index(candidate)
         candidate_indices = self.get_candidate_indices()

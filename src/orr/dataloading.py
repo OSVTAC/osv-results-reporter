@@ -35,7 +35,8 @@ import logging
 from pathlib import Path
 
 import orr.datamodel as datamodel
-from orr.tsvio import TSVReader
+import orr.tsvio as tsvio
+from orr.tsvio import TSVLines, TSVReader
 from orr.datamodel import (Candidate, Choice, Contest, Election,
     Header, ResultStatType, ResultStyle, ResultsMapping, VotingGroup)
 import orr.utils as utils
@@ -178,7 +179,6 @@ def parse_date_time(obj, dt_string):
     Args:
       dt_string: a datetime string in the format "2016-11-08 hh:mm:ss".
     """
-    _log.debug(f'processing parse_date_time: {dt_string}')
     dt = utils.parse_datetime(dt_string)
 
     return dt
@@ -479,189 +479,6 @@ def load_object(loader, data, cls_info=None, context=None, strict=False):
     return model_obj
 
 
-#--- Results Data Loading Routines ---
-
-def _set_obj_attributes(
-    data:dict,
-    process_attrs:dict, # Dict of processing routines by source attr
-    obj: object,        # Object to set
-    trim_underscore:bool=False,  #
-):
-    """
-    Set attributes on objects using the given data.
-
-    This method mutates the given objects_data.
-
-    Args:
-      data: the data for a contest, deserialized from a json results
-        file.
-      obj: the object to be set.
-    """
-
-    # For each attribute handler, set an attribute in the obj
-    # The process_attrs items are accessed to order the sequence of
-    # attributes processed.
-    for attr_name, handler in process_attrs.items():
-        # Skip if we do not have data for this attr
-        if attr_name not in data: continue
-
-        # Invoke the processing routine to convert the raw string.
-        value = handler(obj, data[attr_name])
-        if trim_underscore and attr_name[0] == '_' and attr_name != '_id':
-            attr_name = attr_name[1:]
-
-        # Only set a value if the value is non-trivial and nothing is set yet.
-        # TODO: fix this hack.
-        if value is None and hasattr(obj, attr_name):
-            # Then don't set anything.
-            continue
-
-        setattr(obj, attr_name, value)
-
-
-def _set_attributes_by_id(
-    data:dict,
-    process_attrs:dict, # Dict of processing routines by source attr
-    objects_by_id:dict, # Dict of objects to overlay by id
-    id_key:str,
-):
-    """
-    Set attributes on objects identified by id, using the given data.
-
-    This method mutates the given objects_data.
-
-    Args:
-      data: the data for a contest, deserialized from a json results
-        file.
-      id_key: the key for the contest id in the given data.
-    """
-    try:
-        object_id = data.pop(id_key)
-    except KeyError:
-        raise RuntimeError(f'object data does not contain id key {id_key!r}: {data}')
-
-    # Retrieve the object on which to set attributes.
-    try:
-        obj = objects_by_id[object_id]
-    except KeyError:
-        msg = f'object with id {object_id!r} not among: {sorted(objects_by_id)}'
-        raise RuntimeError(msg)
-
-    _set_obj_attributes(data, process_attrs, obj)
-
-
-def append_results_col(contest, results_col):
-    """
-    Appends a column in the contest.results matrix. The results_col should be a
-    list, which is converted to an integer.
-    """
-
-    if not hasattr(contest,'results'):
-        contest.results = []
-    for i,v in enumerate(results_col):
-        if len(contest.results) <= i:
-            # For the first column, create a new row with empty columns
-            contest.results.append([])
-        contest.results[i].append(int(v))
-
-def process_contest_result_stats(contest, result_stats_data):
-    """
-    Process the results.json 'result_stats' list of result summary data
-    in a contest or turnout.
-    """
-    for result_stat in result_stats_data:
-        # We could use the _id to get a column index, but we assume the
-        # json list of stats is in the correct order so we just append
-        # Otherwise we need to use `result_style.get_voting_group_by_id()`.
-        append_results_col(contest, result_stat['results'])
-
-
-
-def process_choice_results(contest, choices_data):
-    """
-    Process the results.json 'choices' list of vote summary data
-    in a contest or turnout.
-    """
-    choices_by_id = contest.choices_by_id
-
-    for choice_data in choices_data:
-        choice_id = choice_data['_id']
-        choice = choices_by_id[choice_id]
-
-        # We could use the _id to get a column index, but we assume the
-        # json list of stats is in the correct order so we just append
-        # Otherwise we need to use `result_style.get_voting_group_by_id()`.
-        append_results_col(contest, choice_data['results'])
-
-        success = choice_data.get('success')
-        if success:
-            choice.is_successful = True
-
-        choice.winning_status = choice_data.get('winning_status')
-
-
-def load_results(election):
-    """
-    Load contest results statuses from the results file.
-
-    Args:
-      election: an Election object.
-    """
-    election._results_loaded = True
-    input_results_dir = election.input_results_dir
-    path = input_results_dir / RESULTS_FILE_NAME
-    if not path.exists():
-        election.have_results = False
-        return
-
-    results_data = utils.read_json(path)
-
-    if isinstance(results_data, list):
-        # Convert from results_format 0.1
-        contests_data = results_data
-        results_data = dict(
-            _results_format="0.1",
-            turnout=contests_data.pop(0),
-            contests=contests_data,
-            )
-
-    # TODO: this should be converted to the object model style.
-
-    process_election_attrs = dict(
-        _reporting_time=parse_date_time,
-        _results_id=parse_as_is,
-        _results_title=parse_i18n,
-        )
-
-    process_contest_attrs = dict(
-        reporting_time=parse_date_time,
-        result_stats=process_contest_result_stats,
-        choices=process_choice_results,
-        total_precincts=parse_int,
-        precincts_reporting=parse_int,
-        rcv_rounds=parse_int,
-        no_voter_precincts=parse_as_is,
-        success=parse_bool,
-    )
-
-    _set_obj_attributes(results_data, process_election_attrs, election, True)
-
-    data = results_data.get('turnout',None)
-    if data:
-        _set_obj_attributes(data, process_contest_attrs, election.turnout)
-
-    election.have_results = True
-    for data in results_data.get("contests",[]):
-        _id = data.get('_id','')
-        if _id=='TURNOUT':
-           # Reset results array
-            _set_obj_attributes(data, process_contest_attrs, election.turnout)
-        else:
-            _set_attributes_by_id(data, process_attrs=process_contest_attrs,
-                        objects_by_id=election.contests_by_id, id_key='_id')
-            contest = election.contests_by_id[_id]
-
-
 def get_contest_results_path(contest):
     """
     Return the path to the input file containing the detailed results for
@@ -676,28 +493,216 @@ def get_contest_results_path(contest):
     return path
 
 
-# TODO: eliminate the need to pass both tsv_stream and iter_rows.
-def read_rcv_totals(tsv_stream, iter_rows, rounds):
+def parse_choices(choices_data, choices_by_id):
+    """
+    Parse a value in the winning_data dict.
+
+    Returns a list of Choice objects.
+    """
+    id_names = tsvio.split_line(choices_data)
+    choice_ids = [id_name.split(':', maxsplit=1)[0] for id_name in id_names]
+    choices = [choices_by_id[choice_id] for choice_id in choice_ids]
+
+    return choices
+
+
+def process_winning_status(contest, winning_data):
+    """
+    Process the results.json 'choices' list of vote summary data
+    in a contest or turnout.
+    """
+    for winning_status, choices_data in winning_data.items():
+        is_successful = winning_status in ('winning',)
+        choices = parse_choices(choices_data, choices_by_id=contest.choices_by_id)
+        for choice in choices:
+            choice.winning_status = winning_status
+            choice.is_successful = is_successful
+
+    winning_choices = [
+        choice for choice in contest.iter_choices() if choice.winning_status == 'winning'
+    ]
+
+    return winning_choices
+
+
+def row_to_ints(values):
+    return [None if value == '' else int(value) for value in values]
+
+
+# TODO: eliminate the need to pass both tsv_lines and iter_rows.
+def read_rcv_totals(tsv_lines, iter_rows, rounds):
     """
     Args:
-      tsv_stream: a TSVStream object.
+      tsv_lines: a TSVLines object.
       rounds: the number of RCV rounds.
     """
+    if not rounds:
+        return
+
     # The rounds start with the last round and end with round 1.
     for i, row in enumerate(itertools.islice(iter_rows, rounds)):
         # The index i ranges from 0 to (rounds - 1).
         rcv_round = rounds - i
-        if row[0] != f'RCV{rcv_round}':
-            msg = (f'Mismatched RCV row start in {tsv_stream} '
-                   f'(line={tsv_stream.line_num}, round={rcv_round}):\n{tsv_stream.line!r}')
+        expected_start = f'RCV{rcv_round}'
+        if row[0] != expected_start:
+            msg = (
+                f'Expected rcv row starting with {expected_start!r} but got {row[0]!r}:\n'
+                f' {tsv_lines}: line_n0={tsv_lines.line_num}, round={rcv_round}\n'
+                f' line: {tsv_lines.line!r}'
+            )
             raise RuntimeError(msg)
 
         # The empty string is used to signify that the candidate has been
         # eliminated.  Otherwise, the candidate is still in the running
         # and the value should be a numeric vote total.
-        yield tuple(None if x == '' else int(x) for x in row[2:])
+        yield row_to_ints(row[2:])
 
 
+# TODO: also store by party.
+def load_turnout_tsv(contest, tsv_lines):
+    """
+    Returns:
+      results: This is a matrix (list of lists), where the rows correspond
+        to reporting groups (area-voting_group pair), and the columns
+        correspond to result stats.
+    """
+    leading_column_count = 3
+    iter_rows = iter(tsv_lines)
+
+    # Skip the header row.
+    next(iter_rows)
+
+    # Simple check, just validate the column count
+    # We could validate the header if we like later
+    if tsv_lines.num_columns != leading_column_count + contest.result_stat_count:
+        raise RuntimeError(
+            f'Mismatched column heading in tsv data:\n'
+            f'* columns={tsv_lines.num_columns!r} stats={contest.result_stat_count} choices={contest.choice_count}\n'
+            f'* line={tsv_lines.line!r}\n'
+            f'* contest.choices_by_id={dict(contest.choices_by_id)!r}'
+        )
+
+    results = []
+    for row in iter_rows:
+        if len(row) != tsv_lines.num_columns:
+            raise RuntimeError(
+                f'Mismatched columns in {path}: {tsv_lines.line}')
+
+        # We could verify the reporting group but will skip
+        party, *totals = row[2:]
+        # TODO: also store the values for each party.
+        if party != 'ALL':
+            continue
+
+        try:
+            results.append(row_to_ints(totals))
+        except Exception:
+            raise RuntimeError(f'error processing row: {contest.rcv_rounds} {row!r}')
+
+    return results
+
+
+def load_results_tsv(contest, tsv_lines):
+    """
+    Args:
+      tsv_lines: a TSVLines object.
+
+    Returns: (rcv_totals, results)
+      results: This is a matrix (list of lists), where the rows correspond
+        to reporting groups (area-voting_group pair), and the columns
+        correspond to result stats and choices.
+    """
+    assert not contest.is_turnout_contest
+
+    iter_rows = iter(tsv_lines)
+    # Skip the header row.
+    next(iter_rows)
+
+    leading_column_count = 2
+    numeric_column_count = contest.result_stat_count + contest.choice_count
+
+    # Simple check, just validate the column count
+    # We could validate the header if we like later
+    if tsv_lines.num_columns != leading_column_count + numeric_column_count:
+        raise RuntimeError(
+            f'Mismatched column heading in tsv data:\n'
+            f'* columns={tsv_lines.num_columns!r} stats={contest.result_stat_count} choices={contest.choice_count}\n'
+            f'* line={tsv_lines.line!r}\n'
+            f'* contest.choices_by_id={dict(contest.choices_by_id)!r}'
+        )
+
+    if contest.is_rcv:
+        # The RCV rounds are first, starting with the last round.
+        rcv_totals = list(read_rcv_totals(tsv_lines, iter_rows, rounds=contest.rcv_rounds))
+        # Call reversed() so the first round occurs first.
+        rcv_totals = list(reversed(rcv_totals))
+    else:
+        rcv_totals = None
+
+    results = []
+    for row in iter_rows:
+        if len(row) != tsv_lines.num_columns:
+            raise RuntimeError(
+                f'Mismatched columns in {path}: {tsv_lines.line}')
+        # We could verify the reporting group but will skip
+        try:
+            results.append(row_to_ints(row[leading_column_count:]))
+        except Exception:
+            raise RuntimeError(f'error processing row: {contest.rcv_rounds} {row!r}')
+
+    return (rcv_totals, results)
+
+
+def process_contest_summary(contest_loader, data):
+    """
+    Process the results.json "results_summary" list of result summary data
+    in a contest or turnout (i.e. array of TSV lines).
+    """
+    contest = contest_loader.model_object
+    election = contest.election
+
+    # TODO: should we add a ContestResults class to our data model?
+    total_precincts = data.get('total_precincts')
+    contest.total_precincts = parse_int(contest, total_precincts)
+
+    precincts_reporting = data.get('precincts_reporting')
+    contest.precincts_reporting = parse_int(contest, precincts_reporting)
+
+    no_voter_precincts = data.get('no_voter_precincts')
+    contest.no_voter_precincts = parse_as_is(contest, no_voter_precincts)
+
+    summary_lines = iter(data['results_summary'])
+    tsv_lines = TSVLines(summary_lines)
+
+    if contest.is_turnout_contest:
+        eligible_voters = data.get('eligible_voters')
+        contest.eligible_voters = eligible_voters
+
+        results = load_turnout_tsv(contest, tsv_lines=tsv_lines)
+
+        return results
+
+    # We need to get and set the number of rcv rounds before reading the
+    # round data.
+    rcv_rounds = data.get('rcv_rounds')
+    rcv_rounds = parse_int(contest, rcv_rounds)
+    contest.rcv_rounds = rcv_rounds
+
+    rcv_totals, results = load_results_tsv(contest, tsv_lines=tsv_lines)
+    contest.rcv_totals = rcv_totals
+
+    contest_successful = data.get('success')
+    contest.success = contest_successful
+
+    winning_data = data.get('winning_status')
+    process_winning_status(contest, winning_data)
+
+    return results
+
+
+# TODO: don't initialize contest.results here.  Instead,
+#  make this function return a detailed results object that can
+#  be thrown away after use.
 def load_contest_results(contest):
     """
     Load the detailed results for this contest with reporting groups with
@@ -710,67 +715,23 @@ def load_contest_results(contest):
 
     _log.debug(f'load_results_details({path})')
 
-    # TODO: don't initialize results and rcv_totals here.  Instead,
+    # TODO: don't initialize contest.results here.  Instead,
     #  make this function return a detailed results object that can
     #  be thrown away after use.
     contest.results = []
-    contest.rcv_totals = []
     contest.results_details_loaded = True
 
-    with TSVReader(path) as tsv_stream:
-        iter_rows = iter(tsv_stream)
-        headers = next(iter_rows)
+    with TSVReader(path) as tsv_lines:
+        rcv_totals, results = load_results_tsv(contest, tsv_lines)
 
-        # Simple check, just validate the column count
-        # We could validate the header if we like later
-        if tsv_stream.num_columns != 2 + contest.result_stat_count + contest.choice_count:
+        if len(results) != contest.reporting_group_count:
             raise RuntimeError(
-                f'Mismatched column heading in {path}:\n'
-                f'* columns={tsv_stream.num_columns!r} stats={contest.result_stat_count} choices={contest.choice_count}\n'
-                f'* line={tsv_stream.line!r}\n'
-                f'* contest.choices_by_id={dict(contest.choices_by_id)!r}'
+                f'Mismatched reporting groups in {path}\n'
+                f'rg_count={contest.reporting_group_count}\n'
+                f'row_count={len(results)}'
             )
 
-        # The RCV rounds are first, starting with the last round.
-        rcv_totals = list(read_rcv_totals(tsv_stream, iter_rows, rounds=contest.rcv_rounds))
-        # Call reversed() so the first round occurs first.
-        contest.rcv_totals.extend(reversed(rcv_totals))
-
-        for row in iter_rows:
-            if len(row) != tsv_stream.num_columns:
-                raise RuntimeError(
-                    f'Mismatched columns in {path}: {tsv_stream.line}')
-            # We could verify the reporting group but will skip
-            contest.results.append([ int(v) for v in row[2:]])
-
-        if len(contest.results) != contest.reporting_group_count:
-            raise RuntimeError(
-                f'Mismatched reporting groups in {path}\nresults={len(contest.results)} count={contest.reporting_group_count} ')
-
-
-def load_all_results_details(election, filedir=None, filename_format=None):
-    """
-    Loads results details for all contests in the election. If
-    filedir or filename_format is specified, the prior
-    default values are reset.
-
-    Returns '' so this routine can be called from Jinja
-
-    Args:
-        filedir: The directory containing the detailed results data
-        filename_format: Format string with {} for contest id to
-                            create the results source file name.
-    """
-    if filedir:
-        election.result_detail_dir = filedir
-
-    if filename_format:
-        election.result_detail_format_filepath = filename_format
-
-    for c in election.contests:
-        c.load_results_details()
-
-    return ''
+        contest.results = results
 
 
 class VotingGroupLoader:
@@ -1012,6 +973,18 @@ def load_choices(contest_loader, choices_data, context=None):
     return choices_by_id
 
 
+def load_approval_choice(contest_loader, approval_choice_id):
+    """
+    Return the approval choice, as a Choice object.
+    """
+    contest = contest_loader.model_object
+    assert type(contest) == Contest
+
+    approval_choice = contest.choices_by_id[approval_choice_id]
+
+    return approval_choice
+
+
 # We want a name other than load_result_styles() for uniqueness reasons.
 def load_contest_result_style(contest_loader, value, result_styles_by_id):
     return result_styles_by_id[value]
@@ -1037,19 +1010,41 @@ def make_contest_results_loader(contest_loader, data):
     return load_contest_results
 
 
+def load_eligible_voters_stat(contest_loader, value, result_stat_types_by_id):
+    eligible_voters_stat = result_stat_types_by_id['RSEli']
+
+    return eligible_voters_stat
+
+
+def load_turnout_choices(contest_loader, value, parties_by_id):
+    return parties_by_id
+
+
 class TurnoutLoader:
 
     model_class = Contest
 
     auto_attrs = [
         ('id', parse_id, '_id'),
+        # Processing result_styles requires result_stat_types and voting_groups.
+        AutoAttr('eligible_voters_stat', load_eligible_voters_stat, data_key=False,
+            context_keys=('result_stat_types_by_id',), unpack_context=True),
+
         ('ballot_title', parse_i18n),
+        # Don't pass `unpack_context=True` since `load_choices()` accepts
+        # a `context` argument (not the unpacked keys).
+        # Pass `data_key=False` since the "choices" are drawn from th
+        # `parties_by_id` dict.
+        AutoAttr('choices_by_id', load_turnout_choices, data_key=False,
+            context_keys=('parties_by_id',), unpack_context=True),
+
         AutoAttr('result_style', load_contest_result_style,
             context_keys=('result_styles_by_id',), unpack_context=True, required=True),
         AutoAttr('results_mapping', load_results_mapping, data_key=False),
         AutoAttr('voting_district', load_voting_district,
             context_keys=('areas_by_id',), unpack_context=True, required=True),
         ('type', parse_as_is),
+        AutoAttr('summary_results', process_contest_summary, data_key='results'),
     ]
 
 def load_turnout(election_loader, turnout_data, context):
@@ -1081,13 +1076,14 @@ class ContestLoader:
     auto_attrs = [
         ('id', parse_id, '_id'),
         ('id_ext', parse_id, '_id_ext'),
-        ('approval_required', parse_as_is),
+        ('approval_threshold', parse_as_is),
         ('ballot_subtitle', parse_i18n),
         ('ballot_title', parse_i18n),
         # Don't pass `unpack_context=True` since `load_choices()` accepts
         # a `context` argument (not the unpacked keys).
         AutoAttr('choices_by_id', load_choices, data_key='choices',
             context_keys=('parties_by_id',)),
+        ('approval_choice', load_approval_choice, 'approval_choice_id'),
         AutoAttr('contest_party', load_party, data_key='contest_party_id',
           context_keys=('parties_by_id',), unpack_context=True),
         # This is needed only while loading.
@@ -1097,7 +1093,8 @@ class ContestLoader:
         ('is_partisan', parse_as_is),
         ('name', parse_i18n),
         ('short_description', parse_i18n),
-        ('votes_allowed', parse_as_is),
+        # TODO: change this to parse_as_is since they should already be ints.
+        ('votes_allowed', parse_int),
         ('number_elected', parse_as_is),
         ('contest_party_crossover', parse_as_is),
         ('question_text', parse_i18n),
@@ -1113,6 +1110,10 @@ class ContestLoader:
         ('url_state_results', parse_as_is),
         ('vote_for_msg', parse_as_is),
         ('writeins_allowed', parse_int),
+
+        # Handle results-related attributes.
+        AutoAttr('summary_results', process_contest_summary, data_key='results'),
+
         # Pass data_key=False since this does not read from the json data.
         AutoAttr('_load_contest_results_data', make_contest_results_loader, data_key=False),
     ]
@@ -1213,30 +1214,13 @@ def load_contests(election_loader, contests_data, context):
     assert type(election) == Election
 
     load_data = functools.partial(load_single_contest, election=election, context=context)
+    # This is an OrderedDict mapping contest_id to Contest.
     contests_by_id = load_objects_to_mapping(load_data, contests_data, should_index=True)
 
     for contest in contests_by_id.values():
         link_with_header(contest, headers_by_id=election.headers_by_id)
 
     return contests_by_id
-
-
-# Not currently used - supports lazy load of results
-def make_results_loader(election_loader, data):
-    """
-    Return the function to set as election._load_results_data.
-    """
-    return load_results
-
-
-# Always load results if it exists
-def run_results_loader(election_loader, data):
-    """
-    Call the load_results and also:
-    Return the function to set as election._load_results_data.
-    """
-    load_results(election_loader.model_object)
-    return load_results
 
 
 class ElectionLoader:
@@ -1248,17 +1232,20 @@ class ElectionLoader:
         ('date', parse_date, 'election_date'),
         ('election_area', parse_i18n),
         ('url_state_results', parse_as_is),
+        ('no_voter_precincts', parse_as_is),
         # Process headers before contests since the contest data references
         # the headers but not vice versa.
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
             context_keys=('areas_by_id', 'parties_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
         AutoAttr('turnout', load_turnout, data_key='turnout',
-            context_keys=('areas_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
-        # Pass data_key=False since this does not read from the json data.
-        AutoAttr('_load_results_data', run_results_loader, data_key=False),
-        ('no_voter_precincts', parse_as_is),
+            context_keys=('areas_by_id', 'parties_by_id', 'result_stat_types_by_id',
+                'result_styles_by_id', 'voting_groups_by_id')),
 
+        # Results attributes
+        AutoAttr('results_id', parse_as_is, data_key='_results_id'),
+        AutoAttr('results_title', parse_i18n, data_key='_results_title'),
+        AutoAttr('reporting_time', parse_date_time, data_key='_reporting_time'),
     ]
 
 
@@ -1353,15 +1340,70 @@ def load_parties(root_loader, party_data):
     return load_objects_to_mapping(load_data, party_data)
 
 
+def load_summary_results(election_data, input_results_dir):
+    """
+    Load the summary results (`results.json` data) into the election_data dict.
+
+    Returns whether results files are available.
+
+    Args:
+      election_data: the election_data argument passed to `load_election()`.
+      input_results_dir: the directory containing the detailed results
+        data files, as a Path object.
+    """
+    results_path = input_results_dir / RESULTS_FILE_NAME
+    results_available = results_path.exists()
+
+    if not results_available:
+        return False
+
+    results_data = utils.read_json(results_path)
+
+    # TODO: make the rest of this function into a separate function?
+
+    # Temporarily store the contest results data by contest id.
+    contests_results = results_data.pop('contests')
+    contest_results_by_id = {}
+    for contest_results in contests_results:
+        contest_id = contest_results['_id']
+        contest_results_by_id[contest_id] = contest_results
+
+    # Write the contest results data for each contest into the general
+    # contest data.
+    contests_data = election_data['contests']
+    for contest_data in contests_data:
+        contest_id = contest_data['_id']
+        contest_results = contest_results_by_id[contest_id]
+        contest_data['results'] = contest_results
+
+    turnout_results = results_data.pop('turnout')
+    turnout_data = election_data['turnout']
+    turnout_data['results'] = turnout_results
+
+    # Store the top-level results attributes under `election_data['results']`.
+    for key in ['_reporting_time', '_results_format', '_results_id', '_results_title']:
+        assert key not in election_data
+
+    election_data.update(results_data)
+
+    return True
+
+
 def load_election(root_loader, election_data, context):
     """
     Args:
       root_loader: a RootLoader object.
     """
-    cls_info = dict(input_dir=root_loader.input_dir,
-                    input_results_dir=root_loader.input_results_dir)
+    input_results_dir = root_loader.input_results_dir
+
+    results_available = load_summary_results(election_data, input_results_dir=input_results_dir)
+
+    cls_info = dict(input_dir=root_loader.input_dir, input_results_dir=input_results_dir)
     election_loader = ElectionLoader()
-    return load_object(election_loader, election_data, cls_info=cls_info, context=context)
+    election = load_object(election_loader, election_data, cls_info=cls_info, context=context)
+    election._results_available = results_available
+
+    return election
 
 
 class RootLoader:
@@ -1380,8 +1422,10 @@ class RootLoader:
             context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
         ('areas_by_id', load_areas, 'areas'),
         ('parties_by_id', load_parties, 'party_names'),
+        # The `result_stat_types_by_id` contest key is needed for turnout.
         AutoAttr('election', load_election,
-            context_keys=('areas_by_id', 'parties_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
+            context_keys=('areas_by_id', 'parties_by_id', 'result_stat_types_by_id',
+                'result_styles_by_id', 'voting_groups_by_id')),
     ]
 
     def __init__(self, input_dir, input_results_dir):

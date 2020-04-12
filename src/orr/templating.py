@@ -33,6 +33,7 @@ from pathlib import Path
 from jinja2 import (contextfilter, contextfunction, environmentfilter,
     environmentfunction, Undefined)
 
+import orr.datamodel as datamodel
 from orr.datamodel import SubstitutionString
 import orr.utils as utils
 from orr.utils import ENGLISH_LANG
@@ -170,29 +171,6 @@ def lang_to_phrase_id(context, lang_code):
     return language_data['phrase_id']
 
 
-def choose_translation(translations, lang):
-    if lang not in translations:
-        # Then English should be used.
-        lang = ENGLISH_LANG
-
-    # TODO: provide a good error message if a KeyError occurs.
-    text = translations[lang]
-    if not text:
-        msg = f'empty {lang!r} translation for: {translations}'
-        if lang == ENGLISH_LANG:
-            # Raise an exception since English is required.
-            raise RuntimeError(msg)
-
-        _log.warning(msg)
-        # Use English as a fallback, and put brackets around it so we
-        # can see the missing translation in the rendered form.
-        # TODO: provide a good error message if a KeyError occurs below.
-        text = translations[ENGLISH_LANG]
-        text = f'[{text}]'
-
-    return text
-
-
 def _get_template_format_translation(phrases, phrase_id, lang):
     """
     Return a phrase translation, without inserting replacement field values.
@@ -210,7 +188,7 @@ def _get_template_format_translation(phrases, phrase_id, lang):
         _log.warning(msg)
         return phrase_id
 
-    return choose_translation(translations, lang=lang)
+    return utils.choose_translation(translations, lang=lang)
 
 
 def _get_template_translation(phrases, phrase_id, lang, **params):
@@ -260,7 +238,9 @@ def translate_data(context, value, lang=None):
     Return the translation using the currently set language.
 
     Args:
-      phrases: the dict of all phrases (keyed by phrase id).
+      value: the object to translate.  This can be either (1) a data
+        model object with an `__i18n_attr__` attribute, (2) a
+        `SubstitutionString` object, or (3) an i18n dict.
       lang: an optional 2-letter language code.  Defaults to the context's
         current language.
     """
@@ -269,23 +249,7 @@ def translate_data(context, value, lang=None):
 
     check_defined(value)
 
-    if hasattr(value, '__i18n_attr__'):
-        attr_name = value.__i18n_attr__
-        try:
-            value = getattr(value, attr_name)
-        except AttributeError:
-            msg = f'i18n attribute {attr_name!r} missing from object: {value}'
-            # Use `from None` since the new exception provides strictly
-            # more information than the previous.
-            raise RuntimeError(msg) from None
-
-    if isinstance(value, SubstitutionString):
-        data = tuple(
-            translate_data(context, part, lang=lang) for part in value.data
-        )
-        return value.format_string.format(*data)
-
-    return choose_translation(value, lang=lang)
+    return datamodel.translate_object(value, lang=lang)
 
 
 @contextfilter

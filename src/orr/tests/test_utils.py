@@ -183,6 +183,25 @@ class UtilsModuleTest(TestCase):
                 actual = utils.format_percent(percent)
                 self.assertEqual(actual, expected)
 
+    def test_choose_translation(self):
+        translations = {
+            'en': 'Yes',
+            'es': 'Sí',
+            'tl': '',
+        }
+        cases = [
+            ('en', 'Yes'),
+            ('es', 'Sí'),
+            # Test an empty string translation.
+            ('tl', '[Yes]'),
+            # Test the key being missing (English should be used).
+            ('zh', 'Yes'),
+        ]
+        for lang, expected in cases:
+            with self.subTest(lang=lang):
+                actual = utils.choose_translation(translations, lang=lang)
+                self.assertEqual(actual, expected)
+
     def test_make_lang_path(self):
         options = Namespace(lang='zh')
         context = {'options': options}
