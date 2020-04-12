@@ -892,7 +892,20 @@ class Contest:
         self.election = election
         self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
+        # This is the Choice object used for determining whether the
+        # approval threshold is met.
         self.approval_choice = None
+
+        # The "approval_threshold" value can be a string having one
+        # of the following forms:
+        #  * "Advisory"
+        #  * "Majority" (translates to "more than 50%" aka 50% + 1)
+        #  * "n%" for some integer n
+        #  * "m/n" for some integers m and n (e.g. 55/100 or 2/3).
+        #
+        # For California elections, the possibilities are: "Advisory",
+        # "Majority", "55%", and "2/3".
+        self.approval_threshold = None
 
         self.ballot_title = None
         self.ballot_subtitle = None
@@ -1217,7 +1230,7 @@ class Contest:
         candidates = list(self.iter_choices())
         continuing_stat = self.get_stat_by_id(continuing_stat_id)
         return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
-                          candidates=candidates, continuing_stat=continuing_stat)
+            candidates=candidates, continuing_stat=continuing_stat)
 
     def detail_rows(self, choice_stat_idlist, reporting_groups=None):
         """
