@@ -917,13 +917,15 @@ class Contest:
         self.name = None
         self.parent_header = None
         # Number of RCV elimination rounds loaded
-        self.rcv_rounds = 0
+        self.rcv_rounds = None
         self.results_mapping = None
 
         # This is a matrix (list of lists), where the rows correspond
         # to reporting groups (area-voting_group pair), and the columns
         # correspond to result stats and choices.
         self.summary_results = None
+        # TODO: document the format of this value.
+        self.rcv_totals = None
 
         # This is True when there is an approval required and the threshold is met.
         self.success = None
@@ -1223,8 +1225,13 @@ class Contest:
           continuing_stat_id: the id of the ResultStatType object
             corresponding to continuing ballots.
         """
+        if self.rcv_totals is None:
+            raise RuntimeError(f'rcv_totals None for {self!r}: rcv_rounds={rcv_rounds!r}')
+
         if not self.rcv_totals:
-            raise RuntimeError(f'rcv_totals empty for {self!r}: {self.rcv_totals!r}')
+            # Then make sure rcv_rounds is 0.
+            assert not self.rcv_rounds
+            return None
 
         # Convert the choices from a generator to a list before passing
         # to RCVResults.

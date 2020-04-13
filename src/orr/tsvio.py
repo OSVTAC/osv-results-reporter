@@ -77,11 +77,12 @@ class TSVLines:
           path: the path for logging purposes.
         """
         self.lines = lines
+        self.path = path
+        self.read_header = read_header
 
         self.headers = None
         self.line_num = 0
         self.line = None
-        self.read_header = read_header
 
     def __repr__(self):
         return f'<TSVLines: {self.path!r}>'

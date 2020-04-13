@@ -198,7 +198,11 @@
     {% endif %}
     <p>
       {{ show_precincts_reporting(contest.precincts_reporting, contest.total_precincts) }}
-      {% if contest.is_rcv %}
+      {#
+        Note that we can have contest.is_rcv=True with contest.rcv_rounds=0.
+        Thus we check contest.rcv_rounds rather than contest.is_rcv.
+      #}
+      {% if contest.rcv_rounds %}
         {% set default_rcv_path = contest|default_contest_path("results-rcv") %}
         {% with rcv_path=subtemplate('results-rcv.html', default_rcv_path) %}
         <a href="{{ rcv_path }}">[RCV rounds]</a>
@@ -211,7 +215,11 @@
     </p>
     {% set rg_totals = contest.get_rg_summary_totals() %}
     {% set total_result = rg_totals.total_votes %}
-    {% if contest.is_rcv %}
+    {#
+      Note that we can have contest.is_rcv=True with contest.rcv_rounds=0.
+      Thus we check contest.rcv_rounds rather than contest.is_rcv.
+    #}
+    {% if contest.rcv_rounds %}
       {# Pass the id of the ResultStatType object corresponding to continuing ballots. #}
       {% set rcv_results = contest.make_rcv_results("RSTot") %}
       <table class="table summary-table">

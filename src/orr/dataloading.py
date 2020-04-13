@@ -547,7 +547,8 @@ def read_rcv_totals(tsv_lines, iter_rows, rounds):
         if row[0] != expected_start:
             msg = (
                 f'Expected rcv row starting with {expected_start!r} but got {row[0]!r}:\n'
-                f' {tsv_lines}: line_n0={tsv_lines.line_num}, round={rcv_round}\n'
+                f' rcv_rounds={rounds!r}\n'
+                f' {tsv_lines}: line_num={tsv_lines.line_num}, round={rcv_round}\n'
                 f' line: {tsv_lines.line!r}'
             )
             raise RuntimeError(msg)
@@ -685,8 +686,14 @@ def process_contest_summary(contest_loader, data):
     # We need to get and set the number of rcv rounds before reading the
     # round data.
     rcv_rounds = data.get('rcv_rounds')
-    rcv_rounds = parse_int(contest, rcv_rounds)
-    contest.rcv_rounds = rcv_rounds
+    if contest.is_rcv and rcv_rounds is None:
+        raise RuntimeError(
+            f'got is_rcv={contest.is_rcv!r} and rcv_rounds={rcv_rounds!r} for: {contest!r}'
+        )
+
+    if rcv_rounds is not None:
+        rcv_rounds = parse_int(contest, rcv_rounds)
+        contest.rcv_rounds = rcv_rounds
 
     rcv_totals, results = load_results_tsv(contest, tsv_lines=tsv_lines)
     contest.rcv_totals = rcv_totals
