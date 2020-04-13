@@ -1362,21 +1362,21 @@ class Election:
           items: list of items under this header; each item is either a Contest
             or a (header, items) pair
         """
-        headerStack = []
+        header_stack = []
         for headers, contests in self.contests_with_headers():
             for level, header in headers:
                 # Close out headers with an equal or higher level than level
-                while len(headerStack) >= level:
-                    closedHeaderStructure = headerStack.pop()
-                    if len(headerStack) == 0:
-                        yield closedHeaderStructure
+                while len(header_stack) >= level:
+                    closed_header_structure = header_stack.pop()
+                    if len(header_stack) == 0:
+                        yield closed_header_structure
 
-                newHeaderStructure = (header, [])
-                if len(headerStack) > 0:
-                    headerStack[-1][1].append(newHeaderStructure)
-                headerStack.append(newHeaderStructure)
+                new_header_structure = (header, [])
+                if len(header_stack) > 0:
+                    header_stack[-1][1].append(new_header_structure)
+                header_stack.append(new_header_structure)
 
-            headerStack[-1][1].extend(contests)
+            header_stack[-1][1].extend(contests)
 
-        if len(headerStack) > 0:
-          yield headerStack[0]
+        if len(header_stack) > 0:
+            yield header_stack[0]
