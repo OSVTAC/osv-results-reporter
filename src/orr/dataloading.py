@@ -567,15 +567,16 @@ def load_turnout_tsv(contest, tsv_lines):
         to reporting groups (area-voting_group pair), and the columns
         correspond to result stats.
     """
-    leading_column_count = 3
     iter_lines = iter(tsv_lines)
-
     # Skip the header row.
     next(iter_lines)
 
     # Simple check, just validate the column count
     # We could validate the header if we like later
-    if tsv_lines.num_columns != leading_column_count + contest.result_stat_count:
+    leading_column_count = 3
+    numeric_column_count = contest.result_stat_count
+
+    if tsv_lines.num_columns != leading_column_count + numeric_column_count:
         raise RuntimeError(
             f'Mismatched column heading in tsv data:\n'
             f'* columns={tsv_lines.num_columns!r} stats={contest.result_stat_count} choices={contest.choice_count}\n'
