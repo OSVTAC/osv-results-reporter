@@ -692,8 +692,8 @@ def process_contest_summary(contest_loader, data):
     rcv_totals, results = load_results_tsv(contest, tsv_lines=tsv_lines)
     contest.rcv_totals = rcv_totals
 
-    contest_successful = data.get('success')
-    contest.success = contest_successful
+    approval_met = data.get('approval_met')
+    contest.approval_met = approval_met
 
     winning_data = data.get('winning_status')
     process_winning_status(contest, winning_data)

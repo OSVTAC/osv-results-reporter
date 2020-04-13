@@ -48,6 +48,7 @@
         },
         {
             "_id": "617",
+            "approval_met": true,
             "precincts_reporting": 597,
             "rcv_rounds": 0,
             "reporting_time": "2016-11-09 00:00:35",
@@ -57,7 +58,6 @@
                 "ALL\tED\t513573\t131900\t131676\t224\t0\t18253\t55\t89356\t24012",
                 "ALL\tMV\t513573\t142307\t140942\t1365\t0\t17209\t45\t90646\t33042"
             ],
-            "success": true,
             "total_precincts": 597,
             "winning_status": {
                 "winning": "3767:YES"

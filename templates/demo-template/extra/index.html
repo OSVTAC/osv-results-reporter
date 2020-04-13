@@ -169,7 +169,7 @@
       {% set rel_path_template = contest|default_contest_path("results-detail") %}
       {% with rel_output_path=subtemplate('results-detail.html', rel_path_template) %}
 
-    <div class="contest {%- if contest.approval_threshold %} {% if contest.success -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
+    <div class="contest {%- if contest.approval_threshold %} {% if contest.approval_passed -%} successful {%- else -%} failed {%- endif -%} {%- endif %}">
 
     {% set contest_id = contest.contest_name|to_element_id %}
     <h3 id="{{ contest_id }}">{{ anchored_header(contest.contest_name, contest_id) }}

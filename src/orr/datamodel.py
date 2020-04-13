@@ -894,10 +894,12 @@ class Contest:
         self.election = election
         self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
+
         # This is the Choice object used for determining whether the
         # approval threshold is met.
         self.approval_choice = None
-
+        # This is True when there is an approval required and the threshold is met.
+        self.approval_met = None
         # The "approval_threshold" value can be a string having one
         # of the following forms:
         #  * "Advisory"
@@ -927,8 +929,6 @@ class Contest:
         # TODO: document the format of this value.
         self.rcv_totals = None
 
-        # This is True when there is an approval required and the threshold is met.
-        self.success = None
         self.url_state_results = None
         self.votes_allowed = None
 
@@ -942,6 +942,10 @@ class Contest:
     @property
     def is_turnout_contest(self):
         return self.id == 'TURNOUT'
+
+    @property
+    def approval_passed(self):
+        return self.approval_met
 
     @property
     def result_stat_count(self):
