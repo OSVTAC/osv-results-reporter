@@ -529,8 +529,8 @@ def row_to_ints(values):
     return [None if value == '' else int(value) for value in values]
 
 
-# TODO: eliminate the need to pass both tsv_lines and iter_rows.
-def read_rcv_totals(tsv_lines, iter_rows, rounds):
+# TODO: eliminate the need to pass both tsv_lines and iter_lines.
+def read_rcv_totals(tsv_lines, iter_lines, rounds):
     """
     Args:
       tsv_lines: a TSVLines object.
@@ -540,7 +540,7 @@ def read_rcv_totals(tsv_lines, iter_rows, rounds):
         return
 
     # The rounds start with the last round and end with round 1.
-    for i, row in enumerate(itertools.islice(iter_rows, rounds)):
+    for i, row in enumerate(itertools.islice(iter_lines, rounds)):
         # The index i ranges from 0 to (rounds - 1).
         rcv_round = rounds - i
         expected_start = f'RCV{rcv_round}'
@@ -568,10 +568,10 @@ def load_turnout_tsv(contest, tsv_lines):
         correspond to result stats.
     """
     leading_column_count = 3
-    iter_rows = iter(tsv_lines)
+    iter_lines = iter(tsv_lines)
 
     # Skip the header row.
-    next(iter_rows)
+    next(iter_lines)
 
     # Simple check, just validate the column count
     # We could validate the header if we like later
@@ -584,11 +584,7 @@ def load_turnout_tsv(contest, tsv_lines):
         )
 
     results = []
-    for row in iter_rows:
-        if len(row) != tsv_lines.num_columns:
-            raise RuntimeError(
-                f'Mismatched columns in {path}: {tsv_lines.line}')
-
+    for row in iter_lines:
         # We could verify the reporting group but will skip
         party, *totals = row[2:]
         # TODO: also store the values for each party.
@@ -615,9 +611,9 @@ def load_results_tsv(contest, tsv_lines):
     """
     assert not contest.is_turnout_contest
 
-    iter_rows = iter(tsv_lines)
+    iter_lines = iter(tsv_lines)
     # Skip the header row.
-    next(iter_rows)
+    next(iter_lines)
 
     leading_column_count = 2
     numeric_column_count = contest.result_stat_count + contest.choice_count
@@ -634,17 +630,14 @@ def load_results_tsv(contest, tsv_lines):
 
     if contest.is_rcv:
         # The RCV rounds are first, starting with the last round.
-        rcv_totals = list(read_rcv_totals(tsv_lines, iter_rows, rounds=contest.rcv_rounds))
+        rcv_totals = list(read_rcv_totals(tsv_lines, iter_lines, rounds=contest.rcv_rounds))
         # Call reversed() so the first round occurs first.
         rcv_totals = list(reversed(rcv_totals))
     else:
         rcv_totals = None
 
     results = []
-    for row in iter_rows:
-        if len(row) != tsv_lines.num_columns:
-            raise RuntimeError(
-                f'Mismatched columns in {path}: {tsv_lines.line}')
+    for row in iter_lines:
         # We could verify the reporting group but will skip
         try:
             results.append(row_to_ints(row[leading_column_count:]))

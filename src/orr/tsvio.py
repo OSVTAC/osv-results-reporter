@@ -55,9 +55,7 @@ map_tsv_data = str.maketrans(TSV_SOURCE_CHAR_MAP,TSV_FILE_CHAR_MAP)
 unmap_tsv_data = str.maketrans(TSV_FILE_CHAR_MAP,TSV_SOURCE_CHAR_MAP)
 
 
-def split_line(
-    line:str,       # line to be split into fields
-) -> List[str]:  # Returns mapped field list
+def split_line(line):
     """
     Removes trailing whitespace, splits fields by the tab character,
     then returns a list of strings with unmapped line end and delimiter
@@ -87,27 +85,18 @@ class TSVLines:
     def __repr__(self):
         return f'<TSVLines: {self.path!r}>'
 
+    @property
+    def num_columns(self):
+        return len(self.headers)
+
     def _store_line(self, line):
         self.line_num += 1
         self.line = line.rstrip()
 
-    def _parse_line(self, line:str) -> List[str]:
-        """
-        Convert a line and return a list of strings for each
-        field. If fewer columns are found than defined in the header,
-        the list is extended with null strings. (If whitespace is trimmed
-        from a line, the missing \t get mapped to null strings.)
-        """
-        parts = split_line(line)
-        if len(parts) < self.num_columns:
-            # Extend the list with null strings to match header count
-            parts.extend([''] * (self.num_columns - len(parts)))
+    def _split_line(self, line):
+        self._store_line(line)
 
-        return parts
-
-    @property
-    def num_columns(self):
-        return len(self.headers)
+        return split_line(line)
 
     def __iter__(self):
         lines = self.lines
@@ -116,15 +105,29 @@ class TSVLines:
         if self.read_header:
             # The first line is a header with field names and column count
             line = next(lines)
-            self._store_line(line)
-            self.headers = split_line(line)
+            headers = self._split_line(line)
 
-        yield self.headers
+            self.headers = headers
+
+        # Yield the headers first.
+        yield headers
 
         # Read the remaining lines.
         for line in lines:
-            self._store_line(line)
-            yield self._parse_line(line)
+            fields = self._split_line(line)
+
+            if len(fields) > self.num_columns:
+                raise RuntimeError(
+                    f'too many columns in line {self.line_num!r}:\n'
+                    f' expected {self.num_columns} got {len(fields)}\n'
+                    f' {self}\n'
+                    f' line: {line!r}'
+                )
+            if len(fields) < self.num_columns:
+                # Extend the list with null strings to match header count
+                fields.extend((self.num_columns - len(fields)) * [''])
+
+            yield fields
 
 
 class TSVReader:
