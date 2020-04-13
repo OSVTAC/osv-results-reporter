@@ -35,6 +35,7 @@ import logging
 from pathlib import Path
 
 import orr.datamodel as datamodel
+from orr.datamodel import WINNING_STATUSES
 import orr.tsvio as tsvio
 from orr.tsvio import TSVLines, TSVReader
 from orr.datamodel import (Candidate, Choice, Contest, Election,
@@ -512,11 +513,15 @@ def process_winning_status(contest, winning_data):
     in a contest or turnout.
     """
     for winning_status, choices_data in winning_data.items():
+        if winning_status not in WINNING_STATUSES:
+            raise RuntimeError(
+                f'unrecognized winning_status value: {winning_status!r}\n'
+                f' winning_data: {winning_data!r}'
+            )
         is_successful = winning_status in ('winning',)
         choices = parse_choices(choices_data, choices_by_id=contest.choices_by_id)
         for choice in choices:
             choice.winning_status = winning_status
-            choice.is_successful = is_successful
 
     winning_choices = [
         choice for choice in contest.iter_choices() if choice.winning_status == 'winning'
@@ -689,6 +694,7 @@ def process_contest_summary(contest_loader, data):
         rcv_rounds = parse_int(contest, rcv_rounds)
         contest.rcv_rounds = rcv_rounds
 
+    # TODO: also process the "rcv_eliminations" key.
     rcv_totals, results = load_results_tsv(contest, tsv_lines=tsv_lines)
     contest.rcv_totals = rcv_totals
 

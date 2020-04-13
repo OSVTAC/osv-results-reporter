@@ -56,6 +56,7 @@ class CandidateRound:
         return utils.compute_percent(self.votes, self.continuing)
 
 
+# TODO: use the "rcv_eliminations" data in this class.
 class RCVResults:
 
     def __init__(self, rcv_totals, results_mapping, candidates, continuing_stat):

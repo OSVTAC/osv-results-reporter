@@ -43,6 +43,13 @@ _log = logging.getLogger(__name__)
 AREA_ID_ALL = '*'
 VOTING_GROUP_ID_ALL = 'TO'
 
+# The possible winning_status values.
+WINNING_STATUSES = [
+    'tied',
+    'to_runoff',
+    'winning',
+]
+
 # Besides the votes for candidates and measure choices counted, there
 # are a set of summary results with ballots not counted by category,
 # and a summary result for totals. These have a set of IDs and a generic title.
@@ -552,8 +559,6 @@ class Choice:
     def __init__(self, contest=None):
         self.id = None
         self.ballot_title = None
-        self.is_successful = None
-        # TODO: document the possible values.
         self.winning_status = None
 
         # Back-reference.
@@ -561,6 +566,11 @@ class Choice:
 
     def __repr__(self):
         return f'<Choice id={self.id!r} title={i18n_repr(self.ballot_title)}>'
+
+    @property
+    def is_successful(self):
+        # For now, we consider any winning_status value to be "successful".
+        return self.winning_status is not None
 
 
 # TODO: make this not subclass Choice.
@@ -583,7 +593,6 @@ class Candidate(Choice):
     def __init__(self, contest=None):
         self.id = None
         self.ballot_title = None
-        # TODO: document the possible values.
         self.winning_status = None
 
         # Back-reference.
