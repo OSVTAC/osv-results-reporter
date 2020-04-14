@@ -136,7 +136,7 @@
     {% endfor %}
     <tbody class="result-stats">
       <tr>
-        <td class="text-cell total">Total Turnout</td>
+        <td class="text-cell total">{{ "category_turnout_total"|TP }}</td>
         {{ subtotal_percent_tds(turnout_result.total, turnout_result.total) }}
       </tr>
       <tr>
