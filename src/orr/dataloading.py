@@ -1100,8 +1100,7 @@ class ContestLoader:
         ('is_partisan', parse_as_is),
         ('name', parse_i18n),
         ('short_description', parse_i18n),
-        # TODO: change this to parse_as_is since they should already be ints.
-        ('votes_allowed', parse_int),
+        ('votes_allowed', parse_as_is),
         ('number_elected', parse_as_is),
         ('contest_party_crossover', parse_as_is),
         ('question_text', parse_i18n),
