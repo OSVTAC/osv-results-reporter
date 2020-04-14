@@ -1017,12 +1017,6 @@ def make_contest_results_loader(contest_loader, data):
     return load_contest_results
 
 
-def load_eligible_voters_stat(contest_loader, value, result_stat_types_by_id):
-    eligible_voters_stat = result_stat_types_by_id['RSEli']
-
-    return eligible_voters_stat
-
-
 def load_turnout_choices(contest_loader, value, parties_by_id):
     return parties_by_id
 
@@ -1033,10 +1027,6 @@ class TurnoutLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
-        # Processing result_styles requires result_stat_types and voting_groups.
-        AutoAttr('eligible_voters_stat', load_eligible_voters_stat, data_key=False,
-            context_keys=('result_stat_types_by_id',), unpack_context=True),
-
         ('ballot_title', parse_i18n),
         # Don't pass `unpack_context=True` since `load_choices()` accepts
         # a `context` argument (not the unpacked keys).
@@ -1054,7 +1044,7 @@ class TurnoutLoader:
         AutoAttr('summary_results', process_contest_summary, data_key='results'),
     ]
 
-def load_turnout(election_loader, turnout_data, context):
+def load_turnout_object(election_loader, turnout_data, context):
     """
     Process the source data for the election turnout item.
 
@@ -1069,8 +1059,11 @@ def load_turnout(election_loader, turnout_data, context):
     except KeyError:
         raise RuntimeError(f"key '_type' missing from data: {data}")
 
+    result_stat_types_by_id = context['result_stat_types_by_id']
+    eligible_voters_stat = result_stat_types_by_id['RSEli']
+
     cls_info = dict(type_name=type_name, election=election_loader.model_object,
-        areas_by_id=context['areas_by_id'],
+        areas_by_id=context['areas_by_id'], eligible_voters_stat=eligible_voters_stat,
         voting_groups_by_id=context['voting_groups_by_id'])
 
     return load_object(TurnoutLoader(), turnout_data, cls_info=cls_info, context=context)
@@ -1244,7 +1237,7 @@ class ElectionLoader:
         ('headers_by_id', load_headers, 'headers'),
         AutoAttr('contests_by_id', load_contests, data_key='contests',
             context_keys=('areas_by_id', 'parties_by_id', 'result_styles_by_id', 'voting_groups_by_id')),
-        AutoAttr('turnout', load_turnout, data_key='turnout',
+        AutoAttr('turnout', load_turnout_object, data_key='turnout',
             context_keys=('areas_by_id', 'parties_by_id', 'result_stat_types_by_id',
                 'result_styles_by_id', 'voting_groups_by_id')),
 

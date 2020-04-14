@@ -760,6 +760,7 @@ class ResultTotal:
     __i18n_attr__ = 'text'
 
     def __init__(self, stat_or_choice, total):
+        assert stat_or_choice is not None
         self.stat_or_choice = stat_or_choice
         self.total = total
 
@@ -894,15 +895,21 @@ class Contest:
 
     # TODO: don't pass election.
     def __init__(self, type_name, id_=None, election=None, areas_by_id=None,
-        voting_groups_by_id=None):
+        voting_groups_by_id=None, eligible_voters_stat=None):
+        """
+        Args:
+          eligible_voters_stat: the result stat for eligible voters ("RSEli"),
+            as a ResultStatType object. This is turnout specific.
+        """
         assert type_name is not None
         assert election is not None
 
         self.id = id_
         self.type_name = type_name
-        self.election = election
-        self.areas_by_id = areas_by_id
         self.all_voting_groups_by_id = voting_groups_by_id
+        self.areas_by_id = areas_by_id
+        self.election = election
+        self.eligible_voters_stat = eligible_voters_stat
 
         # This is the Choice object used for determining whether the
         # approval threshold is met.
