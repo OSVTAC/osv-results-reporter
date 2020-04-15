@@ -1,7 +1,7 @@
 {
     "areas": [
         {
-            "_id": "*",
+            "_id": "ALL",
             "classification": "All",
             "name": "All Precincts",
             "short_name": "All Precincts"
@@ -10,6 +10,7 @@
             "_id": "PCT1141",
             "classification": "Precinct",
             "name": "Precinct 1141",
+            "reporting_group_ids": "ED MV",
             "short_name": "Precinct 1141"
         },
         {
@@ -17,20 +18,21 @@
             "classification": "Precinct",
             "is_vbm": true,
             "name": "Precinct 7101",
+            "reporting_group_ids": "MV",
             "short_name": "Precinct 7101"
         },
         {
             "_id": "0",
             "classification": "County",
             "name": "City and County of San Francisco",
-            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV PCT7101~MV ASSM17~TO NEIG1~TO",
+            "reporting_area_ids": "ALL PCT1141 PCT7101 ASSM17 NEIG1",
             "short_name": "San Francisco County"
         },
         {
             "_id": "ASSM17",
             "classification": "County Legislative District",
             "name": "California State Assembly District 17",
-            "reporting_group_ids": "*~TO *~ED *~MV PCT1141~ED PCT1141~MV SUPV1~TO NEIG1~TO",
+            "reporting_area_ids": "ALL PCT1141 SUPV1 NEIG1",
             "short_name": "Assembly District 17"
         },
         {
@@ -310,6 +312,7 @@
                 "voting_district": "0"
             }
         ],
+        "election_admin_area_id": "COSF",
         "election_area": {
             "en": "City and County of San Francisco",
             "es": "Ciudad y Condado de San Francisco",
