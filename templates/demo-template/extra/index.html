@@ -126,7 +126,7 @@
 
   <table class="table summary-table">
     {% set turnout_result = turnout_rg_totals.get_summary_total(stat_id='RSCst') %}
-    {% for vg in turnout_contest.voting_groups_from_idlist('ED MV') %}
+    {% for vg in turnout_contest.voting_groups_from_text_ids('ED MV') %}
       {% set rg_totals = turnout_contest.get_rg_summary_totals(vg) %}
       <tr>
         <td class="text-cell">{{ vg|TD }}</td>

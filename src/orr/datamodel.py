@@ -40,7 +40,7 @@ from orr.utils import truncate, ENGLISH_LANG
 _log = logging.getLogger(__name__)
 
 
-AREA_ID_ALL = '*'
+AREA_ID_ALL = 'ALL'
 VOTING_GROUP_ID_ALL = 'TO'
 
 # The possible winning_status values.
@@ -92,7 +92,7 @@ def ensure_int(value, arg_name):
         raise TypeError(f'argument {arg_name!r} not an int: {type(value)}')
 
 
-def parse_ids_text(ids_text):
+def parse_text_ids(ids_text):
     """
     Args:
       ids_text: space-separated list of IDS, as a string.
@@ -194,22 +194,16 @@ class VotingGroup:
     # This attribute says which property contains the translations.
     __i18n_attr__ = 'text'
 
-    def __init__(self, id_=None, heading=None):
+    def __init__(self, id_=None, text=None):
+        """
+        Args:
+          text: an i18n dict.
+        """
         self.id = id_
-        # TODO: remove self.heading.
-        self.heading = heading
-        self._text = None
+        self.text = text
 
     def __repr__(self):
         return f'<VotingGroup id={self.id!r}>'
-
-    @property
-    def text(self):
-        if self._text is None:
-            # TODO: remove this fallback after heading is removed.
-            return {ENGLISH_LANG: self.heading}
-
-        return self._text
 
 
 class ResultStatType:
@@ -248,6 +242,7 @@ class ResultStatType:
         return self._text
 
 
+# TODO: store the voting_group_to_id on each object, in advance?
 class ResultStyle:
 
     """
@@ -274,12 +269,13 @@ class ResultStyle:
         self.is_rcv = None
         self.result_stat_types = None
 
+        # This is a list of VotingGroup objects, in the correct order.
+        self._voting_groups = None
+
         # These are set by @voting_groups.setter.
         #
         # This is a dict mapping VotingGroup id to VotingGroup object.
         self._id_to_voting_group = None
-        # This is a list of VotingGroup objects.
-        self._voting_groups = None
 
     def __repr__(self):
         return f'<ResultStyle id={self.id!r}>'
@@ -292,6 +288,7 @@ class ResultStyle:
         """
         return self._voting_groups
 
+    # TODO: eliminate the need for this setter?
     @voting_groups.setter
     def voting_groups(self, groups):
         """
@@ -320,17 +317,15 @@ class ResultStyle:
         """
         return self._id_to_index[voting_group_id]
 
-    def voting_groups_from_idlist(self, idlist):
+    def voting_groups_from_ids(self, ids):
         """
         Return the list of voting group objects corresponding to a
-        space-separated list of ids. Unmatched ids are omitted.
+        list of voting group ids. Unmatched ids are omitted.
         """
-        if idlist == '*':
+        if ids == ['*']:
             # Then return all of the ids, in order.
             return self.voting_groups
 
-        # Otherwise, return only the matching ones.
-        ids = parse_ids_text(idlist)
         voting_groups = [
             self.get_voting_group_by_id(vg_id) for vg_id in ids
                 if vg_id in self._id_to_index
@@ -402,7 +397,8 @@ class Area:
       short_name:
       is_vbm:
       consolidated_ids:
-      reporting_group_ids:
+      reporting_areas:
+      reporting_groups:
     """
 
     reporting_group_pattern = re.compile(r'(.*)~(.*)')
@@ -414,51 +410,27 @@ class Area:
         self.classification = None
         self.name = None
         self.is_vbm = False
+        self.reporting_areas = None
+        self.reporting_groups = None
+
+        # This is a private attribute needed to set `self.reporting_groups`.
+        self._reporting_area_ids = None
 
     def __repr__(self):
         return f'<Area {self.classification!r}: id={self.id!r}>'
 
-    def get_reporting_group_ids(self):
-        # TODO: parse the ids when loading.
-        return parse_ids_text(self.reporting_group_ids)
-
     @property
-    def reporting_group_count(self):
-        reporting_group_ids = self.get_reporting_group_ids()
-
-        return len(reporting_group_ids)
-
-    def iter_reporting_groups(self, areas_by_id, voting_groups_by_id):
-        """
-        An iterator that creates and yields the reporting groups.
-        """
-        reporting_group_ids = self.get_reporting_group_ids()
-
-        for index, s in enumerate(reporting_group_ids):
-            m = self.reporting_group_pattern.match(s)
-            try:
-                if not m:
-                    raise ValueError(f'ReportingGroup id does not match pattern')
-                area_id, group_id = m.groups()
-                area = areas_by_id[area_id]
-                voting_group = voting_groups_by_id[group_id]
-                group = ReportingGroup(area, voting_group, index=index)
-            except Exception:
-                raise RuntimeError(f"error handling ReportingGroup id {s!r} for area {self.id!r}")
-
-            yield group
+    def is_all(self):
+        return self.id == AREA_ID_ALL
 
 
 class ReportingGroup:
 
     """
-    The reporting group defines an (Area, VotingGroup) tuple for
-    results subtotals. The Area ID '*' is a special placeholder meaning
-    all precincts (in a contest), and VotingGroup 'TO' is used for
-    all voters. Each voting district active in an election should have
-    a reporting_group_ids string that is a space-separated list of
-    area_id~voting_group_id ID pairs that reference a list of (area,group)
-    tuples.
+    The reporting group defines an (area, voting_group) tuple for
+    results subtotals. The area with id "ALL" is a special placeholder
+    area meaning all precincts (for that contest), and VotingGroup "TO"
+    is used for all voters in those areas.
     """
 
     def __init__(self, area, voting_group, index=None):
@@ -471,6 +443,15 @@ class ReportingGroup:
         self.voting_group = voting_group
         self.index = index
 
+    def __repr__(self):
+        return (
+            f'<ReportingGroup index={self.index!r} area={self.area!r} '
+            f'voting_group={self.voting_group!r}>'
+        )
+
+    def __str__(self):
+        return f'{self.area.id}~{self.voting_group.id}'
+
     def display(self):
         """
         Return the display format for use in a template.
@@ -479,7 +460,9 @@ class ReportingGroup:
         """
         text = self.area.short_name
         if self.area.id == AREA_ID_ALL or self.voting_group.id != VOTING_GROUP_ID_ALL:
-            text += f' - {self.voting_group.heading}'
+            # This defaults to English.
+            vg_name = translate_object(self.voting_group)
+            text += f' - {vg_name}'
 
         return text
 
@@ -705,7 +688,7 @@ class ResultsMapping:
 
         return [self.stat_id_to_index[label_or_id]]
 
-    def get_indexes_by_id_list(self, stat_idlist=None):
+    def get_indices_by_spaced_ids(self, spaced_ids=None):
         """
         Convert a space-separated list of ids into a list of indices.
 
@@ -721,10 +704,10 @@ class ResultsMapping:
         CHOICES id is included, the stat values can be reordered before and
         after choices.
         """
-        if stat_idlist is None:
-            stat_idlist = '*'
+        if spaced_ids is None:
+            spaced_ids = '*'
 
-        stat_ids = parse_ids_text(stat_idlist)
+        stat_ids = parse_text_ids(spaced_ids)
 
         indices = []
         for label_or_id in stat_ids:
@@ -733,25 +716,25 @@ class ResultsMapping:
 
         return indices
 
-    def iter_result_stats(self, stat_idlist=None):
+    def iter_result_stats(self, spaced_ids=None):
         """
         Yield ResultStatType objects.
 
         Args:
-          stat_idlist: a list of ResultStatType ids, as a space-delimited
+          spaced_ids: a list of ResultStatType ids, as a space-delimited
             string, or None to yield all of the ResultStatType objects,
             in order.
         """
         result_stat_types = self.result_stat_types
 
-        if stat_idlist is None:
+        if spaced_ids is None:
             # Then yield all of them.
             yield from result_stat_types
             return
 
-        indices = self.get_indexes_by_id_list(stat_idlist)
+        stat_indices = self.get_indices_by_spaced_ids(spaced_ids)
 
-        yield from (result_stat_types[i] for i in indices)
+        yield from (result_stat_types[i] for i in stat_indices)
 
 
 class ResultTotal:
@@ -906,6 +889,7 @@ class Contest:
 
         self.id = id_
         self.type_name = type_name
+        # TODO: remove all_voting_groups_by_id?
         self.all_voting_groups_by_id = voting_groups_by_id
         self.areas_by_id = areas_by_id
         self.election = election
@@ -969,10 +953,6 @@ class Contest:
         Helper function to get the number of result stats
         """
         return self.results_mapping.result_stat_count
-
-    @property
-    def reporting_group_count(self):
-        return self.voting_district.reporting_group_count
 
     @property
     def choice_count(self):
@@ -1103,15 +1083,40 @@ class Contest:
 
         return choice is self.approval_choice
 
-    def iter_reporting_groups(self):
-        """
-        Create and return a list of ReportingGroup objects.
-        """
-        area = self.voting_district
-        voting_groups_by_id = self.all_voting_groups_by_id
-        iterator = area.iter_reporting_groups(self.areas_by_id, voting_groups_by_id=voting_groups_by_id)
+    @property
+    def voting_groups(self):
+        return self.result_style.voting_groups
 
-        return iterator
+    def iter_reporting_groups(self, summary_only=False):
+        """
+        Return an iterator that creates and yields the reporting groups
+        (as ReportingGroup objects).
+
+        Args:
+          summary_only: whether to yield the reporting groups only for
+            the summary totals.
+        """
+        contest_area = self.voting_district
+        reporting_areas = iter(contest_area.reporting_areas)
+
+        # The ALL area needs to be special-cased.  Namely, to get the
+        # voting groups for the ALL area (i.e. the contest as a whole),
+        # we need to look to the contest's result style.
+        area = next(reporting_areas)
+        assert area.is_all
+
+        for index, voting_group in enumerate(self.voting_groups):
+            yield ReportingGroup(area, voting_group, index=index)
+
+        if summary_only:
+            return
+
+        # For the remaining areas, we look at the area itself for its
+        # voting groups.
+        for area in reporting_areas:
+            for voting_group in area.reporting_groups:
+                index += 1
+                yield ReportingGroup(area, voting_group, index=index)
 
     def has_stat(self, stat_id):
         """
@@ -1124,11 +1129,11 @@ class Contest:
     def get_stat_by_id(self, stat_id):
         return self.results_mapping.get_stat_by_id(stat_id)
 
-    def iter_result_stats(self, stat_idlist=None):
+    def iter_result_stats(self, spaced_ids=None):
         """
         Yield ResultStatType objects.
         """
-        yield from self.results_mapping.iter_result_stats(stat_idlist)
+        yield from self.results_mapping.iter_result_stats(spaced_ids)
 
     def _iter_headers(self):
         item = self
@@ -1153,7 +1158,7 @@ class Contest:
         my_header_path = self.make_header_path()
         return get_path_difference(my_header_path, header_path)
 
-    def detail_headings(self, stat_idlist=None, translator=None):
+    def detail_headings(self, spaced_ids=None, translator=None):
         """
         Args:
           translator: a function that is a return value of `make_translator()`.
@@ -1164,17 +1169,22 @@ class Contest:
             heading = translator(choice)
             headings.append(heading)
 
-        result_stats = self.iter_result_stats(stat_idlist)
+        result_stats = self.iter_result_stats(spaced_ids)
 
         headings.extend(translator(stat) for stat in result_stats)
 
         return headings
 
-    def voting_groups_from_idlist(self, group_idlist):
+    def voting_groups_from_text_ids(self, text_ids):
         """
         Helper function to reference the voting groups.
+
+        Args:
+          text_ids: a space-delimited string of voting group ids.
         """
-        return self.result_style.voting_groups_from_idlist(group_idlist)
+        vg_ids = parse_text_ids(text_ids)
+
+        return self.result_style.voting_groups_from_ids(vg_ids)
 
     def load_results_details(self):
         """
@@ -1260,7 +1270,7 @@ class Contest:
         return RCVResults(self.rcv_totals, results_mapping=self.results_mapping,
             candidates=candidates, continuing_stat=continuing_stat)
 
-    def detail_rows(self, choice_stat_idlist, reporting_groups=None):
+    def detail_rows(self, spaced_choice_ids, reporting_groups=None):
         """
         Yield rows of vote stat and choice values for the given reporting
         groups.
@@ -1275,7 +1285,7 @@ class Contest:
         self.load_results_details()
 
         results_mapping = self.results_mapping
-        indices = results_mapping.get_indexes_by_id_list(choice_stat_idlist)
+        indices = results_mapping.get_indices_by_spaced_ids(spaced_choice_ids)
 
         results = self.results
         for rg in reporting_groups:

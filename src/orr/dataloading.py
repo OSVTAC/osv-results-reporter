@@ -35,7 +35,7 @@ import logging
 from pathlib import Path
 
 import orr.datamodel as datamodel
-from orr.datamodel import WINNING_STATUSES
+from orr.datamodel import AREA_ID_ALL, VOTING_GROUP_ID_ALL, WINNING_STATUSES
 import orr.tsvio as tsvio
 from orr.tsvio import TSVLines, TSVReader
 from orr.datamodel import (Candidate, Choice, Contest, Election,
@@ -592,9 +592,9 @@ def load_turnout_tsv(contest, tsv_lines):
     results = []
     for row in iter_lines:
         # We could verify the reporting group but will skip
-        party, *totals = row[2:]
+        party_id, *totals = row[2:]
         # TODO: also store the values for each party.
-        if party != 'ALL':
+        if party_id != AREA_ID_ALL:
             continue
 
         try:
@@ -605,7 +605,7 @@ def load_turnout_tsv(contest, tsv_lines):
     return results
 
 
-def load_results_tsv(contest, tsv_lines):
+def load_results_tsv(contest, tsv_lines, expected_groups=None):
     """
     Args:
       tsv_lines: a TSVLines object.
@@ -614,8 +614,13 @@ def load_results_tsv(contest, tsv_lines):
       results: This is a matrix (list of lists), where the rows correspond
         to reporting groups (area-voting_group pair), and the columns
         correspond to result stats and choices.
+      expected_groups: what reporting groups are expected, as an iterator
+        of ReportingGroup objects.
     """
     assert not contest.is_turnout_contest
+
+    if expected_groups is None:
+        expected_groups = contest.iter_reporting_groups()
 
     iter_lines = iter(tsv_lines)
     # Skip the header row.
@@ -643,12 +648,30 @@ def load_results_tsv(contest, tsv_lines):
         rcv_totals = None
 
     results = []
-    for row in iter_lines:
-        # We could verify the reporting group but will skip
+    for row_number, row in enumerate(iter_lines, start=1):
+        # We check that the reporting group of each row matches what is expected.
+        expected_group = next(expected_groups)
+        expected_area_vg = [expected_group.area.id, expected_group.voting_group.id]
+        if row[:leading_column_count] != expected_area_vg:
+            raise RuntimeError(
+                f'unexpected reporting group for results row {row_number}:\n'
+                f' row: {row!r}\n'
+                f' expected: {expected_area_vg!r} ({expected_group!r})'
+            )
+
         try:
             results.append(row_to_ints(row[leading_column_count:]))
         except Exception:
             raise RuntimeError(f'error processing row: {contest.rcv_rounds} {row!r}')
+
+    unused_groups = list(expected_groups)
+    if unused_groups:
+        # Truncate the list of leftover groups to prevent a super long message.
+        remaining = ' '.join(repr(str(group)) for group in unused_groups[:10])
+        raise RuntimeError(
+            f'found {len(unused_groups)} unused reporting groups (after row {row_number!r}): '
+            f'{remaining}...'
+        )
 
     return (rcv_totals, results)
 
@@ -694,8 +717,12 @@ def process_contest_summary(contest_loader, data):
         rcv_rounds = parse_int(contest, rcv_rounds)
         contest.rcv_rounds = rcv_rounds
 
-    # TODO: also process the "rcv_eliminations" key.
-    rcv_totals, results = load_results_tsv(contest, tsv_lines=tsv_lines)
+        # TODO: also process the "rcv_eliminations" key.
+
+    expected_groups = contest.iter_reporting_groups(summary_only=True)
+
+    rcv_totals, results = load_results_tsv(contest, tsv_lines=tsv_lines,
+        expected_groups=expected_groups)
     contest.rcv_totals = rcv_totals
 
     approval_met = data.get('approval_met')
@@ -731,13 +758,6 @@ def load_contest_results(contest):
     with TSVReader(path) as tsv_lines:
         rcv_totals, results = load_results_tsv(contest, tsv_lines)
 
-        if len(results) != contest.reporting_group_count:
-            raise RuntimeError(
-                f'Mismatched reporting groups in {path}\n'
-                f'rg_count={contest.reporting_group_count}\n'
-                f'row_count={len(results)}'
-            )
-
         contest.results = results
 
 
@@ -747,10 +767,7 @@ class VotingGroupLoader:
 
     auto_attrs = [
         ('id', parse_id, '_id'),
-        ('heading', parse_i18n),
-        # Save the dict to a private attribute so "text" can be a property.
-        # TODO: make this public after heading is removed.
-        ('_text', parse_i18n, 'text'),
+        ('text', parse_i18n),
     ]
 
 
@@ -769,28 +786,26 @@ class ResultStatTypeLoader:
     ]
 
 
-# ResultStyle loading
-
-def ids_text_to_objects(ids_text, objects_by_id):
+def text_ids_to_objects(text_ids, objects_by_id):
     """
     Convert a space-separated list of object ids into objects.
 
     Args:
-      ids_text: a space-separated list of object ids, as a string.
+      text_ids: a space-separated list of object ids, as a string.
       objects_by_id: the dict of all objects of a single type, mapping
         object id to object.
 
     Returns: (objects, indexes_by_id)
       objects: the objects as a list.
     """
-    ids = datamodel.parse_ids_text(ids_text)
+    ids = datamodel.parse_text_ids(text_ids)
     objects = [objects_by_id[_id] for _id in ids]
 
     return objects
 
 
 # We want a name other than load_result_stat_types() for uniqueness reasons.
-def load_stat_types(result_style_loader, ids_text, result_stat_types_by_id):
+def load_stat_types(result_style_loader, text_ids, result_stat_types_by_id):
     """
     Return the list of ResultStatType objects for a ResultStyle.
 
@@ -800,13 +815,13 @@ def load_stat_types(result_style_loader, ids_text, result_stat_types_by_id):
     result_style = result_style_loader.model_object
     assert type(result_style) == ResultStyle
 
-    result_stat_types = ids_text_to_objects(ids_text, result_stat_types_by_id)
+    result_stat_types = text_ids_to_objects(text_ids, result_stat_types_by_id)
 
     return result_stat_types
 
 
 # We want a name other than load_voting_groups() for uniqueness reasons.
-def load_result_voting_groups(result_style_loader, ids_text, voting_groups_by_id):
+def load_result_voting_groups(result_style_loader, text_ids, voting_groups_by_id):
     """
     Args:
       result_style_loader: a ResultStyleLoader object.
@@ -814,7 +829,7 @@ def load_result_voting_groups(result_style_loader, ids_text, voting_groups_by_id
     result_style = result_style_loader.model_object
     assert type(result_style) == ResultStyle
 
-    voting_groups = ids_text_to_objects(ids_text, voting_groups_by_id)
+    voting_groups = text_ids_to_objects(text_ids, voting_groups_by_id)
 
     return voting_groups
 
@@ -836,6 +851,24 @@ class ResultStyleLoader:
     ]
 
 
+def load_reporting_groups(area_loader, vg_ids, voting_groups_by_id):
+    """
+    Args:
+      data: a space-delimited string of voting group ids, e.g. "ED MV".
+    """
+    voting_groups = text_ids_to_objects(vg_ids, voting_groups_by_id)
+
+    return voting_groups
+
+
+def load_reporting_area_ids(area_loader, data, context=None):
+    """
+    Args:
+      data: a space-delimited string of area ids, e.g. "ALL PCT1141 ...".
+    """
+    return datamodel.parse_text_ids(data)
+
+
 class AreaLoader:
 
     model_class = datamodel.Area
@@ -849,7 +882,13 @@ class AreaLoader:
         ('is_vbm', parse_bool),
         ('has_no_voters', parse_bool),
         ('consolidated_ids', parse_as_is),
-        ('reporting_group_ids', parse_as_is),
+        AutoAttr('reporting_groups', load_reporting_groups,
+            data_key='reporting_group_ids', context_keys=('voting_groups_by_id',),
+            unpack_context=True),
+        # Save the ids as private attributes so we can convert them to
+        # objects in `load_areas()`.
+        AutoAttr('_reporting_area_ids', load_reporting_area_ids,
+            data_key='reporting_area_ids'),
     ]
 
 
@@ -1320,14 +1359,37 @@ def load_result_styles(root_loader, styles_data, context):
     return result_styles_by_id
 
 
-def load_areas(root_loader, areas_data):
+def load_areas(root_loader, areas_data, context):
     """
     Process source data representing an area (e.g. precinct or district).
     """
+    # Get the default voting group.
+    voting_groups_by_id = context['voting_groups_by_id']
+    total_voting_group = voting_groups_by_id[VOTING_GROUP_ID_ALL]
+
     def load_data(data):
-        return load_object(AreaLoader(), data)
+        return load_object(AreaLoader(), data, context=context)
 
     areas_by_id = load_objects_to_mapping(load_data, areas_data)
+
+    # Now that we have all the areas by id, we can convert the
+    # reporting_area_ids to Area objects.
+    areas = iter(areas_by_id.values())
+    # Skip the ALL area because we can't set reporting_areas on it.
+    area = next(areas)
+    assert area.is_all
+
+    for area in areas:
+        if not area.reporting_groups:
+            # Set the voting groups default ("TO").
+            area.reporting_groups = [total_voting_group]
+
+        area_ids = area._reporting_area_ids
+        if not area_ids:
+            continue
+
+        reporting_areas = [areas_by_id[area_id] for area_id in area_ids]
+        area.reporting_areas = reporting_areas
 
     return areas_by_id
 
@@ -1416,10 +1478,11 @@ class RootLoader:
         # processing "election" depends on them.
         ('result_stat_types_by_id', load_result_stat_types, 'result_stat_types'),
         ('voting_groups_by_id', load_voting_groups, 'voting_groups'),
+        AutoAttr('areas_by_id', load_areas, 'areas',
+            context_keys=('voting_groups_by_id',)),
         # Processing result_styles requires result_stat_types and voting_groups.
         AutoAttr('result_styles_by_id', load_result_styles, data_key='result_styles',
             context_keys=('result_stat_types_by_id', 'voting_groups_by_id')),
-        ('areas_by_id', load_areas, 'areas'),
         ('parties_by_id', load_parties, 'party_names'),
         # The `result_stat_types_by_id` contest key is needed for turnout.
         AutoAttr('election', load_election,

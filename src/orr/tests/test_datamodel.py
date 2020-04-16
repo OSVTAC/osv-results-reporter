@@ -88,21 +88,24 @@ class ReportingGroupTest(TestCase):
             # Test the common case.
             (('PCT1141', 'Precinct 1141', 'EV', 'Early Voting'),
              'Precinct 1141 - Early Voting'),
-            # Test with Area id equal to "*".
-            (('*', 'All Precincts', 'EV', 'Early Voting'),
+            # Test with Area id equal "ALL".
+            (('ALL', 'All Precincts', 'EV', 'Early Voting'),
              'All Precincts - Early Voting'),
             # Test with VotingGroup id equal to "TO".
             (('PCT1141', 'Precinct 1141', 'TO', 'Total'),
              'Precinct 1141'),
-            # Test with Area id equal to "*" **and** VotingGroup id equal to "TO".
-            (('*', 'All Precincts', 'TO', 'Total'),
+            # Test with Area id equal "ALL" **and** VotingGroup id equal to "TO".
+            (('ALL', 'All Precincts', 'TO', 'Total'),
              'All Precincts - Total'),
         ]
         for args, expected in cases:
             with self.subTest(args=args):
                 area_id, area_short_name, voting_id, voting_heading = args
+
                 area = Area(id_=area_id, short_name=area_short_name)
-                voting_group = VotingGroup(id_=voting_id, heading=voting_heading)
+
+                text = {'en': voting_heading}
+                voting_group = VotingGroup(id_=voting_id, text=text)
 
                 rg = ReportingGroup(area, voting_group)
                 actual = rg.display()
