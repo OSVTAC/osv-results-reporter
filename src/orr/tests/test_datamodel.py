@@ -159,7 +159,9 @@ class ContestTest(TestCase):
 
     def test_get_new_headers(self):
         # A real Election object isn't needed, so pass any non-None value.
-        item1, item2, item3, item4, item5 = (Contest(id_=i, type_name='item', election='xxx') for i in range(1, 6))
+        item1, item2, item3, item4, item5 = (
+            Contest(id_=i, type_name='item', election='xxx') for i in range(1, 6)
+        )
         item2.parent_header = item1
         item3.parent_header = item2
 

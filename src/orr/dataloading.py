@@ -38,8 +38,8 @@ import orr.datamodel as datamodel
 from orr.datamodel import AREA_ID_ALL, VOTING_GROUP_ID_ALL, WINNING_STATUSES
 import orr.tsvio as tsvio
 from orr.tsvio import TSVLines, TSVReader
-from orr.datamodel import (Candidate, Choice, Contest, Election,
-    Header, ResultStatType, ResultStyle, ResultsMapping, VotingGroup)
+from orr.datamodel import (Candidate, Choice, Contest, Election, Header,
+    ResultStatType, ResultStyle, ResultsMapping, Turnout, VotingGroup)
 import orr.utils as utils
 from orr.utils import truncate
 
@@ -617,7 +617,7 @@ def load_results_tsv(contest, tsv_lines, expected_groups=None):
       expected_groups: what reporting groups are expected, as an iterator
         of ReportingGroup objects.
     """
-    assert not contest.is_turnout_contest
+    assert type(contest) == Contest
 
     if expected_groups is None:
         expected_groups = contest.iter_reporting_groups()
@@ -697,7 +697,7 @@ def process_contest_summary(contest_loader, data):
     summary_lines = iter(data['results_summary'])
     tsv_lines = TSVLines(summary_lines)
 
-    if contest.is_turnout_contest:
+    if type(contest) == Turnout:
         eligible_voters = data.get('eligible_voters')
         contest.eligible_voters = eligible_voters
 
@@ -1040,7 +1040,11 @@ def load_results_mapping(contest_loader, data):
     contest = contest_loader.model_object
 
     result_style = contest.result_style
-    choices = list(contest.iter_choices())
+    # TODO: remove the need for this branching.
+    if type(contest) is Contest:
+        choices = list(contest.iter_choices())
+    else:
+        choices = None
 
     return ResultsMapping(result_style.result_stat_types, choices=choices)
 
@@ -1062,7 +1066,7 @@ def load_turnout_choices(contest_loader, value, parties_by_id):
 
 class TurnoutLoader:
 
-    model_class = Contest
+    model_class = Turnout
 
     auto_attrs = [
         ('id', parse_id, '_id'),
@@ -1083,6 +1087,7 @@ class TurnoutLoader:
         AutoAttr('summary_results', process_contest_summary, data_key='results'),
     ]
 
+
 def load_turnout_object(election_loader, turnout_data, context):
     """
     Process the source data for the election turnout item.
@@ -1093,17 +1098,12 @@ def load_turnout_object(election_loader, turnout_data, context):
       election_loader: an ElectionLoader object.
       turnout_data: the turnout element of the election.
     """
-    try:
-        type_name = turnout_data.pop('_type')
-    except KeyError:
-        raise RuntimeError(f"key '_type' missing from data: {data}")
-
     result_stat_types_by_id = context['result_stat_types_by_id']
     eligible_voters_stat = result_stat_types_by_id['RSEli']
 
-    cls_info = dict(type_name=type_name, election=election_loader.model_object,
-        areas_by_id=context['areas_by_id'], eligible_voters_stat=eligible_voters_stat,
-        voting_groups_by_id=context['voting_groups_by_id'])
+    cls_info = dict(election=election_loader.model_object,
+        areas_by_id=context['areas_by_id'], voting_groups_by_id=context['voting_groups_by_id'],
+        eligible_voters_stat=eligible_voters_stat)
 
     return load_object(TurnoutLoader(), turnout_data, cls_info=cls_info, context=context)
 

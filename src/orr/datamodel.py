@@ -825,127 +825,51 @@ class ReportingGroupTotals:
             yield self.get_summary_total(stat_id=result_stat.id)
 
 
-class Contest:
+class ReportableMixin:
 
     """
-    Contest is a class that encompasses all contest types: offices, measures,
-    and retention/recall. All contests have the following common attributes:
+    Encapsulates objects with reportable totals, e.g. a contest, or turnout
+    for the election as a whole.
 
     Attributes:
       id: must be unique across all contests or headers
-      type_name: a string indicating the Contest type (see below for
-        descriptions).
 
       ballot_title: text appearing on the ballot representing the contest.
       ballot_subtitle: second level title for this item
-      choices: List of choices: candidates or Yes/No etc. on measures
-               and recall/retention contests
       header_id: id of the parent header object containing this item
         (or a falsey value for root).
       parent_header: the parent header of the item, as a Header object.
-      results_mapping: a ResultsMapping object.
-      results: the result subtotals as a matrix, where each row corresponds
-        to a ReportingGroup object, and each column a ResultStatType object
-        or Choice object.  This means a subtotal can be accessed e.g. as
-        `results[rg_index][stat_choice_index]`.
+
       _results_details_loaded: bool indicating if detailed results are present
-      rcv_totals: a list of tuples, one for each round, starting with the
-        first round.
-
-    Private attributes:
-      _load_contest_results_data: a function that loads the results details
-        for the contest.  The function should have signature: load(contest).
-
-    A Contest with type_name "office" represents an elected office where
-    choices are a set of candidates.
-
-    A Contest with type_name "measure" represents a ballot measure question posed to voters.
-    Most measures have a Yes/No question though the text that can appear on
-    ballots for the response may be different, e.g. "Bonds Yes". For a
-    yes/no question, the measure will pass or fail, depending on the approval
-    required. Normally, the first choice is yes. Some measures might be
-    multiple choice, e.g. preferred name of a proposed city, and might
-    have more than 2 choices. Ranked Choice Voting could be used with a
-    multiple choice measure.
-
-    (In orr we don't need to distinguish from a measure:)
-
-    A Contest with type_name "ynoffice" is a hybrid of MeasureContest and OfficeContest,
-    used for approval voting (retention contest) or for a recall question.
-    The attributes defining an elected office are included, and information
-    on the incumbent/candidate can be defined.
     """
 
     # TODO: don't pass election.
-    def __init__(self, type_name, id_=None, election=None, areas_by_id=None,
-        voting_groups_by_id=None, eligible_voters_stat=None):
+    def __init__(self, election=None, areas_by_id=None, voting_groups_by_id=None):
         """
         Args:
-          eligible_voters_stat: the result stat for eligible voters ("RSEli"),
-            as a ResultStatType object. This is turnout specific.
+          areas_by_id:
         """
-        assert type_name is not None
         assert election is not None
 
-        self.id = id_
-        self.type_name = type_name
         # TODO: remove all_voting_groups_by_id?
         self.all_voting_groups_by_id = voting_groups_by_id
         self.areas_by_id = areas_by_id
         self.election = election
-        self.eligible_voters_stat = eligible_voters_stat
-
-        # This is the Choice object used for determining whether the
-        # approval threshold is met.
-        self.approval_choice = None
-        # This is True when there is an approval required and the threshold is met.
-        self.approval_met = None
-        # The "approval_threshold" value can be a string having one
-        # of the following forms:
-        #  * "Advisory"
-        #  * "Majority" (translates to "more than 50%" aka 50% + 1)
-        #  * "n%" for some integer n
-        #  * "m/n" for some integers m and n (e.g. 55/100 or 2/3).
-        #
-        # For California elections, the possibilities are: "Advisory",
-        # "Majority", "55%", and "2/3".
-        self.approval_threshold = None
 
         self.ballot_title = None
         self.ballot_subtitle = None
-        # This is a dict mapping Choice id to Choice object.
-        self.choices_by_id = None
-        self.contest_party = None
         self.name = None
         self.parent_header = None
-        # Number of RCV elimination rounds loaded
-        self.rcv_rounds = None
         self.results_mapping = None
 
         # This is a matrix (list of lists), where the rows correspond
         # to reporting groups (area-voting_group pair), and the columns
         # correspond to result stats and choices.
         self.summary_results = None
-        # TODO: document the format of this value.
-        self.rcv_totals = None
 
         self.url_state_results = None
-        self.votes_allowed = None
 
         self._results_details_loaded = False
-
-    def __repr__(self):
-        name = translate_object(self.contest_name)
-        return f'<Contest {self.type_name!r}: id={self.id!r} name={name!r}>'
-
-    # TODO: instead make a separate class for turnout.
-    @property
-    def is_turnout_contest(self):
-        return self.id == 'TURNOUT'
-
-    @property
-    def approval_passed(self):
-        return self.approval_met
 
     @property
     def result_stat_count(self):
@@ -953,135 +877,6 @@ class Contest:
         Helper function to get the number of result stats
         """
         return self.results_mapping.result_stat_count
-
-    @property
-    def choice_count(self):
-        if self.choices_by_id is None:
-            return 0
-
-        return len(self.choices_by_id)
-
-    # This is named "contest_name" instead of "name" to make it easier to
-    # search for occurrences in the code.
-    @property
-    def contest_name(self):
-        """
-        Return the contest name, as a SubstitutionString object.
-        """
-        format_str = '{}'
-        if self.name:
-            fields = [self.name]
-        elif self.ballot_title:
-            fields = [self.ballot_title]
-            if self.ballot_subtitle:
-                format_str += ' - {}'
-                fields.append(self.ballot_subtitle)
-        else:
-            format_str = ''
-            fields = []
-
-        if self.contest_party:
-            format_str += ' ({})'
-            fields.append(self.contest_party.name)
-
-        return SubstitutionString(format_str, fields)
-
-    @property
-    def is_rcv(self):
-        """
-        Return whether the contest is an RCV contest.
-        """
-        return self.result_style.is_rcv
-
-    @property
-    def can_vote_for_multiple(self):
-        """
-        Return True or False, or None for unspecified.
-
-        None can happen e.g. for the turnout pseudo-contest, as votes
-        don't make sense in that context.
-        """
-        if self.votes_allowed is None:
-            return None
-
-        try:
-            return self.votes_allowed > 1 and not self.is_rcv
-        except Exception:
-            raise RuntimeError(f'error for contest: {self!r}')
-
-    percent_pattern = re.compile(r'^(\d+)%$')
-    fraction_pattern = re.compile(r'^(\d+)/(\d+)$')
-
-    @property
-    def approval_threshold_fraction(self):
-        """
-        Converts the approval_threshold string to a fractional number,
-        0.0 if not applicable or .50, .55, .66667 etc for Majority, percent,
-        or fractions.
-        """
-        approval_threshold = self.approval_threshold
-        if not approval_threshold:
-            return 0.0
-        if approval_threshold == 'Majority':
-            return 0.5
-
-        m = self.percent_pattern.match(approval_threshold)
-        if m:
-            return(float(m.group(1))/100.0)
-
-        m = self.fraction_pattern.match(approval_threshold)
-        if m:
-            return(float(m.group(1))/float(m.group(2)))
-
-        return 0.0
-
-    @property
-    def approval_threshold_percentage(self):
-      fraction = self.approval_threshold_fraction
-      if fraction == 0.0:
-        return ''
-      if fraction == 0.5:
-        return '50%+1'
-      if fraction == 2/3:
-        return '66⅔%'
-      return '{:.2g}%'.format(fraction * 100.0)
-
-    # Also expose the dict values as an ordered list, for convenience.
-    # TODO: change this to a list?
-    def iter_choices(self):
-        """
-        Return an iterator over the Choice objects, in their pre-election order.
-        """
-        if self.choices_by_id is None:
-            yield from ()
-        else:
-            # Here we use that choices_by_id is an OrderedDict.
-            yield from self.choices_by_id.values()
-
-    # TODO: move this to ReportingGroupTotals.
-    @property
-    def choices_sorted(self):
-        """
-        Return the list of choices in descending order of total votes
-        """
-        rg_totals = self.get_rg_summary_totals()
-        if self.approval_threshold:
-            def sorter(choice):
-                # Sort Yes above No. Return 1 for Yes and 0 for No to
-                # accomplish this.
-                return 1 if self.is_approval_choice(choice) else 0
-        else:
-            def sorter(choice):
-                # For other contests, sort by vote total
-                return rg_totals.get_summary_total(choice).total
-
-        yield from sorted(self.iter_choices(), reverse=True, key=sorter)
-
-    def is_approval_choice(self, choice):
-        if not self.approval_threshold:
-            return False
-
-        return choice is self.approval_choice
 
     @property
     def voting_groups(self):
@@ -1222,13 +1017,6 @@ class Contest:
         # TODO: remove this assumption.
         return vg_index
 
-    def get_eligible_total(self):
-        """
-        Return the number of voters eligible to register (stat_id "RSEli"),
-        as a ResultTotal object.
-        """
-        return ResultTotal(self.eligible_voters_stat, total=self.eligible_voters)
-
     def get_rg_summary_totals(self, voting_group=None):
         """
         Return the summary totals for a voting group, as a ReportingGroupTotals
@@ -1238,6 +1026,11 @@ class Contest:
           voting_group: a VotingGroup object, or None for the "all" voting
             group.
         """
+        if type(self) == Turnout:
+            can_vote_for_multiple = False
+        else:
+            can_vote_for_multiple = self.can_vote_for_multiple
+
         # Summary results should be loaded for the election if present
         assert self.election.summary_results_loaded
 
@@ -1247,7 +1040,7 @@ class Contest:
         vg_totals = self.summary_results[rg_index]
 
         return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping,
-            can_vote_for_multiple=self.can_vote_for_multiple)
+            can_vote_for_multiple=can_vote_for_multiple)
 
     def make_rcv_results(self, continuing_stat_id):
         """
@@ -1294,6 +1087,253 @@ class Contest:
             row.extend(utils.format_number(results_row[i]) for i in indices)
 
             yield row
+
+
+class Turnout(ReportableMixin):
+
+    # TODO: don't pass election.
+    def __init__(self, election=None, areas_by_id=None, voting_groups_by_id=None,
+        eligible_voters_stat=None):
+        """
+        Args:
+          eligible_voters_stat: the result stat for eligible voters ("RSEli"),
+            as a ResultStatType object. This is turnout specific.
+        """
+        super().__init__(election=election, areas_by_id=areas_by_id,
+            voting_groups_by_id=voting_groups_by_id)
+
+        self.eligible_voters = None
+        self.eligible_voters_stat = eligible_voters_stat
+
+    def __repr__(self):
+        return f'<Turnout: object>'
+
+    def get_eligible_total(self):
+        """
+        Return the number of voters eligible to register (stat_id "RSEli"),
+        as a ResultTotal object.
+        """
+        return ResultTotal(self.eligible_voters_stat, total=self.eligible_voters)
+
+
+class Contest(ReportableMixin):
+
+    """
+    Contest is a class that encompasses all contest types: offices, measures,
+    and retention/recall. All contests have the following common attributes:
+
+    Attributes:
+      type_name: a string indicating the Contest type (see below for
+        descriptions).
+      choices: List of choices: candidates or Yes/No etc. on measures
+               and recall/retention contests
+      results_mapping: a ResultsMapping object.
+      results: the result subtotals as a matrix, where each row corresponds
+        to a ReportingGroup object, and each column a ResultStatType object
+        or Choice object.  This means a subtotal can be accessed e.g. as
+        `results[rg_index][stat_choice_index]`.
+      rcv_totals: a list of tuples, one for each round, starting with the
+        first round.
+
+    Private attributes:
+      _load_contest_results_data: a function that loads the results details
+        for the contest.  The function should have signature: load(contest).
+
+    A Contest with type_name "office" represents an elected office where
+    choices are a set of candidates.
+
+    A Contest with type_name "measure" represents a ballot measure question posed to voters.
+    Most measures have a Yes/No question though the text that can appear on
+    ballots for the response may be different, e.g. "Bonds Yes". For a
+    yes/no question, the measure will pass or fail, depending on the approval
+    required. Normally, the first choice is yes. Some measures might be
+    multiple choice, e.g. preferred name of a proposed city, and might
+    have more than 2 choices. Ranked Choice Voting could be used with a
+    multiple choice measure.
+
+    (In orr we don't need to distinguish from a measure:)
+
+    A Contest with type_name "ynoffice" is a hybrid of MeasureContest and OfficeContest,
+    used for approval voting (retention contest) or for a recall question.
+    The attributes defining an elected office are included, and information
+    on the incumbent/candidate can be defined.
+    """
+
+    # TODO: don't pass election.
+    def __init__(self, type_name, id_=None, election=None, areas_by_id=None,
+        voting_groups_by_id=None):
+        """
+        Args:
+          type_name:
+        """
+        assert type_name is not None
+        super().__init__(election=election, areas_by_id=areas_by_id,
+            voting_groups_by_id=voting_groups_by_id)
+
+        self.id = id_
+        self.type_name = type_name
+
+        self.contest_party = None
+
+        # This is a dict mapping Choice id to Choice object.
+        self.choices_by_id = None
+
+        # Number of RCV elimination rounds loaded
+        self.rcv_rounds = None
+        # TODO: document the format of this value.
+        self.rcv_totals = None
+
+        self.votes_allowed = None
+
+        # This is the Choice object used for determining whether the
+        # approval threshold is met.
+        self.approval_choice = None
+        # This is True when there is an approval required and the threshold is met.
+        self.approval_met = None
+        # The "approval_threshold" value can be a string having one
+        # of the following forms:
+        #  * "Advisory"
+        #  * "Majority" (translates to "more than 50%" aka 50% + 1)
+        #  * "n%" for some integer n
+        #  * "m/n" for some integers m and n (e.g. 55/100 or 2/3).
+        #
+        # For California elections, the possibilities are: "Advisory",
+        # "Majority", "55%", and "2/3".
+        self.approval_threshold = None
+
+    def __repr__(self):
+        name = translate_object(self.contest_name)
+        return f'<Contest {self.type_name!r}: id={self.id!r} name={name!r}>'
+
+    @property
+    def approval_passed(self):
+        return self.approval_met
+
+    @property
+    def choice_count(self):
+        if self.choices_by_id is None:
+            return 0
+
+        return len(self.choices_by_id)
+
+    # This is named "contest_name" instead of "name" to make it easier to
+    # search for occurrences in the code.
+    @property
+    def contest_name(self):
+        """
+        Return the contest name, as a SubstitutionString object.
+        """
+        format_str = '{}'
+        if self.name:
+            fields = [self.name]
+        elif self.ballot_title:
+            fields = [self.ballot_title]
+            if self.ballot_subtitle:
+                format_str += ' - {}'
+                fields.append(self.ballot_subtitle)
+        else:
+            format_str = ''
+            fields = []
+
+        if self.contest_party:
+            format_str += ' ({})'
+            fields.append(self.contest_party.name)
+
+        return SubstitutionString(format_str, fields)
+
+    @property
+    def is_rcv(self):
+        """
+        Return whether the contest is an RCV contest.
+        """
+        return self.result_style.is_rcv
+
+    @property
+    def can_vote_for_multiple(self):
+        """
+        Return True or False, or None for unspecified.
+
+        None can happen e.g. for the turnout pseudo-contest, as votes
+        don't make sense in that context.
+        """
+        if self.votes_allowed is None:
+            return None
+
+        try:
+            return self.votes_allowed > 1 and not self.is_rcv
+        except Exception:
+            raise RuntimeError(f'error for contest: {self!r}')
+
+    percent_pattern = re.compile(r'^(\d+)%$')
+    fraction_pattern = re.compile(r'^(\d+)/(\d+)$')
+
+    @property
+    def approval_threshold_fraction(self):
+        """
+        Converts the approval_threshold string to a fractional number,
+        0.0 if not applicable or .50, .55, .66667 etc for Majority, percent,
+        or fractions.
+        """
+        approval_threshold = self.approval_threshold
+        if not approval_threshold:
+            return 0.0
+        if approval_threshold == 'Majority':
+            return 0.5
+
+        m = self.percent_pattern.match(approval_threshold)
+        if m:
+            return(float(m.group(1))/100.0)
+
+        m = self.fraction_pattern.match(approval_threshold)
+        if m:
+            return(float(m.group(1))/float(m.group(2)))
+
+        return 0.0
+
+    @property
+    def approval_threshold_percentage(self):
+      fraction = self.approval_threshold_fraction
+      if fraction == 0.0:
+        return ''
+      if fraction == 0.5:
+        return '50%+1'
+      if fraction == 2/3:
+        return '66⅔%'
+      return '{:.2g}%'.format(fraction * 100.0)
+
+    # Also expose the dict values as an ordered list, for convenience.
+    # TODO: change this to a list?
+    def iter_choices(self):
+        """
+        Return an iterator over the Choice objects, in their pre-election order.
+        """
+        # Here we use that choices_by_id is an OrderedDict.
+        yield from self.choices_by_id.values()
+
+    # TODO: move this to ReportingGroupTotals.
+    @property
+    def choices_sorted(self):
+        """
+        Return the list of choices in descending order of total votes
+        """
+        rg_totals = self.get_rg_summary_totals()
+        if self.approval_threshold:
+            def sorter(choice):
+                # Sort Yes above No. Return 1 for Yes and 0 for No to
+                # accomplish this.
+                return 1 if self.is_approval_choice(choice) else 0
+        else:
+            def sorter(choice):
+                # For other contests, sort by vote total
+                return rg_totals.get_summary_total(choice).total
+
+        yield from sorted(self.iter_choices(), reverse=True, key=sorter)
+
+    def is_approval_choice(self, choice):
+        if not self.approval_threshold:
+            return False
+
+        return choice is self.approval_choice
 
 
 class Election:
