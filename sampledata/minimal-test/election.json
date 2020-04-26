@@ -22,7 +22,7 @@
             "short_name": "Precinct 7101"
         },
         {
-            "_id": "0",
+            "_id": "COSF",
             "classification": "County",
             "name": "City and County of San Francisco",
             "reporting_area_ids": "ALL PCT1141 PCT7101 ASSM17 NEIG1",
@@ -266,7 +266,7 @@
                     "zh": "投選您的第一、第二和第三選擇"
                 },
                 "votes_allowed": 3,
-                "voting_district": "0",
+                "voting_district": "COSF",
                 "writeins_allowed": 1
             },
             {
@@ -309,7 +309,7 @@
                 },
                 "result_style": "EMS",
                 "votes_allowed": 1,
-                "voting_district": "0"
+                "voting_district": "COSF"
             }
         ],
         "election_admin_area_id": "COSF",
@@ -395,7 +395,8 @@
                 "en": "Registration and Turnout"
             },
             "result_style": "EMTX2",
-            "voting_district": "0"
+            "turnout_party_ids": "ALL DEM REP",
+            "voting_district": "COSF"
         },
         "url_state_results": "https://osvtac.github.io/"
     },
@@ -406,6 +407,12 @@
         "zh"
     ],
     "party_names": [
+        {
+            "_id": "ALL",
+            "name": {
+                "en": "All Parties Combined"
+            }
+        },
         {
             "_id": "DEM",
             "name": {
