@@ -45,6 +45,12 @@ from orr.writers.xlsxwriting import XLSXBook
 _log = logging.getLogger(__name__)
 
 
+def debug_raise(obj_or_msg):
+    if type(obj_or_msg) != str:
+        msg = f'repr: {obj_or_msg!r}'
+    raise RuntimeError(msg)
+
+
 def check_defined(value):
     """
     Ensure the value is not "undefined".

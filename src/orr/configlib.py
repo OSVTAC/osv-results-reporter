@@ -95,6 +95,8 @@ def create_jinja_env(output_dir, template_dirs=None, translation_data=None,
         languages_data=languages,
         phrases_data=phrases,
     )
+    # We need to update by index since "raise" is a Python keyword.
+    env.globals['raise'] = templating.debug_raise
 
     translate_phrase = contextfilter(functools.partial(templating.translate_phrase, phrases=phrases))
 
