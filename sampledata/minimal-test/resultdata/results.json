@@ -80,17 +80,7 @@
             "ALL\tED\tREP\t6609\t\t\t4125\t4122",
             "ALL\tMV\tALL\t\t244962\t200615\t198000\t177935\t0\t9405",
             "ALL\tMV\tDEM\t\t\t142573\t140984\t140674\t0\t6788",
-            "ALL\tMV\tREP\t\t\t12767\t12583\t12677\t0\t462",
-            "PCT1141\tTO\tALL\t1056",
-            "PCT1141\tTO\tDEM\t593",
-            "PCT1141\tTO\tREP\t50",
-            "PCT1141\tED\tALL\t220",
-            "PCT1141\tED\tDEM\t113",
-            "PCT1141\tED\tREP\t11",
-            "PCT1141\tMV\tALL\t\t404\t397\t\t\t0\t7",
-            "PCT1141\tMV\tDEM\t\t267\t261\t\t\t0\t6",
-            "PCT1141\tMV\tREP\t\t20\t20\t\t\t0\t0",
-            "PCT7101\tTO\tALL\t147"
+            "ALL\tMV\tREP\t\t\t12767\t12583\t12677\t0\t462"
          ],
         "total_precincts": "604"
     }
