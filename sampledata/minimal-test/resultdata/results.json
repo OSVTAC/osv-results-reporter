@@ -73,8 +73,8 @@
         "results_summary": [
             "area_id\tsubtotal_type\tparty\tRSReg\tRSCst\tRSCnt\tRSCd1\tRSCd2\tRSPnd\tRSCha",
             "ALL\tTO\tALL\t500516\t372848\t\t305184\t283427",
-            "ALL\tTO\tDEM\t305059\t\t\t219810\t219367",
-            "ALL\tTO\tREP\t32967\t\t\t16708\t16799",
+            "ALL\tTO\tDEM\t305059\t222848\t\t219810\t219367",
+            "ALL\tTO\tREP\t32967\t150000\t\t16708\t16799",
             "ALL\tED\tALL\t101679\t127886\t\t107184\t105492",
             "ALL\tED\tDEM\t61346\t\t\t78826\t78693",
             "ALL\tED\tREP\t6609\t\t\t4125\t4122",
