@@ -68,22 +68,28 @@ def split_line(line):
 
 class TSVLines:
 
-    def __init__(self, lines, read_header=True, path=None):
+    def __init__(self, lines, path=None, convert=None):
         """
         Args:
           lines: an iterator of lines.
           path: the path for logging purposes.
+          convert: a function to convert `row[2:]` for each row after
+            the header row.
         """
+        if convert is None:
+            convert = lambda row: row
+
+        assert convert is not None
         self.lines = lines
         self.path = path
-        self.read_header = read_header
+        self.convert = convert
 
         self.headers = None
         self.line_num = 0
         self.line = None
 
     def __repr__(self):
-        return f'<TSVLines: {self.path!r}>'
+        return f'<TSVLines: {self.path!r} convert={self.convert!r}>'
 
     @property
     def num_columns(self):
@@ -101,13 +107,15 @@ class TSVLines:
     def __iter__(self):
         lines = self.lines
 
-        # First read the header line if configured to do so.
-        if self.read_header:
-            # The first line is a header with field names and column count
-            line = next(lines)
-            headers = self._split_line(line)
+        # The first line is a header with field names and column count
+        line = next(lines)
 
-            self.headers = headers
+        headers = self._split_line(line)
+        # TODO: remove this debug check.
+        if headers[0] not in ('area_id',):
+            raise RuntimeError(f'unexpected header row: {headers!r}')
+
+        self.headers = headers
 
         # Yield the headers first.
         yield headers
@@ -116,18 +124,53 @@ class TSVLines:
         for line in lines:
             fields = self._split_line(line)
 
-            if len(fields) > self.num_columns:
+            if len(fields) < self.num_columns:
+                # Extend the list with null strings to match header count
+                fields.extend((self.num_columns - len(fields)) * [''])
+            elif len(fields) > self.num_columns:
                 raise RuntimeError(
                     f'too many columns in line {self.line_num!r}:\n'
                     f' expected {self.num_columns} got {len(fields)}\n'
                     f' {self}\n'
                     f' line: {line!r}'
                 )
-            if len(fields) < self.num_columns:
-                # Extend the list with null strings to match header count
-                fields.extend((self.num_columns - len(fields)) * [''])
 
             yield fields
+
+    def _make_group_id_rows(self, rows, start):
+        """
+        Yields triples: (line_number, group_id, remaining)
+          line_number: the line number, starting with the given `start`.
+          group_id: a composite reporting group id, as a 2-tuple
+            (area_id, voting_group_id).
+          remaining: the remaining values, as a list of strings.
+        """
+        for line_number, row in enumerate(rows, start=start):
+            try:
+                group_id = tuple(row[:2])
+                remaining = self.convert(row[2:])
+            except Exception:
+                msg = (
+                    f'parsing failed at line {line_number}:\n'
+                    f'  line: {self.line!r}\n'
+                    f' split: {row}'
+                )
+                raise RuntimeError(msg)
+
+            yield (line_number, group_id, remaining)
+
+    def get_parsed_rows(self):
+        """
+        Returns: (headers, parsed_rows)
+          headers: the headers, as a list.
+          parsed_rows: an iterator of 3-tuples (line_number, group_id, remaining).
+        """
+        rows = iter(self)
+        headers = next(rows)
+
+        parsed_rows = self._make_group_id_rows(rows, start=2)
+
+        return (headers, parsed_rows)
 
 
 class TSVReader:
@@ -144,27 +187,25 @@ class TSVReader:
         line_num:   line number in file
     """
 
-    def __init__(self, path:str, read_header:bool=True):
+    def __init__(self, path, convert):
         """
         Creates a tsv reader object. The opened file is passed in as f
         (so a with/as statement can provide a file open context).
-        If read_header is true, the first line is assumed to be a
-        header. If the sep column separating character is not supplied,
-        the characters '\t|,' will be searched in the header line (if
-        read) to automatically set the separator, otherwise tab is assumed.
 
         Args:
           path: the path to open, as a path-like object.
+          convert: a function to convert `row[2:]` for each row after
+            the header row.
         """
+        self.convert = convert
         self.path = path
-        self.read_header = read_header
 
     def __enter__(self):
         path = self.path
         stream = open(path, encoding=UTF8_ENCODING)
         self.stream = stream
 
-        return TSVLines(stream, path=path)
+        return TSVLines(stream, path=path, convert=self.convert)
 
     def __exit__(self, type, value, traceback):
         """

@@ -38,19 +38,21 @@ class TSVReaderTest(TestCase):
 
     def test(self):
         text = dedent("""\
-        header1\theader2\theader3\theader4
+        area_id\theader2\theader3\theader4
         row1\t100\t101\t102
         row2\t200\t201\t202
         """)
         expected = [
-            ['header1', 'header2', 'header3', 'header4'],
+            ['area_id', 'header2', 'header3', 'header4'],
             ['row1', '100', '101', '102'],
             ['row2', '200', '201', '202'],
         ]
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / 'temp.tsv'
             path.write_text(text)
-            with TSVReader(path) as tsv_lines:
+
+            convert = int
+            with TSVReader(path, convert=convert) as tsv_lines:
                 actual = list(tsv_lines)
 
         self.assertEqual(actual, expected)

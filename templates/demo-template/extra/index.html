@@ -49,14 +49,14 @@
   <tr>
     <td colspan="3">&nbsp;</td>
   </tr>
-  {% set rg_totals = contest.get_rg_summary_totals() %}
-  {% set cast_result = rg_totals.get_summary_total(stat_id='RSCst') %}
+  {% set vote_totals = contest.get_contest_totals_by_stat() %}
+  {% set cast_result = vote_totals.get_total(id_='RSCst') %}
   {% if contest.can_vote_for_multiple %}
     {# TODO: show "Blank Ballots" once we add it to the input data. -#}
     {% set stat_ids = 'RSOvr RSCst' %}
   {% else %}
     {% set stat_ids = 'RSUnd RSOvr RSCst' %}
-    {% set voted_ballots = rg_totals.get_voted_ballots() %}
+    {% set voted_ballots = vote_totals.get_voted_ballots() %}
     <tr>
       {#-
          We hard-code different language here ("Voted Ballots" instead of
@@ -67,7 +67,7 @@
       {{ subtotal_percent_tds(voted_ballots.total, cast_result.total) }}
     </tr>
   {% endif %}
-  {% for result_total in rg_totals.iter_result_totals(stat_ids) %}
+  {% for result_total in vote_totals.iter_totals(stat_ids) %}
     <tr>
       <td class="text-cell">{{ result_total|TD }}</td>
       {{ subtotal_percent_tds(result_total.total, cast_result.total) }}
@@ -105,8 +105,8 @@
   <h4>{{ "voter_registration_header"|TP }}</h4>
 
   <table class="table summary-table">
-    {% set turnout_rg_totals = turnout_contest.get_rg_summary_totals() %}
-    {% set reg_result = turnout_rg_totals.get_summary_total(stat_id='RSReg') %}
+    {% set turnout_by_stat = turnout_contest.get_totals_by_stat() %}
+    {% set reg_result = turnout_by_stat.get_total(id_='RSReg') %}
     {% set eligible_result = turnout_contest.get_eligible_total() %}
     <tr>
       <td class="text-cell">{{ reg_result|TD }}</td>
@@ -124,14 +124,24 @@
     {{ show_precincts_reporting(turnout_contest.precincts_reporting, turnout_contest.total_precincts) }}
   </p>
 
+{# Turnout by Election Day / Vote-by-mail #}
   <table class="table summary-table">
-    {% set turnout_result = turnout_rg_totals.get_summary_total(stat_id='RSCst') %}
+    <thead>
+      <tr>
+        <th></th>
+        <th>Voters</th>
+        <th>{{ "category_percentage"|TP }}</th>
+        <th class="bars-header"></th>
+      </tr>
+    </thead>
+    {% set turnout_by_vg = turnout_contest.get_totals_by_vg(stat_id='RSCst') %}
+    {% set turnout_result = turnout_by_vg.get_total() %}
     {% for vg in turnout_contest.voting_groups_from_text_ids('ED MV') %}
-      {% set rg_totals = turnout_contest.get_rg_summary_totals(vg) %}
+      {% set subtotal_result = turnout_by_vg.get_total(vg) %}
       <tr>
         <td class="text-cell">{{ vg|TD }}</td>
-        {% set subtotal_result = rg_totals.get_summary_total(stat_id='RSCst') %}
         {{ subtotal_percent_tds(subtotal_result.total, turnout_result.total) }}
+        {{ bar_td(subtotal_result.total, turnout_result.total) }}
       </tr>
     {% endfor %}
     <tbody class="result-stats">
@@ -149,6 +159,38 @@
       <tr>
         <td class="text-cell">{{ "percent_of_eligible_voters"|TP }} <span class="note">({{ "quantity_modifier_estimated"|TP }})</span></td>
         <td>{{ turnout_result.total|format_percent2(eligible_result.total) }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+
+  {# Turnout by Party #}
+  <h4>Turnout by Party</h4>
+
+  {% set turnout_by_party = turnout_contest.get_totals_by_party('RSCst') %}
+  {% set turnout_result = turnout_by_party.get_total() %}
+  <table class="table summary-table">
+    <thead>
+      <tr>
+        <th>Party</th>
+        <th>Voters</th>
+        <th>{{ "category_percentage"|TP }}</th>
+        <th class="bars-header"></th>
+      </tr>
+    </thead>
+    <tbody class="choices">
+      {% for party_result in turnout_by_party.iter_totals('PARTIES') %}
+        <tr>
+          <td class="text-cell title">
+            {{- party_result|TD -}}
+          </td>
+          {{ subtotal_percent_tds(party_result.total, turnout_result.total) }}
+          {{ bar_td(party_result.total, turnout_result.total) }}
+        </tr>
+      {% endfor %}
+      <tr>
+        <td class="text-cell total">{{ "category_turnout_total"|TP }}</td>
+        {{ subtotal_percent_tds(turnout_result.total, turnout_result.total) }}
       </tr>
     </tbody>
   </table>
@@ -213,8 +255,8 @@
         <a href="{{ contest.url_state_results }}">[{{ "hyperlink_text_ca_state_results"|TP }} &rArr;]</a>
       {% endif %}
     </p>
-    {% set rg_totals = contest.get_rg_summary_totals() %}
-    {% set total_result = rg_totals.total_votes %}
+    {% set vote_totals = contest.get_contest_totals_by_stat() %}
+    {% set total_result = vote_totals.total_votes %}
     {#
       Note that we can have contest.is_rcv=True with contest.rcv_rounds=0.
       Thus we check contest.rcv_rounds rather than contest.is_rcv.
@@ -270,7 +312,7 @@
       </table>
     {% else %}
     {% set totalVotes = total_result.total %}
-    {% set voted_ballots = rg_totals.get_voted_ballots() %}
+    {% set voted_ballots = vote_totals.get_voted_ballots() %}
     {% set voteDenominator = voted_ballots.total %}
     <table class="table summary-table">
       <thead>
@@ -285,10 +327,10 @@
         {% if contest.approval_threshold %}
           {% set maxDisplayVote = totalVotes %}
         {% else %}
-          {% set maxDisplayVote = rg_totals.get_max_vote_total() %}
+          {% set maxDisplayVote = vote_totals.get_max_total(stat_ids='CHOICES') %}
         {% endif %}
         {% for choice in contest.choices_sorted %}
-          {% set vote_result = rg_totals.get_summary_total(choice) %}
+          {% set vote_result = vote_totals.get_total(choice) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice|TD -}}
@@ -305,7 +347,7 @@
           </tr>
         {% endfor %}
         {% if contest.has_stat('RSWri') %}
-          {% set vote_result = rg_totals.get_summary_total(stat_id='RSWri') %}
+          {% set vote_result = vote_totals.get_total(id_='RSWri') %}
           {% if vote_result.total %}
             <tr>
               <td class="text-cell title">{{ vote_result|TD }} <span class="note">({{ "write_in_modifier_unreviewed"|TP }})</span></td>

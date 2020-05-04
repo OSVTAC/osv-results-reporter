@@ -56,11 +56,12 @@ class DataLoadingModuleTest(TestCase):
             [10000, 6000, 500, 800, 300, 200],
         ]
         stream = io.StringIO(text)
-        tsv_lines = TSVLines(stream)
-        iter_rows = iter(tsv_lines)
 
-        # Advance past the header line.
-        next(iter_rows)
+        def convert(remaining):
+            return dataloading.row_to_ints(remaining)
 
-        actual = list(dataloading.read_rcv_totals(tsv_lines, iter_rows, rounds=3))
+        tsv_lines = TSVLines(stream, convert=convert)
+        headers, parsed_rows = tsv_lines.get_parsed_rows()
+
+        actual = list(dataloading.read_rcv_totals(parsed_rows, round_count=3))
         self.assertEqual(actual, expected)

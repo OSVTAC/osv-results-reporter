@@ -41,6 +41,7 @@ _log = logging.getLogger(__name__)
 
 
 AREA_ID_ALL = 'ALL'
+PARTY_ID_ALL = 'ALL'
 VOTING_GROUP_ID_ALL = 'TO'
 
 # The possible winning_status values.
@@ -100,21 +101,6 @@ def parse_text_ids(ids_text):
     return ids_text.split()
 
 
-def make_index_map(values):
-    """
-    Return an `indexes_by_value` dict mapping the value to its (0-based)
-    index in the list.
-    """
-    return {value: index for index, value in enumerate(values)}
-
-
-def make_indexes_by_id(objects):
-    """
-    Return a dict mapping object id to its (0-based) index in the list.
-    """
-    return make_index_map(obj.id for obj in objects)
-
-
 # TODO: test this.
 def i18n_repr(i18n_text):
     """
@@ -135,6 +121,20 @@ def i18n_repr(i18n_text):
 SubstitutionString = namedtuple('SubstitutionString', 'format_string, data')
 
 
+def get_i18n_value(obj):
+    if not hasattr(obj, '__i18n_attr__'):
+        raise RuntimeError(f'object does not have __i18n_attr__: {obj!r}')
+
+    attr_name = obj.__i18n_attr__
+    try:
+        return getattr(obj, attr_name)
+    except AttributeError:
+        msg = f'i18n attribute {attr_name!r} missing from object: {obj}'
+        # Use `from None` since the new exception provides strictly
+        # more information than the previous.
+        raise RuntimeError(msg) from None
+
+
 def translate_object(obj, lang=None):
     """
     Args:
@@ -147,14 +147,7 @@ def translate_object(obj, lang=None):
         lang = ENGLISH_LANG
 
     if hasattr(obj, '__i18n_attr__'):
-        attr_name = obj.__i18n_attr__
-        try:
-            obj = getattr(obj, attr_name)
-        except AttributeError:
-            msg = f'i18n attribute {attr_name!r} missing from object: {obj}'
-            # Use `from None` since the new exception provides strictly
-            # more information than the previous.
-            raise RuntimeError(msg) from None
+        obj = get_i18n_value(obj)
 
     if isinstance(obj, SubstitutionString):
         # TODO: make this a method of `SubstitutionString`?
@@ -267,55 +260,60 @@ class ResultStyle:
         self.id = None
         self.description = None
         self.is_rcv = None
+
+        # These two attributes are set by the loader at the same time.
+        # This is a list of the ResultStatType objects, in the correct order.
         self.result_stat_types = None
+        # This is a mapping from ResultStatType id to ResultStatType index.
+        self.stat_id_to_index = None
 
-        # This is a list of VotingGroup objects, in the correct order.
-        self._voting_groups = None
-
-        # These are set by @voting_groups.setter.
-        #
-        # This is a dict mapping VotingGroup id to VotingGroup object.
-        self._id_to_voting_group = None
+        # These two attributes are set by the loader at the same time.
+        # This is a list of the VotingGroup objects, in the correct order.
+        self.voting_groups = None
+        # This is a mapping from VotingGroup id to VotingGroup index.
+        self.vg_id_to_index = None
 
     def __repr__(self):
         return f'<ResultStyle id={self.id!r}>'
 
     @property
-    def voting_groups(self):
-        """
-        Return the VotingGroup objects associated with this result style
-        (in the correct order), as a list.
-        """
-        return self._voting_groups
+    def result_stat_count(self):
+        return len(self.result_stat_types)
 
-    # TODO: eliminate the need for this setter?
-    @voting_groups.setter
-    def voting_groups(self, groups):
-        """
-        Args:
-          groups: a list of VotingGroup objects.
-        """
-        self._id_to_index = make_indexes_by_id(groups)
-        self._id_to_voting_group = {vg.id: vg for vg in groups}
-        self._voting_groups = groups
+    def get_stat_by_id(self, stat_id):
+        index = self.stat_id_to_index[stat_id]
 
-    def get_voting_group_by_id(self, voting_group_id):
-        """
-        Return the `VotingGroup` object given an id.
+        return self.result_stat_types[index]
 
-        Raises:
-          * `KeyError` if the id doesn't exist for the ResultStyle.
-        """
-        return self._id_to_voting_group[voting_group_id]
+    def get_stat_index(self, id_):
+        index = self.stat_id_to_index[id_]
+        stat = self.result_stat_types[index]
 
-    def get_vg_index_by_id(self, voting_group_id):
-        """
-        Return the `VotingGroup` index given an id.
+        yield (stat, index)
 
-        Raises:
-          * `KeyError` if the id doesn't exist for the ResultStyle.
+    def _get_vg_index(self, vg_id):
         """
-        return self._id_to_index[voting_group_id]
+        Args: a VotingGroup object or id.
+        """
+        index = self.vg_id_to_index[vg_id]
+        vg = self.voting_groups[index]
+
+        return vg
+
+    def get_vg_index(self, vg_id=None):
+        """
+        Args: a VotingGroup object or id.
+        """
+        if vg_id is None:
+            vg_id = VOTING_GROUP_ID_ALL  # "TO"
+        elif type(vg_id) != str:
+            # Then assume it is a VotingGroup object.
+            vg_id = vg_id.id
+
+        index = self.vg_id_to_index[vg_id]
+        vg = self.voting_groups[index]
+
+        yield (vg, index)
 
     def voting_groups_from_ids(self, ids):
         """
@@ -327,8 +325,7 @@ class ResultStyle:
             return self.voting_groups
 
         voting_groups = [
-            self.get_voting_group_by_id(vg_id) for vg_id in ids
-                if vg_id in self._id_to_index
+            self._get_vg_index(vg_id) for vg_id in ids
         ]
 
         return voting_groups
@@ -445,12 +442,15 @@ class ReportingGroup:
 
     def __repr__(self):
         return (
-            f'<ReportingGroup index={self.index!r} area={self.area!r} '
-            f'voting_group={self.voting_group!r}>'
+            f'<ReportingGroup|{self.index!r}: area={self.area!r} vg={self.voting_group!r}>'
         )
 
     def __str__(self):
         return f'{self.area.id}~{self.voting_group.id}'
+
+    @property
+    def group_id(self):
+        return (self.area.id, self.voting_group.id)
 
     def display(self):
         """
@@ -476,9 +476,15 @@ class Party:
       heading:
     """
 
+    # This attribute says which property contains the translations.
+    __i18n_attr__ = 'name'
+
     def __init__(self, _id=None):
         self.id = _id
         self._name = None
+
+    def __repr__(self):
+        return f'<Party {self.id!r}>'
 
     @property
     def name(self):
@@ -616,21 +622,31 @@ class ResultsMapping:
     and (2) index in the results row.
     """
 
-    def __init__(self, result_stat_types, choices):
+    def __init__(self, result_style=None, choices=None):
         """
         Args:
           result_stat_types: an iterable of ResultStatType objects.
           choices: the choices in the contest, as a list of Choice objects.
         """
-        stat_id_to_index = make_indexes_by_id(result_stat_types)
-
         self.choices = choices
-        self.stat_id_to_index = stat_id_to_index
-        self.result_stat_types = result_stat_types
+        self.result_style = result_style
+
+        all_items = list(result_style.result_stat_types)
+        if choices:
+            all_items.extend(choices)
+        self.all_items = all_items
 
     @property
     def choice_count(self):
         return len(self.choices)
+
+    @property
+    def result_stat_types(self):
+        return self.result_style.result_stat_types
+
+    @property
+    def stat_id_to_index(self):
+        return self.result_style.stat_id_to_index
 
     @property
     def result_stat_count(self):
@@ -645,9 +661,7 @@ class ResultsMapping:
         return stat_id in self.stat_id_to_index
 
     def get_stat_by_id(self, stat_id):
-        stat_index = self.stat_id_to_index[stat_id]
-
-        return self.result_stat_types[stat_index]
+        return self.result_style.get_stat_by_id(stat_id)
 
     def get_choice_index(self, choice):
         """
@@ -655,42 +669,42 @@ class ResultsMapping:
         """
         return self.result_stat_count + choice.index
 
-    def get_stat_or_choice_index(self, stat_or_choice=None, stat_id=None):
+    def get_stat_or_choice_index(self, stat_or_choice):
         """
         Args:
           stat_or_choice: a ResultStatType object or Choice object.
-          stat_id: the id of a a ResultStatType object.
+          stat_id: the id of a ResultStatType object.
         """
         if type(stat_or_choice) == ResultStatType:
             stat_id = stat_or_choice.id
+        elif isinstance(stat_or_choice, str):
+            return self.stat_id_to_index[stat_or_choice]
 
-        if stat_id is not None:
-            return self.stat_id_to_index[stat_id]
-
-        # TODO: provide a good error message if this assertion fails.
-        assert isinstance(stat_or_choice, Choice)
+        if not isinstance(stat_or_choice, Choice):
+            raise RuntimeError(f'stat_or_choice not Choice but: {stat_or_choice!r}')
 
         return self.get_choice_index(stat_or_choice)
 
-    def get_indices_by_id(self, label_or_id):
+    def iter_indices_by_id(self, label_or_id):
         """
+        A generator yielding the indices corresponding to a single string id.
+
         Args:
           label_or_id: a ResultStatType id, or one of the special strings "*"
             or "CHOICES".
         """
         if label_or_id == '*':
-            return list(range(self.result_stat_count))
+            yield from range(self.result_stat_count)
+        elif label_or_id == 'CHOICES':
+            yield from range(self.result_stat_count,
+                self.result_stat_count + len(self.choices))
+        else:
+            yield self.stat_id_to_index[label_or_id]
 
-        if label_or_id == 'CHOICES':
-            return list(
-                range(self.result_stat_count, self.result_stat_count + len(self.choices))
-            )
-
-        return [self.stat_id_to_index[label_or_id]]
-
-    def get_indices_by_spaced_ids(self, spaced_ids=None):
+    def iter_indices_by_spaced_ids(self, spaced_ids=None):
         """
-        Convert a space-separated list of ids into a list of indices.
+        A generator yielding indices after converting from a space-separated
+        list of ids.
 
         Map a space-separated ID list into a set of result type index values.
         The index can be used to access the result_stat_types[].header or
@@ -707,18 +721,12 @@ class ResultsMapping:
         if spaced_ids is None:
             spaced_ids = '*'
 
-        stat_ids = parse_text_ids(spaced_ids)
-
-        indices = []
-        for label_or_id in stat_ids:
-            new_indices = self.get_indices_by_id(label_or_id)
-            indices.extend(new_indices)
-
-        return indices
+        for label_or_id in parse_text_ids(spaced_ids):
+            yield from self.iter_indices_by_id(label_or_id)
 
     def iter_result_stats(self, spaced_ids=None):
         """
-        Yield ResultStatType objects.
+        A generator that yields ResultStatType objects.
 
         Args:
           spaced_ids: a list of ResultStatType ids, as a space-delimited
@@ -732,9 +740,32 @@ class ResultsMapping:
             yield from result_stat_types
             return
 
-        stat_indices = self.get_indices_by_spaced_ids(spaced_ids)
+        stat_indices = self.iter_indices_by_spaced_ids(spaced_ids)
 
         yield from (result_stat_types[i] for i in stat_indices)
+
+    def get_summary_index(self, stat_or_choice=None, id_=None, stat_ids=None):
+        """
+        A generator that yields (obj, index) pairs.
+
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
+          stat_id: the id of a ResultStatType object.
+          stat_ids: a string of space-delimited ids.
+        """
+        if stat_or_choice is not None:
+            # TODO: check stat_or_choice_index
+            index = self.get_stat_or_choice_index(stat_or_choice)
+
+            yield (stat_or_choice, index)
+        else:
+            if stat_ids is None:
+                assert id_ is not None
+                indices = [self.stat_id_to_index[id_]]
+            else:
+                indices = self.iter_indices_by_spaced_ids(stat_ids)
+
+            yield from ((self.all_items[i], i) for i in indices)
 
 
 class ResultTotal:
@@ -742,77 +773,122 @@ class ResultTotal:
     # This attribute says which property contains the translations.
     __i18n_attr__ = 'text'
 
-    def __init__(self, stat_or_choice, total):
-        assert stat_or_choice is not None
-        self.stat_or_choice = stat_or_choice
+    def __init__(self, obj, total):
+        assert obj is not None
+        assert not isinstance(obj, str)
+        self.obj = obj
         self.total = total
 
     def __repr__(self):
-        return f'<ResultTotal object: {self.stat_or_choice!r}>'
+        return f'<ResultTotal|{self.total!r}: {self.obj!r}>'
 
     @property
     def text(self):
-        return self.stat_or_choice.text
+        return get_i18n_value(self.obj)
 
 
-class ReportingGroupTotals:
+class IndexedTotals:
 
     """
-    Encapsulates the vote totals for a reporting group (ReportingGroup object).
+    Encapsulates a list of vote totals indexed by a mapping of some kind.
     """
 
-    def __init__(self, vg_totals, results_mapping, can_vote_for_multiple=None):
+    # TODO: remove the need for the can_vote_for_multiple argument.
+    # TODO: should we keep headers, or get it by calling resolve()?
+    def __init__(self, name, totals, resolve, headers, can_vote_for_multiple=None):
         """
         Args:
-          results_mapping: a ResultsMapping object.
+          name: a name, for debugging purposes.
+          totals: the list of totals.
+          resolve: a function with signature: `resolve(*args, **kwargs)`
+            that yields one or more pairs: `(obj, index)`.
+            For example: `resolve(stat_id=stat_id) -> [(result_stat, index)]`.
+          headers: the headers, for debugging purposes.
           can_vote_for_multiple: None means unspecified.
         """
         self.can_vote_for_multiple = can_vote_for_multiple
-        self.results_mapping = results_mapping
-        self.vg_totals = vg_totals
+        self.resolve = resolve
+        self.headers = headers
+        self.name = name
+        self.totals = totals
+
+    def __repr__(self):
+        if self.headers is None:
+            parts = [str(total) for total in self.totals]
+        else:
+            parts = []
+            for header, total in zip(self.headers, self.totals):
+                parts.append(f'{header.id}:{total}')
+
+        details = ', '.join(parts)
+        return f'<IndexedTotals {self.name!r}: {details} >'
 
     @property
     def total_votes(self):
         """
         Return the total vote for choices (i.e. "RSTot"), as a ResultTotal object.
         """
-        return self.get_summary_total(stat_id='RSTot')
+        try:
+            return self.get_total(id_='RSTot')
+        except Exception:
+            # Re-raise as something other than AttributeError for a less
+            # confusing traceback.
+            raise RuntimeError()
 
-    def get_summary_total(self, stat_or_choice=None, stat_id=None):
+    # TODO: remove this?
+    def get_max_total(self, *args, **kwargs):
+        choice_indices = self.resolve(*args, **kwargs)
+
+        return max(self.totals[pair[1]] for pair in choice_indices)
+
+    def _iter_totals(self, *args, **kwargs):
         """
         Return the summary total for a ResultStatType or Choice object,
         as a ResultTotal object.
 
         Args:
           stat_or_choice: a ResultStatType object or Choice object.
-          stat_id: the id of a a ResultStatType object.
+          stat_id: the id of a ResultStatType object.
         """
-        if stat_id is not None:
-            stat_or_choice = self.results_mapping.get_stat_by_id(stat_id)
+        try:
+            yield from (
+                ResultTotal(o, total=self.totals[i]) for o, i in self.resolve(*args, **kwargs)
+            )
+        except Exception:
+            raise RuntimeError(
+                'failed for:\n'
+                f' resolve function: {self.resolve!r}\n'
+                f'   args: {args!r}\n'
+                f' kwargs: {kwargs!r}'
+            )
 
-        # TODO: check stat_or_choice_index
-        stat_or_choice_index = self.results_mapping.get_stat_or_choice_index(stat_or_choice)
-
-        total = self.vg_totals[stat_or_choice_index]
-
-        return ResultTotal(stat_or_choice, total=total)
-
-    def get_voted_ballots(self):
+    # TODO: update this docstring.
+    # TODO: document what arguments and keyword arguments are accepted.
+    def get_total(self, *args, **kwargs):
         """
-        Return a ResultTotal object.
+        Return the summary total for a ResultStatType or Choice object,
+        as a ResultTotal object.
+
+        Args:
+          stat_or_choice: a ResultStatType object or Choice object.
+          stat_id: the id of a ResultStatType object.
         """
-        if self.can_vote_for_multiple:
-            # Then use "Ballots cast" as the denominator.
-            return self.get_summary_total(stat_id='RSCst')
+        try:
+            # The following line will error out if result_totals doesn't
+            # contain just one pair.
+            result_total, = self._iter_totals(*args, **kwargs)
+        except ValueError:
+            msg = (
+                'failed for:\n'
+                f' resolve function: {self.resolve!r}\n'
+                f'   args: {args!r}\n'
+                f' kwargs: {kwargs!r}'
+            )
+            raise RuntimeError(msg)
 
-        return self.total_votes
+        return result_total
 
-    def get_max_vote_total(self):
-        choice_indices = self.results_mapping.get_indices_by_id('CHOICES')
-
-        return max(self.vg_totals[index] for index in choice_indices)
-
-    def iter_result_totals(self, stat_ids):
+    def iter_totals(self, spaced_ids):
         """
         Yield ResultTotal objects.
 
@@ -821,8 +897,20 @@ class ReportingGroupTotals:
             string, or None to yield all of the ResultStatType objects,
             in order.
         """
-        for result_stat in self.results_mapping.iter_result_stats(stat_ids):
-            yield self.get_summary_total(stat_id=result_stat.id)
+        # Convert the space-delimited string to a list.
+        for id_ in parse_text_ids(spaced_ids):
+            yield from self._iter_totals(id_=id_)
+
+    # TODO: remove or update this?
+    def get_voted_ballots(self):
+        """
+        Return a ResultTotal object.
+        """
+        if self.can_vote_for_multiple:
+            # Then use "Ballots cast" as the denominator.
+            return self.get_total(id_='RSCst')
+
+        return self.total_votes
 
 
 class ReportableMixin:
@@ -860,23 +948,37 @@ class ReportableMixin:
         self.ballot_subtitle = None
         self.name = None
         self.parent_header = None
-        self.results_mapping = None
-
-        # This is a matrix (list of lists), where the rows correspond
-        # to reporting groups (area-voting_group pair), and the columns
-        # correspond to result stats and choices.
-        self.summary_results = None
+        self.result_style = None
 
         self.url_state_results = None
 
+        # This is the matrix of summary results totals.  The "shape"
+        # of the matrix (e.g. 2-D vs. 3-D) depends on whether the concrete
+        # class is Contest or Turnout.
+        self._results_summary = None
+
         self._results_details_loaded = False
+
+    @property
+    def all_area(self):
+        """
+        Return the ALL area, as an Area object.
+        """
+        return self.areas_by_id[AREA_ID_ALL]
+
+    @property
+    def result_stat_types(self):
+        """
+        Helper function to get the number of result stats
+        """
+        return self.result_style.result_stat_types
 
     @property
     def result_stat_count(self):
         """
         Helper function to get the number of result stats
         """
-        return self.results_mapping.result_stat_count
+        return self.result_style.result_stat_count
 
     @property
     def voting_groups(self):
@@ -891,8 +993,8 @@ class ReportableMixin:
           summary_only: whether to yield the reporting groups only for
             the summary totals.
         """
-        contest_area = self.voting_district
-        reporting_areas = iter(contest_area.reporting_areas)
+        area = self.voting_district
+        reporting_areas = iter(area.reporting_areas)
 
         # The ALL area needs to be special-cased.  Namely, to get the
         # voting groups for the ALL area (i.e. the contest as a whole),
@@ -922,13 +1024,7 @@ class ReportableMixin:
         return self.results_mapping.has_stat(stat_id)
 
     def get_stat_by_id(self, stat_id):
-        return self.results_mapping.get_stat_by_id(stat_id)
-
-    def iter_result_stats(self, spaced_ids=None):
-        """
-        Yield ResultStatType objects.
-        """
-        yield from self.results_mapping.iter_result_stats(spaced_ids)
+        return self.result_style.get_stat_by_id(stat_id)
 
     def _iter_headers(self):
         item = self
@@ -964,7 +1060,7 @@ class ReportableMixin:
             heading = translator(choice)
             headings.append(heading)
 
-        result_stats = self.iter_result_stats(spaced_ids)
+        result_stats = self.results_mapping.iter_result_stats(spaced_ids)
 
         headings.extend(translator(stat) for stat in result_stats)
 
@@ -995,31 +1091,10 @@ class ReportableMixin:
 
         return ''
 
-    def get_summary_rg_index(self, voting_group=None):
+    # TODO: move this to the Contest object.
+    def get_contest_totals_by_stat(self, voting_group=None):
         """
-        Return the index of the reporting group for the summary totals of
-        the given voting group.
-
-        Args:
-          voting_group: a VotingGroup object, or None for the "all" voting
-            group.
-        """
-        if voting_group is None:
-            vg_id = VOTING_GROUP_ID_ALL  # 'TO'
-        else:
-            vg_id = voting_group.id
-
-        vg_index = self.result_style.get_vg_index_by_id(vg_id)
-
-        # Here we make the assumption that the reporting group for the
-        # "all" area for the voting group we're interested in has an
-        # index that matches the index of the voting group.
-        # TODO: remove this assumption.
-        return vg_index
-
-    def get_rg_summary_totals(self, voting_group=None):
-        """
-        Return the summary totals for a voting group, as a ReportingGroupTotals
+        Return the summary totals for a voting group, as an IndexedTotals
         object.
 
         Args:
@@ -1032,14 +1107,21 @@ class ReportableMixin:
             can_vote_for_multiple = self.can_vote_for_multiple
 
         # Summary results should be loaded for the election if present
-        assert self.election.summary_results_loaded
+        assert self.election.summary_data_loaded
 
-        rg_index = self.get_summary_rg_index(voting_group)
+        # Here we make the assumption that the reporting group for the
+        # "all" area for the voting group we're interested in has an
+        # index that matches the index of the voting group.
+        # TODO: remove this assumption.
+        (vg, rg_index), = self.result_style.get_vg_index(voting_group)
 
         # This is the row of subtotals corresponding to the voting group.
-        vg_totals = self.summary_results[rg_index]
+        vg_totals = self._results_summary[rg_index]
 
-        return ReportingGroupTotals(vg_totals, results_mapping=self.results_mapping,
+        # TODO: include the contest repr in the name argument.
+        # TODO: also pass headers?
+        return IndexedTotals('contest totals', vg_totals, headers=None,
+            resolve=self.results_mapping.get_summary_index,
             can_vote_for_multiple=can_vote_for_multiple)
 
     def make_rcv_results(self, continuing_stat_id):
@@ -1078,14 +1160,13 @@ class ReportableMixin:
         self.load_results_details()
 
         results_mapping = self.results_mapping
-        indices = results_mapping.get_indices_by_spaced_ids(spaced_choice_ids)
+        indices = list(results_mapping.iter_indices_by_spaced_ids(spaced_choice_ids))
 
         results = self.results
         for rg in reporting_groups:
             results_row = results[rg.index]
             row = [rg.display()]
             row.extend(utils.format_number(results_row[i]) for i in indices)
-
             yield row
 
 
@@ -1105,8 +1186,24 @@ class Turnout(ReportableMixin):
         self.eligible_voters = None
         self.eligible_voters_stat = eligible_voters_stat
 
+        # These two attributes are set by the loader at the same time.
+        # This is a list of the Party objects, in the correct order.
+        self.parties = None
+        # This is a mapping from Party id to Party index.
+        self._party_id_to_index = None
+
     def __repr__(self):
         return f'<Turnout: object>'
+
+    @property
+    def turnout_summary(self):
+        """
+        Return the summary turnout totals.
+
+        This is a 3-D matrix (list of list of lists) indexed by:
+        reporting group (area-voting_group pair) -> party -> result stat.
+        """
+        return self._results_summary
 
     def get_eligible_total(self):
         """
@@ -1115,6 +1212,80 @@ class Turnout(ReportableMixin):
         """
         return ResultTotal(self.eligible_voters_stat, total=self.eligible_voters)
 
+    def _get_party_index(self, id_=None):
+        if id_ == 'PARTIES':
+            # Skip the "all" party.
+            indices = (
+                index for (party_id, index) in self._party_id_to_index.items()
+                    if party_id != PARTY_ID_ALL
+            )
+        else:
+            if id_ is None:
+                id_ = PARTY_ID_ALL
+            indices = [self._party_id_to_index[id_]]
+
+        yield from ((self.parties[i], i) for i in indices)
+
+    # TODO: share code with get_contest_totals_by_stat()?
+    def get_totals_by_stat(self, vg=None):
+        """
+        Return an IndexedTotals object for turnout by result stat.
+
+        Args:
+          vg: the voting group for which to get totals, as a voting group
+            object or string id, or None for the "all" voting group ("TO").
+            Defaults to None.
+        """
+        (vg, vg_index), = self.result_style.get_vg_index(vg)
+
+        # Pass no party id for the "all" party.
+        (all_party, all_party_index), = self._get_party_index()
+
+        totals = self.turnout_summary[vg_index][all_party_index]
+
+        return IndexedTotals('turnout by stat', totals, resolve=self.result_style.get_stat_index,
+            headers=self.result_stat_types)
+
+    def get_totals_by_vg(self, stat_id):
+        """
+        Return an IndexedTotals object for turnout by voting group.
+
+        Args:
+          stat_id: the result stat for which to get totals, as a ResultStatType id.
+        """
+        stat_index = self.result_style.stat_id_to_index[stat_id]
+
+        all_party_index = self._party_id_to_index[PARTY_ID_ALL]
+
+        totals = []
+        for vg_totals in self.turnout_summary:
+            total = vg_totals[all_party_index][stat_index]
+            totals.append(total)
+
+        return IndexedTotals('turnout by voting group', totals,
+            resolve=self.result_style.get_vg_index,
+            headers=self.result_style.voting_groups)
+
+    def get_totals_by_party(self, stat_id):
+        """
+        Return an IndexedTotals object for turnout by party.
+
+        Args:
+          stat_id: the result stat for which to get totals, as a ResultStatType id.
+        """
+        stat_index = self.result_style.stat_id_to_index[stat_id]
+
+        (vg, vg_index), = self.result_style.get_vg_index(VOTING_GROUP_ID_ALL)
+
+        totals = self.turnout_summary[vg_index]
+
+        totals = []
+        for party_totals in self.turnout_summary[vg_index]:
+            total = party_totals[stat_index]
+            totals.append(total)
+
+        return IndexedTotals('turnout by party', totals, resolve=self._get_party_index,
+            headers=self.parties)
 
 class Contest(ReportableMixin):
 
@@ -1178,6 +1349,8 @@ class Contest(ReportableMixin):
         # This is a dict mapping Choice id to Choice object.
         self.choices_by_id = None
 
+        self.results_mapping = None
+
         # Number of RCV elimination rounds loaded
         self.rcv_rounds = None
         # TODO: document the format of this value.
@@ -1204,6 +1377,18 @@ class Contest(ReportableMixin):
     def __repr__(self):
         name = translate_object(self.contest_name)
         return f'<Contest {self.type_name!r}: id={self.id!r} name={name!r}>'
+
+    @property
+    def contest_summary(self):
+        """
+        Return the contest's summary totals.
+
+        The return value is a 2-D matrix (list of lists) indexed by:
+        reporting group (area-voting_group pair) -> result stats and choices.
+        In other words, the rows correspond to reporting groups, and
+        the columns correspond to result stats and choices.
+        """
+        return self._results_summary
 
     @property
     def approval_passed(self):
@@ -1310,13 +1495,13 @@ class Contest(ReportableMixin):
         # Here we use that choices_by_id is an OrderedDict.
         yield from self.choices_by_id.values()
 
-    # TODO: move this to ReportingGroupTotals.
+    # TODO: move this to IndexedTotals.
     @property
     def choices_sorted(self):
         """
         Return the list of choices in descending order of total votes
         """
-        rg_totals = self.get_rg_summary_totals()
+        rg_totals = self.get_contest_totals_by_stat()
         if self.approval_threshold:
             def sorter(choice):
                 # Sort Yes above No. Return 1 for Yes and 0 for No to
@@ -1325,7 +1510,7 @@ class Contest(ReportableMixin):
         else:
             def sorter(choice):
                 # For other contests, sort by vote total
-                return rg_totals.get_summary_total(choice).total
+                return rg_totals.get_total(choice).total
 
         yield from sorted(self.iter_choices(), reverse=True, key=sorter)
 
@@ -1388,7 +1573,7 @@ class Election:
         return f'<Election ballot_title={i18n_repr(self.ballot_title)} election_date={self.date!r}>'
 
     @property
-    def summary_results_loaded(self):
+    def summary_data_loaded(self):
         return self._results_available is not None
 
     # Also expose the dict values as an (ordered) list, for convenience.

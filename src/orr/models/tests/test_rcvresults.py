@@ -24,7 +24,8 @@ Test the orr.models.rcvresults module.
 
 from unittest import TestCase
 
-from orr.datamodel import Candidate, ResultStatType, ResultsMapping
+import orr.dataloading as dataloading
+from orr.datamodel import Candidate, ResultStatType, ResultStyle, ResultsMapping
 import orr.models.rcvresults as rcvresults
 from orr.models.rcvresults import RCVResults, CandidateRound
 
@@ -110,7 +111,11 @@ class RCVResultsTest(TestCase):
         continuing_stat = result_stat_types[1]
         assert continuing_stat.heading == 'Continuing'
 
-        results_mapping = ResultsMapping(result_stat_types, choices=candidates)
+        result_style = ResultStyle()
+        result_style.result_stat_types = result_stat_types
+        result_style.stat_id_to_index = dataloading.make_indexes_by_id(result_stat_types)
+
+        results_mapping = ResultsMapping(result_style=result_style, choices=candidates)
         rcv_results = RCVResults(SAMPLE_RCV_TOTALS, results_mapping, candidates=candidates,
                                  continuing_stat=continuing_stat)
 
