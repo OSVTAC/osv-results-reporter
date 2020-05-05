@@ -660,9 +660,6 @@ class ResultsMapping:
         """
         return stat_id in self.stat_id_to_index
 
-    def get_stat_by_id(self, stat_id):
-        return self.result_style.get_stat_by_id(stat_id)
-
     def get_choice_index(self, choice):
         """
         Return the index of a choice's results in each results row.
