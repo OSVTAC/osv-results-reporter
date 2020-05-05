@@ -285,8 +285,8 @@ class ResultStyle:
 
         return self.result_stat_types[index]
 
-    def get_stat_index(self, id_):
-        index = self.stat_id_to_index[id_]
+    def get_stat_index(self, stat_id):
+        index = self.stat_id_to_index[stat_id]
         stat = self.result_stat_types[index]
 
         yield (stat, index)

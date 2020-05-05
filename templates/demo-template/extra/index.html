@@ -106,7 +106,7 @@
 
   <table class="table summary-table">
     {% set turnout_by_stat = turnout_contest.get_totals_by_stat() %}
-    {% set reg_result = turnout_by_stat.get_total(id_='RSReg') %}
+    {% set reg_result = turnout_by_stat.get_total('RSReg') %}
     {% set eligible_result = turnout_contest.get_eligible_total() %}
     <tr>
       <td class="text-cell">{{ reg_result|TD }}</td>
