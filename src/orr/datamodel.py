@@ -909,7 +909,7 @@ class IndexedTotals:
         """
         if self.can_vote_for_multiple:
             # Then use "Ballots cast" as the denominator.
-            return self.get_total(id_='RSCst')
+            return self.get_total('RSCst')
 
         return self.total_votes
 
