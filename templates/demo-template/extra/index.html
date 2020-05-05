@@ -327,11 +327,10 @@
         {% if contest.approval_threshold %}
           {% set maxDisplayVote = totalVotes %}
         {% else %}
-          {% set maxDisplayVote = vote_totals.get_max_total(stat_ids='CHOICES') %}
+          {% set maxDisplayVote = vote_totals.get_max_total('CHOICES') %}
         {% endif %}
-        {# TODO: use a for loop that yields results? #}
-        {% for choice in contest.choices_sorted %}
-          {% set vote_result = vote_totals.get_total(choice) %}
+        {% for vote_result in vote_totals.sorted_totals('CHOICES') %}
+          {% set choice = vote_result.obj %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>
             <td class="text-cell title">
               {{- choice|TD -}}

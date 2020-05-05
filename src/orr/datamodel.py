@@ -744,7 +744,7 @@ class ResultsMapping:
         yield from (result_stat_types[i] for i in stat_indices)
 
     # TODO: can we make the id the first argument?
-    def get_summary_index(self, stat_or_choice=None, id_=None, stat_ids=None):
+    def get_summary_index(self, stat_or_choice=None, id_=None):
         """
         A generator that yields (obj, index) pairs.
 
@@ -759,11 +759,8 @@ class ResultsMapping:
 
             yield (stat_or_choice, index)
         else:
-            if stat_ids is None:
-                assert id_ is not None
-                indices = [self.stat_id_to_index[id_]]
-            else:
-                indices = self.iter_indices_by_spaced_ids(stat_ids)
+            assert id_ is not None
+            indices = self.iter_indices_by_id(id_)
 
             yield from ((self.all_items[i], i) for i in indices)
 
@@ -835,12 +832,6 @@ class IndexedTotals:
             # confusing traceback.
             raise RuntimeError()
 
-    # TODO: remove this?
-    def get_max_total(self, *args, **kwargs):
-        choice_indices = self.resolve(*args, **kwargs)
-
-        return max(self.totals[pair[1]] for pair in choice_indices)
-
     def _iter_totals(self, *args, **kwargs):
         """
         Return the summary total for a ResultStatType or Choice object,
@@ -900,6 +891,19 @@ class IndexedTotals:
         # Convert the space-delimited string to a list.
         for id_ in parse_text_ids(spaced_ids):
             yield from self._iter_totals(id_=id_)
+
+    # TODO: add a reverse argument?
+    def sorted_totals(self, spaced_ids):
+        key = lambda r: r.total
+        # Order by descending total.
+        results = sorted(self.iter_totals(spaced_ids), key=key, reverse=True)
+
+        return results
+
+    # TODO: change this to return a ResultTotal object?
+    def get_max_total(self, spaced_ids):
+        results = self.iter_totals(spaced_ids)
+        return max(result.total for result in results)
 
     # TODO: remove or update this?
     def get_voted_ballots(self):
