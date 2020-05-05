@@ -135,30 +135,31 @@
       </tr>
     </thead>
     {% set turnout_by_vg = turnout_contest.get_totals_by_vg(stat_id='RSCst') %}
-    {% set turnout_result = turnout_by_vg.get_total() %}
+    {% set total_turnout = turnout_by_vg.get_total() %}
+    {# TODO: follow the pattern of turnout_by_party.iter_totals()? #}
     {% for vg in turnout_contest.voting_groups_from_text_ids('ED MV') %}
       {% set subtotal_result = turnout_by_vg.get_total(vg) %}
       <tr>
         <td class="text-cell">{{ vg|TD }}</td>
-        {{ subtotal_percent_tds(subtotal_result.total, turnout_result.total) }}
-        {{ bar_td(subtotal_result.total, turnout_result.total) }}
+        {{ subtotal_percent_tds(subtotal_result.total, total_turnout.total) }}
+        {{ bar_td(subtotal_result.total, total_turnout.total) }}
       </tr>
     {% endfor %}
     <tbody class="result-stats">
       <tr>
         <td class="text-cell total">{{ "category_turnout_total"|TP }}</td>
-        {{ subtotal_percent_tds(turnout_result.total, turnout_result.total) }}
+        {{ subtotal_percent_tds(total_turnout.total, total_turnout.total) }}
       </tr>
       <tr>
         <td colspan="2">&nbsp;</td>
       </tr>
       <tr>
         <td class="text-cell">{{ "percent_of_registered_voters"|TP }}</td>
-        <td>{{ turnout_result.total|format_percent2(reg_result.total) }}</td>
+        <td>{{ total_turnout.total|format_percent2(reg_result.total) }}</td>
       </tr>
       <tr>
         <td class="text-cell">{{ "percent_of_eligible_voters"|TP }} <span class="note">({{ "quantity_modifier_estimated"|TP }})</span></td>
-        <td>{{ turnout_result.total|format_percent2(eligible_result.total) }}</td>
+        <td>{{ total_turnout.total|format_percent2(eligible_result.total) }}</td>
       </tr>
     </tbody>
   </table>
@@ -168,6 +169,7 @@
   <h4>Turnout by Party</h4>
 
   {% set turnout_by_party = turnout_contest.get_totals_by_party('RSCst') %}
+  {# TODO: can we use the above total_turnout? #}
   {% set turnout_result = turnout_by_party.get_total() %}
   <table class="table summary-table">
     <thead>
