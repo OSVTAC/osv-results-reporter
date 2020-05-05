@@ -136,13 +136,11 @@
     </thead>
     {% set turnout_by_vg = turnout_contest.get_totals_by_vg(stat_id='RSCst') %}
     {% set total_turnout = turnout_by_vg.get_total() %}
-    {# TODO: follow the pattern of turnout_by_party.iter_totals()? #}
-    {% for vg in turnout_contest.voting_groups_from_text_ids('ED MV') %}
-      {% set subtotal_result = turnout_by_vg.get_total(vg) %}
+    {% for group_result in turnout_by_vg.iter_totals('ED MV') %}
       <tr>
-        <td class="text-cell">{{ vg|TD }}</td>
-        {{ subtotal_percent_tds(subtotal_result.total, total_turnout.total) }}
-        {{ bar_td(subtotal_result.total, total_turnout.total) }}
+        <td class="text-cell">{{ group_result|TD }}</td>
+        {{ subtotal_percent_tds(group_result.total, total_turnout.total) }}
+        {{ bar_td(group_result.total, total_turnout.total) }}
       </tr>
     {% endfor %}
     <tbody class="result-stats">
@@ -331,6 +329,7 @@
         {% else %}
           {% set maxDisplayVote = vote_totals.get_max_total(stat_ids='CHOICES') %}
         {% endif %}
+        {# TODO: use a for loop that yields results? #}
         {% for choice in contest.choices_sorted %}
           {% set vote_result = vote_totals.get_total(choice) %}
           <tr {%- if choice.is_successful %} class="successful"{% endif -%}>

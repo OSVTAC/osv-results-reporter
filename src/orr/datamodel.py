@@ -300,10 +300,12 @@ class ResultStyle:
 
         return vg
 
-    def get_vg_index(self, vg_id=None):
+    # TODO: can we switch the argument name back to vg_id?
+    def get_vg_index(self, id_=None):
         """
         Args: a VotingGroup object or id.
         """
+        vg_id = id_
         if vg_id is None:
             vg_id = VOTING_GROUP_ID_ALL  # "TO"
         elif type(vg_id) != str:
@@ -741,6 +743,7 @@ class ResultsMapping:
 
         yield from (result_stat_types[i] for i in stat_indices)
 
+    # TODO: can we make the id the first argument?
     def get_summary_index(self, stat_or_choice=None, id_=None, stat_ids=None):
         """
         A generator that yields (obj, index) pairs.
@@ -1062,17 +1065,6 @@ class ReportableMixin:
         headings.extend(translator(stat) for stat in result_stats)
 
         return headings
-
-    def voting_groups_from_text_ids(self, text_ids):
-        """
-        Helper function to reference the voting groups.
-
-        Args:
-          text_ids: a space-delimited string of voting group ids.
-        """
-        vg_ids = parse_text_ids(text_ids)
-
-        return self.result_style.voting_groups_from_ids(vg_ids)
 
     def load_results_details(self):
         """
@@ -1507,7 +1499,7 @@ class Contest(ReportableMixin):
         else:
             def sorter(choice):
                 # For other contests, sort by vote total
-                return rg_totals.get_total(choice).total
+                return rg_totals.get_total(stat_or_choice=choice).total
 
         yield from sorted(self.iter_choices(), reverse=True, key=sorter)
 
