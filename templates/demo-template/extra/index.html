@@ -50,7 +50,7 @@
     <td colspan="3">&nbsp;</td>
   </tr>
   {% set vote_totals = contest.get_contest_totals_by_stat() %}
-  {% set cast_result = vote_totals.get_total(id_='RSCst') %}
+  {% set cast_result = vote_totals.get_total('RSCst') %}
   {% if contest.can_vote_for_multiple %}
     {# TODO: show "Blank Ballots" once we add it to the input data. -#}
     {% set stat_ids = 'RSOvr RSCst' %}
@@ -347,7 +347,7 @@
           </tr>
         {% endfor %}
         {% if contest.has_stat('RSWri') %}
-          {% set vote_result = vote_totals.get_total(id_='RSWri') %}
+          {% set vote_result = vote_totals.get_total('RSWri') %}
           {% if vote_result.total %}
             <tr>
               <td class="text-cell title">{{ vote_result|TD }} <span class="note">({{ "write_in_modifier_unreviewed"|TP }})</span></td>

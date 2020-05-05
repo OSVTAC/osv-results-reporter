@@ -300,12 +300,10 @@ class ResultStyle:
 
         return vg
 
-    # TODO: can we switch the argument name back to vg_id?
-    def get_vg_index(self, id_=None):
+    def get_vg_index(self, vg_id=None):
         """
         Args: a VotingGroup object or id.
         """
-        vg_id = id_
         if vg_id is None:
             vg_id = VOTING_GROUP_ID_ALL  # "TO"
         elif type(vg_id) != str:
@@ -743,8 +741,7 @@ class ResultsMapping:
 
         yield from (result_stat_types[i] for i in stat_indices)
 
-    # TODO: can we make the id the first argument?
-    def get_summary_index(self, stat_or_choice=None, id_=None):
+    def get_summary_index(self, id_, stat_or_choice=None):
         """
         A generator that yields (obj, index) pairs.
 
@@ -826,7 +823,7 @@ class IndexedTotals:
         Return the total vote for choices (i.e. "RSTot"), as a ResultTotal object.
         """
         try:
-            return self.get_total(id_='RSTot')
+            return self.get_total('RSTot')
         except Exception:
             # Re-raise as something other than AttributeError for a less
             # confusing traceback.
@@ -890,7 +887,7 @@ class IndexedTotals:
         """
         # Convert the space-delimited string to a list.
         for id_ in parse_text_ids(spaced_ids):
-            yield from self._iter_totals(id_=id_)
+            yield from self._iter_totals(id_)
 
     # TODO: add a reverse argument?
     def sorted_totals(self, spaced_ids):
