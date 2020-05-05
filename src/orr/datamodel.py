@@ -291,7 +291,7 @@ class ResultStyle:
 
         yield (stat, index)
 
-    def _get_vg_index(self, vg_id):
+    def get_vg_by_id(self, vg_id):
         """
         Args: a VotingGroup object or id.
         """
@@ -325,7 +325,7 @@ class ResultStyle:
             return self.voting_groups
 
         voting_groups = [
-            self._get_vg_index(vg_id) for vg_id in ids
+            self.get_vg_by_id(vg_id) for vg_id in ids
         ]
 
         return voting_groups
